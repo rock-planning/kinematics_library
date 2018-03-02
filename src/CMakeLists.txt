@@ -33,7 +33,7 @@ target_link_libraries(kinematics_library ${kdl_parser_LIBRARY} )
 
 
 
-install(DIRECTORY include/ DESTINATION include/kinematics_library)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include/kinematics_library)
 install(TARGETS kinematics_library DESTINATION lib)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig) 
 
