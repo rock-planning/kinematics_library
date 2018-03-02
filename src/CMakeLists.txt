@@ -1,7 +1,5 @@
 project(kinematics_library)
 
-#set(KINEMATICS_LIBRARY_VERSION 0.1)
-#set(TARGET_NAME ${PROJECT_NAME})
 
 CONFIGURE_FILE("${PROJECT_NAME}.pc.in" "${PROJECT_NAME}.pc" @ONLY)
 
