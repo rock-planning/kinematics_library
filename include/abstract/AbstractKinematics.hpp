@@ -66,7 +66,7 @@ public:
     
 };
 
-//typedef boost::shared_ptr<AbstractKinematic> AbstractKinematicPtr;
+typedef std::shared_ptr<kinematics_library::AbstractKinematics> AbstractKinematicPtr;
 //typedef boost::shared_ptr<const AbstractKinematic> AbstractKinematicConstPtr;
 
 };

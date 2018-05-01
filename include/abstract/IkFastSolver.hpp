@@ -5,9 +5,9 @@
 #include <boost/function.hpp>
 #include <string>
 
-#include "AbstractKinematics.hpp"
+#include "abstract/AbstractKinematics.hpp"
 #include "KinematicsHelper.hpp"
-#include "Ikfast.h"
+#include "abstract/Ikfast.h"
 
 /** \file AbstractIkFastSolver.hpp
 *    \brief Interface to use ikfast generated Inverse solver.

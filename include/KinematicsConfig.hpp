@@ -7,6 +7,13 @@
 namespace kinematics_library
 {
 
+enum Robot
+{
+    ARTEMIS,
+    UNKNOWN
+};
+    
+    
 enum KinematicSolver
 {
     IKFAST,
@@ -21,29 +28,36 @@ enum KinematicSolver
  */
 struct KinematicsConfig
 {
-    KinematicsConfig() : mKinematicSolver(KDL)
+    KinematicsConfig() : kinematic_solver(KDL), robot(UNKNOWN)
                               {}
 
     // kinematics solver: currently 3 types of solvers available
-    enum KinematicSolver mKinematicSolver;
+    enum KinematicSolver kinematic_solver;
     // base name - from here inverse and forward kinematic will be calculated
-    std::string mBaseName;
+    std::string base_name;
     //tip name -
-    std::string mTipName;
+    std::string tip_name;
     // joint weight. It is used for finding the optimal inverse kinematic solution
-    std::vector <double> mJointsWeight;
+    std::vector <double> joints_weight;
     // minimum joints limits
-    std::vector <double> mMinJointsLimits;
+    std::vector <double> min_joints_limits;
     // maximum joints limits
-    std::vector <double> mMaxJointsLimits;
+    std::vector <double> max_joints_limits;
     // Number of Joints
-    std::size_t mNumberOfJoints;
+    std::size_t number_of_joints;	
+    //URDF file for the robot. Please give filename with absolute path
+    std::string urdf_file;
+    // pick a robot
+    enum Robot robot;
+    
 };
 
 struct KinematicsStatus
 {
     enum StatusCode
     {
+	KDL_CHAIN_FAILED,
+	TRANSFORMED_CHAIN_FAILED,
         IK_FOUND,
         FK_FOUND,
         NO_IK_SOLUTION,

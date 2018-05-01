@@ -29,7 +29,9 @@ namespace kinematics_library
     {
         public:
             RobotKinematics(KinematicsConfig _kinematicsconfig, KDL::Tree _kinematicsKDLTree);
-            ~RobotKinematics();
+            ~RobotKinematics();;
+	    
+	    bool initialise();
             /**
             * Print a welcome to stdout
             * \return nothing
@@ -40,19 +42,15 @@ namespace kinematics_library
                          base::commands::Joints &solution,
                          KinematicsStatus &solver_status);
 
-            bool solveIK(const std::vector < base::samples::RigidBodyState> &target_poses,
-                         const base::samples::Joints &joint_status,
-                         base::JointsTrajectory &solutions,
-                         KinematicsStatus &solver_status);
 
-			bool solveIKRelatively (const base::samples::Joints &joint_angles,
-                                    const base::samples::RigidBodyState &relative_pose,
-			                        base::commands::Joints &solution,
-			                        KinematicsStatus &solver_status);
+	    bool solveIKRelatively (const base::samples::Joints &joint_angles,
+				    const base::samples::RigidBodyState &relative_pose,
+				    base::commands::Joints &solution,
+				    KinematicsStatus &solver_status);
 
-            void solveFK(const base::samples::Joints &joint_angles,
-                         base::samples::RigidBodyState &result_pose,
-                         KinematicsStatus &solver_status);
+	    void solveFK(const base::samples::Joints &joint_angles,
+			    base::samples::RigidBodyState &result_pose,
+			    KinematicsStatus &solver_status);
 
         protected:
             boost::shared_ptr<AbstractKinematics> kinematics_solver_;
@@ -78,6 +76,7 @@ namespace kinematics_library
 		
 
     };
+    typedef std::shared_ptr<kinematics_library::RobotKinematics> RobotKinematicsPtr;
 
 } // end namespace trajectory_optimization
 
