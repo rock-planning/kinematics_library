@@ -28,10 +28,10 @@ namespace kinematics_library
     class RobotKinematics
     {
         public:
-            RobotKinematics(KinematicsConfig _kinematicsconfig, KDL::Tree _kinematicsKDLTree);
+            RobotKinematics(KinematicsConfig _kinematicsconfig);
             ~RobotKinematics();;
 	    
-	    bool initialise();
+	    bool initialise(KinematicsStatus &kinematics_status);
             /**
             * Print a welcome to stdout
             * \return nothing

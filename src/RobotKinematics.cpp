@@ -5,12 +5,20 @@
 namespace kinematics_library
 {
 
-    RobotKinematics::RobotKinematics(KinematicsConfig _kinematicsconfig, KDL::Tree _kinematicsKDLTree) :
-        kinematics_config_(_kinematicsconfig),kdl_tree_(_kinematicsKDLTree)
-    {}
+    RobotKinematics::RobotKinematics(KinematicsConfig _kinematicsconfig) :
+        kinematics_config_(_kinematicsconfig)
+    {	
+    }
     
-    bool RobotKinematics::initialise()
+    bool RobotKinematics::initialise(KinematicsStatus &kinematics_status)
     {
+
+	if (!kdl_parser::treeFromFile(kinematics_config_.urdf_file, kdl_tree_))
+	{
+	    kinematics_status.statuscode = KinematicsStatus::KDL_CHAIN_FAILED;
+	    LOG_FATAL_S<<"[KinematicLibraryTask]: Error while initialzing KDL tree";
+	}
+	
         std::map<std::string,KDL::TreeElement>::const_iterator root = kdl_tree_.getRootSegment();
         root_name_ = root->first;
 
@@ -19,9 +27,9 @@ namespace kinematics_library
 
         if(!kdl_tree_.getChain(base_name_, tip_name_, kdl_chain_))
 	{
-		LOG_FATAL("[RobotKinematics]: Could not initiailise KDL chain !!!!!!!");            
-		exit(1);
-		return false;
+	    kinematics_status.statuscode = KinematicsStatus::KDL_INITIALISATION_FAILED;    
+	    LOG_FATAL("[RobotKinematics]: Could not initiailise KDL chain !!!!!!!");            	
+	    return false;
 	}
         else
 	    LOG_INFO("[RobotKinematics]: KDL chain initialised with size %d",kdl_chain_.segments.size());            
@@ -36,8 +44,7 @@ namespace kinematics_library
 			
 	transform_pose_.Identity();
 	transformFrame( kdl_tree_, root_name_, base_name_, transform_pose_);
-	
-		
+
         current_jt_status_.resize(rev_jt_kdlchain_.segments.size(),0.0);
         jt_names_.resize(rev_jt_kdlchain_.segments.size(),"");
         ik_solution_.resize(rev_jt_kdlchain_.segments.size(),0.0);
@@ -54,22 +61,26 @@ namespace kinematics_library
         {
             case IKFAST:
             {
+		LOG_INFO_S<<"[RobotKinematics]: IKFAST solver is selected";
                 kinematics_solver_ = boost::shared_ptr<AbstractKinematics> (new IkFastSolver( kinematics_config_.number_of_joints, kinematics_config_.joints_weight, 
                                                                                             joints_limits_, ComputeIk,ComputeFk) );
                 break;
             }
             case CUSTOM_SOLVER:
             {
+		LOG_INFO_S<<"[RobotKinematics]: CUSTOM solver is selected";
                 //kinematics_solver_ = boost::shared_ptr<AbstractKinematics> (new ArmSolver(kinematics_config_.mKinematicConstraints));
                 break;
             }
             case KDL:
             {
+		LOG_INFO_S<<"[RobotKinematics]: KDL solver is selected";
                 kinematics_solver_ = boost::shared_ptr<AbstractKinematics> (new KdlSolver(kinematics_config_.number_of_joints, joints_limits_, rev_jt_kdlchain_));
                 break;
             }
             default:
             {
+		kinematics_status.statuscode = KinematicsStatus::NO_KINEMATIC_SOLVER_FOUND;
                 LOG_ERROR("[RobotKinematics]: This  kinematicSolver is not available");
                 throw new std::runtime_error("This kinematicSolver is not available");
 		return false;
@@ -146,22 +157,31 @@ namespace kinematics_library
                                    KinematicsStatus &solver_status)
     {
 
-		LOG_WARN("[RobotKinematics]: IK function called ");
-		LOG_WARN("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f",
-					target_position(0), target_position(1), target_position(2));
-		LOG_WARN("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
-        			target_orientation.x(), target_orientation.y(), target_orientation.z(), target_orientation.w());
+	LOG_WARN("[RobotKinematics]: IK function called ");
+	LOG_WARN("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f",
+		target_position(0), target_position(1), target_position(2));
+	LOG_WARN("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
+		target_orientation.x(), target_orientation.y(), target_orientation.z(), target_orientation.w());
 
+	     base::samples::RigidBodyState result_pose;
+	solveFK( joint_status, result_pose, solver_status);
+	std::cout<<"Pose = "<<result_pose.getPose()<<std::endl;
         for(unsigned int i = 0; i < rev_jt_kdlchain_.segments.size(); i++)
         {
             current_jt_status_.at(i) = joint_status[rev_jt_kdlchain_.getSegment(i).getJoint().getName()].position;
             jt_names_.at(i)          = rev_jt_kdlchain_.getSegment(i).getJoint().getName();
         }
 
+	LOG_WARN("[RobotKinematics]: After IK function called ");
+	LOG_WARN("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f",
+		target_position(0), target_position(1), target_position(2));
+	LOG_WARN("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
+		target_orientation.x(), target_orientation.y(), target_orientation.z(), target_orientation.w());
 
         if(kinematics_solver_->getIK(base_name_, target_position, target_orientation,
                                    current_jt_status_, ik_solution_, solver_status))
-        {            
+        {
+	    LOG_INFO_S<<"[RobotKinematics]: IK Found";
             solution = base::samples::Joints::Positions(ik_solution_,jt_names_);
 	    for (std::size_t i = 0; i != solution.elements.size(); ++i)
 	    {

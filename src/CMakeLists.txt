@@ -15,7 +15,7 @@ pkg_check_modules(kdl_parser REQUIRED kdl_parser)
 #include_directories(${KINEMATICS_DIR_PATH}/include ${EIGEN3_INCLUDE_DIR} ${kdl_parser_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} )
 include_directories( ${CMAKE_SOURCE_DIR}/include ${EIGEN3_INCLUDE_DIR} ${kdl_parser_INCLUDE_DIRS} )
 
-message(${CMAKE_SOURCE_DIR}/include)
+message("message ${CMAKE_SOURCE_DIR}/include") 
 
 add_library(abstract_kinematics_library SHARED
             ${CMAKE_CURRENT_LIST_DIR}/abstract/AbstractKinematics.cpp

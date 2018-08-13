@@ -9,7 +9,7 @@ KinematicsFactory::KinematicsFactory()
 KinematicsFactory::~KinematicsFactory()
 {}
 
-RobotKinematicsPtr KinematicsFactory::getKinematicsSolver(KinematicsConfig kinematics_config, KDL::Tree kinematics_KDLTree)
+RobotKinematicsPtr KinematicsFactory::getKinematicsSolver(KinematicsConfig kinematics_config)
 {
 	RobotKinematicsPtr kinematic_solver = NULL;
 
@@ -17,13 +17,15 @@ RobotKinematicsPtr KinematicsFactory::getKinematicsSolver(KinematicsConfig kinem
 	{	
 	    case ARTEMIS:
 	    {
-		kinematic_solver = std::shared_ptr<artemis::ArtemisKinematics>(new artemis::ArtemisKinematics(kinematics_config, kinematics_KDLTree ));
+		kinematic_solver = std::shared_ptr<artemis::ArtemisKinematics>(new artemis::ArtemisKinematics(kinematics_config));
 		break;
 	    }
 	    default:
 	    {
-		    std::cout<<"No kinematic solver selected"<<std::endl;
-		    return NULL;
+		LOG_INFO_S<<"[KinematicsFactory]: Unknown robot "<<kinematics_config.robot<<" . So KDL solver will be used";
+		kinematics_config.kinematic_solver = kinematics_library::KDL;
+		kinematic_solver = std::shared_ptr<RobotKinematics>(new RobotKinematics(kinematics_config));
+		break;
 	    }
 	}
 	return kinematic_solver;

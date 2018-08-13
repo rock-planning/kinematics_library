@@ -19,7 +19,7 @@ namespace artemis
     class ArtemisKinematics: public kinematics_library::RobotKinematics
     {
         public:
-            ArtemisKinematics(kinematics_library::KinematicsConfig artemis_config,  KDL::Tree kinematicsKDLTree);
+            ArtemisKinematics(kinematics_library::KinematicsConfig artemis_config);
             ~ArtemisKinematics(){};
         
         protected:

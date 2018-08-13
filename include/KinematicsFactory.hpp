@@ -27,7 +27,7 @@ public:
     */
     ~KinematicsFactory();
 
-     RobotKinematicsPtr getKinematicsSolver(KinematicsConfig kinematics_config,  KDL::Tree kinematics_KDLTree);
+     RobotKinematicsPtr getKinematicsSolver(KinematicsConfig kinematics_config);
 
 };
 

@@ -10,6 +10,7 @@ namespace kinematics_library
 enum Robot
 {
     ARTEMIS,
+    KUKA,
     UNKNOWN
 };
     
@@ -57,16 +58,14 @@ struct KinematicsStatus
     enum StatusCode
     {
 	KDL_CHAIN_FAILED,
-	TRANSFORMED_CHAIN_FAILED,
+	KDL_INITIALISATION_FAILED,	
+	NO_KINEMATIC_SOLVER_FOUND,
         IK_FOUND,
         FK_FOUND,
         NO_IK_SOLUTION,
         NO_FK_SOLUTION,
-        IK_TIMEOUT,
-        INVALID_LINK_NAME,
-        IK_FORBID_CONSTRAINTS, //ik solver forbidden by constraints
-        IK_JOINTLIMITS_VIOLATED,
-		INVALID_STATE
+        IK_TIMEOUT,       
+        IK_JOINTLIMITS_VIOLATED
     }statuscode;
 
 };
