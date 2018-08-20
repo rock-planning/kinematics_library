@@ -9,6 +9,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <kdl_parser/kdl_parser.hpp>
+#include <urdf_parser/urdf_parser.h>
 #include <base/samples/Joints.hpp>
 #include <base/commands/Joints.hpp>
 #include <base/samples/RigidBodyState.hpp>
@@ -36,8 +37,7 @@ namespace kinematics_library
             * Print a welcome to stdout
             * \return nothing
             */
-            bool solveIK(const base::Vector3d &target_position,
-                         const base::Quaterniond &target_orientation,
+            bool solveIK(const base::samples::RigidBodyState &target_pose,
                          const base::samples::Joints &joint_status,
                          base::commands::Joints &solution,
                          KinematicsStatus &solver_status);
@@ -67,13 +67,13 @@ namespace kinematics_library
         private:
             std::vector<double>current_jt_status_, ik_solution_;
             std::vector<std::string> jt_names_;
-            std::string root_name_, base_name_, tip_name_;
-			base::Vector3d fk_position_;
-	        base::Quaterniond fk_orientation_;
-			KDL::Frame transform_pose_;
-			void transformFrame( const KDL::Tree &kdl_tree, const std::string &base_link, const std::string &tip_link, KDL::Frame &pose);
-            std::vector< std::pair<double, double> > joints_limits_;
-		
+            std::string kin_base_name_, kin_tip_name_;
+	    base::samples::RigidBodyState kinematic_pose_;
+	    urdf::ModelInterfaceSharedPtr urdf_model_;
+	    std::vector< std::pair<double, double> > joints_limits_;
+	    void transformFrame( const KDL::Tree &kdl_tree, const std::string &base_link, const std::string &tip_link, KDL::Frame &pose);
+	    bool initiailiseURDF(std::string urdf_file);
+            
 
     };
     typedef std::shared_ptr<kinematics_library::RobotKinematics> RobotKinematicsPtr;

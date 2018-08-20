@@ -18,14 +18,14 @@ namespace kinematics_library
 	    kinematics_status.statuscode = KinematicsStatus::KDL_CHAIN_FAILED;
 	    LOG_FATAL_S<<"[KinematicLibraryTask]: Error while initialzing KDL tree";
 	}
+
+        kin_base_name_ = kinematics_config_.base_name;
+        kin_tip_name_ = kinematics_config_.tip_name;
 	
-        std::map<std::string,KDL::TreeElement>::const_iterator root = kdl_tree_.getRootSegment();
-        root_name_ = root->first;
+	kinematic_pose_.sourceFrame = kin_base_name_;
+	kinematic_pose_.targetFrame = kin_tip_name_;
 
-        base_name_ = kinematics_config_.base_name;
-        tip_name_ = kinematics_config_.tip_name;
-
-        if(!kdl_tree_.getChain(base_name_, tip_name_, kdl_chain_))
+        if(!kdl_tree_.getChain(kin_base_name_, kin_tip_name_, kdl_chain_))
 	{
 	    kinematics_status.statuscode = KinematicsStatus::KDL_INITIALISATION_FAILED;    
 	    LOG_FATAL("[RobotKinematics]: Could not initiailise KDL chain !!!!!!!");            	
@@ -41,9 +41,14 @@ namespace kinematics_library
                 rev_jt_kdlchain_.addSegment(kdl_chain_.getSegment(i));
             }
         }
-			
-	transform_pose_.Identity();
-	transformFrame( kdl_tree_, root_name_, base_name_, transform_pose_);
+        
+        if(!initiailiseURDF(kinematics_config_.urdf_file))
+	{
+	    kinematics_status.statuscode = KinematicsStatus::URDF_FAILED;
+	    return true;
+	}			
+
+	//transformFrame( kdl_tree_, root_name_, base_name_, transform_pose_);
 
         current_jt_status_.resize(rev_jt_kdlchain_.segments.size(),0.0);
         jt_names_.resize(rev_jt_kdlchain_.segments.size(),"");
@@ -53,9 +58,10 @@ namespace kinematics_library
         //pack the joint limit as std::pair
         joints_limits_.clear();
         for(std::size_t jn = 0; jn < kinematics_config_.number_of_joints; jn++)
-        {
-            joints_limits_.push_back(std::make_pair(kinematics_config_.min_joints_limits.at(jn), kinematics_config_.max_joints_limits.at(jn)));
-        }
+        {            
+	    joints_limits_.push_back(std::make_pair(urdf_model_->getJoint(rev_jt_kdlchain_.getSegment(jn).getJoint().getName())->limits->lower, 
+						    urdf_model_->getJoint(rev_jt_kdlchain_.getSegment(jn).getJoint().getName())->limits->upper));
+        }      
 	
         switch(kinematics_config_.kinematic_solver)
         {
@@ -89,6 +95,36 @@ namespace kinematics_library
         LOG_DEBUG("[RobotKinematics]: Initiailising finished");  
         return true;
     }
+    
+    bool RobotKinematics::initiailiseURDF(std::string urdf_file)
+    {
+    	std::string xml_string;
+	std::fstream xml_file(urdf_file.c_str(), std::fstream::in);
+	
+	if (xml_file.is_open())
+	{
+	    while ( xml_file.good() )
+	    {
+	        std::string line;
+	        std::getline( xml_file, line);
+	        xml_string += (line + "\n");
+	    }
+		xml_file.close();
+		urdf_model_ = urdf::parseURDF(xml_string);
+		if(urdf_model_.get() == NULL)
+		{
+		    LOG_ERROR("[RobotKinematics] Error while getting urdf model. urdf_model is empty");
+		    return false;
+		}
+	}
+	else
+	{
+	    LOG_ERROR("[RobotKinematics] Cannot open urdf file.");
+		return false;
+	}
+	return true;
+    }   
+
 
     RobotKinematics::~RobotKinematics()
     {
@@ -112,73 +148,48 @@ namespace kinematics_library
 		pose = pose * new_chain.getSegment(i).getFrameToTip();
 	}	
     }
-
+    
     void RobotKinematics::solveFK( const base::samples::Joints &joint_angles,
                                     base::samples::RigidBodyState &result_pose,
                                     KinematicsStatus &solver_status)
     {
         for(unsigned int i = 0; i < rev_jt_kdlchain_.segments.size(); i++)
             current_jt_status_.at(i) = joint_angles[rev_jt_kdlchain_.getSegment(i).getJoint().getName()].position;
+	
 
-        kinematics_solver_->getFK(base_name_, tip_name_, current_jt_status_,
-                                result_pose.position, result_pose.orientation, solver_status);
-
-		LOG_DEBUG("[RobotKinematics]: Rootname = %s Basename = %s", root_name_.c_str(), base_name_.c_str());
-		
-	    if(root_name_ != base_name_)
-		{
-			KDL::Frame calculated_frame, new_frame;
-		    calculated_frame.p.data[0] = result_pose.position(0);
-		    calculated_frame.p.data[1] = result_pose.position(1);
-		    calculated_frame.p.data[2] = result_pose.position(2);
-
-		    calculated_frame.M = KDL::Rotation::Quaternion(	result_pose.orientation.x(), result_pose.orientation.y(),
-		                                            		result_pose.orientation.z(), result_pose.orientation.w() );
-
-			new_frame = transform_pose_ * calculated_frame;
-
-			result_pose.position(0) = new_frame.p.data[0];
-		    result_pose.position(1) = new_frame.p.data[1];
-		    result_pose.position(2) = new_frame.p.data[2];
-
-		    new_frame.M.GetQuaternion(	result_pose.orientation.x(), result_pose.orientation.y(), 
-									result_pose.orientation.z(), result_pose.orientation.w());
-		}
-
-        result_pose.sourceFrame = base_name_;
-        result_pose.targetFrame = tip_name_;
-
+        kinematics_solver_->getFK(kin_base_name_, kin_tip_name_, current_jt_status_,
+                                kinematic_pose_.position, kinematic_pose_.orientation, solver_status);	
+	
+	convertPoseBetweenDifferentFrames(kdl_tree_, kinematic_pose_, result_pose);	
+	
     }
 
-    bool RobotKinematics::solveIK(const base::Vector3d &target_position,
-                                   const base::Quaterniond &target_orientation,
-                                   const base::samples::Joints &joint_status,
-                                   base::commands::Joints &solution,
-                                   KinematicsStatus &solver_status)
+    bool RobotKinematics::solveIK(const base::samples::RigidBodyState &target_pose,                                   
+                                  const base::samples::Joints &joint_status,
+                                  base::commands::Joints &solution,
+                                  KinematicsStatus &solver_status)
     {
 
-	LOG_WARN("[RobotKinematics]: IK function called ");
-	LOG_WARN("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f",
-		target_position(0), target_position(1), target_position(2));
-	LOG_WARN("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
-		target_orientation.x(), target_orientation.y(), target_orientation.z(), target_orientation.w());
+	LOG_DEBUG_S<<"[RobotKinematics]: IK function called for target pose ";
+	LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", target_pose.position(0), target_pose.position(1), target_pose.position(2));		
+	LOG_DEBUG("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
+		target_pose.orientation.x(), target_pose.orientation.y(), target_pose.orientation.z(), target_pose.orientation.w());
+	
+	convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);	
 
-	     base::samples::RigidBodyState result_pose;
-	solveFK( joint_status, result_pose, solver_status);
-	std::cout<<"Pose = "<<result_pose.getPose()<<std::endl;
+	LOG_DEBUG_S<<"[RobotKinematics]: Target pose after frame transformation ";
+	LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", kinematic_pose_.position(0), kinematic_pose_.position(1), kinematic_pose_.position(2));		
+	LOG_DEBUG("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
+		kinematic_pose_.orientation.x(), kinematic_pose_.orientation.y(), kinematic_pose_.orientation.z(), kinematic_pose_.orientation.w());
+	
+
         for(unsigned int i = 0; i < rev_jt_kdlchain_.segments.size(); i++)
         {
             current_jt_status_.at(i) = joint_status[rev_jt_kdlchain_.getSegment(i).getJoint().getName()].position;
             jt_names_.at(i)          = rev_jt_kdlchain_.getSegment(i).getJoint().getName();
-        }
+        }	
 
-	LOG_WARN("[RobotKinematics]: After IK function called ");
-	LOG_WARN("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f",
-		target_position(0), target_position(1), target_position(2));
-	LOG_WARN("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
-		target_orientation.x(), target_orientation.y(), target_orientation.z(), target_orientation.w());
-
-        if(kinematics_solver_->getIK(base_name_, target_position, target_orientation,
+        if(kinematics_solver_->getIK(kin_base_name_, kinematic_pose_.position, kinematic_pose_.orientation,
                                    current_jt_status_, ik_solution_, solver_status))
         {
 	    LOG_INFO_S<<"[RobotKinematics]: IK Found";
@@ -201,7 +212,7 @@ namespace kinematics_library
                                                     KinematicsStatus &solver_status)
 
     {
-		LOG_WARN("[RobotKinematics]: solveIKRelatively function called ");
+	LOG_WARN("[RobotKinematics]: solveIKRelatively function called ");
 
         // calculate the forward kinematics for the current joint angles
 		base::samples::RigidBodyState fk;
@@ -231,8 +242,11 @@ namespace kinematics_library
         eulerrot = base::Position::Zero();
         quaternionToEuler(target_orientation, eulerrot);
         std::cout<<" target euler = "<<eulerrot.x()<<"  "<<eulerrot.y()<<"  "<<eulerrot.z()<<std::endl;
+	
+	base::samples::RigidBodyState target_pose;
+	
         //solve inverse kinematics
-        return solveIK( target_position, target_orientation, joint_angles, solution, solver_status);
+        return solveIK( target_pose, joint_angles, solution, solver_status);
 
 	}
 
