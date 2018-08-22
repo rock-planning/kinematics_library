@@ -19,13 +19,10 @@ namespace kinematics_library
 	    LOG_FATAL_S<<"[KinematicLibraryTask]: Error while initialzing KDL tree";
 	}
 
-        kin_base_name_ = kinematics_config_.base_name;
-        kin_tip_name_ = kinematics_config_.tip_name;
-	
-	kinematic_pose_.sourceFrame = kin_base_name_;
-	kinematic_pose_.targetFrame = kin_tip_name_;
+        kinematic_pose_.sourceFrame = kinematics_config_.base_name;
+        kinematic_pose_.targetFrame = kinematics_config_.tip_name;
 
-        if(!kdl_tree_.getChain(kin_base_name_, kin_tip_name_, kdl_chain_))
+        if(!kdl_tree_.getChain(kinematic_pose_.sourceFrame, kinematic_pose_.targetFrame, kdl_chain_))
 	{
 	    kinematics_status.statuscode = KinematicsStatus::KDL_INITIALISATION_FAILED;    
 	    LOG_FATAL("[RobotKinematics]: Could not initiailise KDL chain !!!!!!!");            	
@@ -157,7 +154,7 @@ namespace kinematics_library
             current_jt_status_.at(i) = joint_angles[rev_jt_kdlchain_.getSegment(i).getJoint().getName()].position;
 	
 
-        kinematics_solver_->getFK(kin_base_name_, kin_tip_name_, current_jt_status_,
+        kinematics_solver_->getFK(kinematic_pose_.sourceFrame, kinematic_pose_.targetFrame, current_jt_status_,
                                 kinematic_pose_.position, kinematic_pose_.orientation, solver_status);	
 	
 	convertPoseBetweenDifferentFrames(kdl_tree_, kinematic_pose_, result_pose);	
@@ -189,7 +186,7 @@ namespace kinematics_library
             jt_names_.at(i)          = rev_jt_kdlchain_.getSegment(i).getJoint().getName();
         }	
 
-        if(kinematics_solver_->getIK(kin_base_name_, kinematic_pose_.position, kinematic_pose_.orientation,
+        if(kinematics_solver_->getIK(kinematic_pose_.sourceFrame, kinematic_pose_.position, kinematic_pose_.orientation,
                                    current_jt_status_, ik_solution_, solver_status))
         {
 	    LOG_INFO_S<<"[RobotKinematics]: IK Found";

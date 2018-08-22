@@ -273,12 +273,13 @@ namespace kinematics_library
     
     void convertPoseBetweenDifferentFrames(const KDL::Tree &kdl_tree, const base::samples::RigidBodyState &source_pose, base::samples::RigidBodyState &target_pose)
     {
-	if( (source_pose.sourceFrame.c_str() != target_pose.sourceFrame.c_str()) && (!target_pose.sourceFrame.empty()) )
+	target_pose.position = source_pose.position;
+	target_pose.orientation = source_pose.orientation;
+
+	if( (source_pose.sourceFrame.compare(target_pose.sourceFrame) != 0) && (!target_pose.sourceFrame.empty()) )
 	{
 	    LOG_DEBUG("[RobotKinematics]: Target basename = %s and kinematic basename = %s are not the same", 
 		      target_pose.sourceFrame.c_str(), source_pose.sourceFrame.c_str());
-	    
-	    
 	    
 	    // transform_base_tk_ -> transformation from target base to kinematic base    
 	    KDL::Frame calculated_frame, new_frame;	    
@@ -295,7 +296,7 @@ namespace kinematics_library
 
 	}
 	
-	if( (source_pose.targetFrame.c_str() != target_pose.sourceFrame.c_str()) && (!target_pose.targetFrame.empty()) )
+	if( (source_pose.targetFrame.compare(target_pose.targetFrame) != 0) && (!target_pose.targetFrame.empty()) )
 	{
 	    LOG_DEBUG("[RobotKinematics]: Target tipname = %s and kinematic tipname = %s are not the same", 
 		      target_pose.targetFrame.c_str(), source_pose.targetFrame.c_str());

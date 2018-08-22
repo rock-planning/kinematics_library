@@ -67,7 +67,6 @@ namespace kinematics_library
         private:
             std::vector<double>current_jt_status_, ik_solution_;
             std::vector<std::string> jt_names_;
-            std::string kin_base_name_, kin_tip_name_;
 	    base::samples::RigidBodyState kinematic_pose_;
 	    urdf::ModelInterfaceSharedPtr urdf_model_;
 	    std::vector< std::pair<double, double> > joints_limits_;
