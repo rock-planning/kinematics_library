@@ -1,4 +1,4 @@
-#include "KinematicsHelper.hpp"
+#include <abstract/KinematicsHelper.hpp>
 
 namespace kinematics_library
 {
@@ -136,38 +136,38 @@ namespace kinematics_library
 
     void getPositionRotation(const Eigen::Matrix4d &hom_mat, base::Vector3d &fk_position, Eigen::Vector3d &fk_orientationZYX)
     {
-	double cos_beta = 0.0;
-	// position
-	fk_position(0) = hom_mat(0,3);
-	fk_position(1) = hom_mat(1,3);
-	fk_position(2) = hom_mat(2,3);
+		double cos_beta = 0.0;
+		// position
+		fk_position(0) = hom_mat(0,3);
+		fk_position(1) = hom_mat(1,3);
+		fk_position(2) = hom_mat(2,3);
 
-	//orientation
-	fk_orientationZYX(1) = atan2(-hom_mat(2,0), sqrt( (hom_mat(0,0)*hom_mat(0,0)) + (hom_mat(1,0)*hom_mat(1,0)) ));
+		//orientation
+		fk_orientationZYX(1) = atan2(-hom_mat(2,0), sqrt( (hom_mat(0,0)*hom_mat(0,0)) + (hom_mat(1,0)*hom_mat(1,0)) ));
 
-	cos_beta = cos(fk_orientationZYX(1));
+		cos_beta = cos(fk_orientationZYX(1));
 
-	if( (fk_orientationZYX(1) > (-M_PI/2.0 - std::numeric_limits<double>::epsilon())) &&
-	    (fk_orientationZYX(1) < (-M_PI/2.0 + std::numeric_limits<double>::epsilon())) )
-	{
-	    //std::cout<<"im here  -90"<<std::endl;
-	    fk_orientationZYX(0) =  0.0;
-	    fk_orientationZYX(1) = -M_PI/2.0;
-	    fk_orientationZYX(2) = -atan2(hom_mat(0,1), hom_mat(1,1));
-	}
-	else if((fk_orientationZYX(1) > (M_PI/2.0 - std::numeric_limits<double>::epsilon())) &&
-		(fk_orientationZYX(1) < (M_PI/2.0 + std::numeric_limits<double>::epsilon())) )
-	{
-	    //std::cout<<"im here  90"<<std::endl;
-	    fk_orientationZYX(0) =  0.0;
-	    fk_orientationZYX(1) =  M_PI/2.0;
-	    fk_orientationZYX(2) =  atan2(hom_mat(0,1), hom_mat(1,1));
-	}
-	else
-	{
-	    fk_orientationZYX(0) =  atan2(hom_mat(1,0)/cos_beta, hom_mat(0,0)/cos_beta);
-	    fk_orientationZYX(2) =  atan2(hom_mat(2,1)/cos_beta, hom_mat(2,2)/cos_beta);
-	}    
+		if( (fk_orientationZYX(1) > (-M_PI/2.0 - std::numeric_limits<double>::epsilon())) &&
+			(fk_orientationZYX(1) < (-M_PI/2.0 + std::numeric_limits<double>::epsilon())) )
+		{
+			//std::cout<<"im here  -90"<<std::endl;
+			fk_orientationZYX(0) =  0.0;
+			fk_orientationZYX(1) = -M_PI/2.0;
+			fk_orientationZYX(2) = -atan2(hom_mat(0,1), hom_mat(1,1));
+		}
+		else if((fk_orientationZYX(1) > (M_PI/2.0 - std::numeric_limits<double>::epsilon())) &&
+			(fk_orientationZYX(1) < (M_PI/2.0 + std::numeric_limits<double>::epsilon())) )
+		{
+			//std::cout<<"im here  90"<<std::endl;
+			fk_orientationZYX(0) =  0.0;
+			fk_orientationZYX(1) =  M_PI/2.0;
+			fk_orientationZYX(2) =  atan2(hom_mat(0,1), hom_mat(1,1));
+		}
+		else
+		{
+			fk_orientationZYX(0) =  atan2(hom_mat(1,0)/cos_beta, hom_mat(0,0)/cos_beta);
+			fk_orientationZYX(2) =  atan2(hom_mat(2,1)/cos_beta, hom_mat(2,2)/cos_beta);
+		}    
     }
     
     void getPositionRotation(const Eigen::Matrix4d &hom_mat, base::Vector3d &fk_position, base::Quaterniond &fk_orientationZYX)
@@ -233,97 +233,149 @@ namespace kinematics_library
 
     }
     
+    void convertVectorToKDLArray(const std::vector<double> &joint_angles, KDL::JntArray &kdl_jt_array)
+    {
+        for(unsigned int i = 0; i <joint_angles.size(); i++  )
+            kdl_jt_array.data(i) = joint_angles.at(i);
+
+    }
+
+    void convertKDLArrayToVector(const KDL::JntArray &kdl_jt_array, std::vector<double> &joint_angles)
+    {
+        joint_angles.resize(kdl_jt_array.data.size());
+
+        for(unsigned int i = 0; i <kdl_jt_array.data.size(); i++  )
+            joint_angles.at(i) = kdl_jt_array.data(i);
+
+    }
+    
+	void convertKDLArrayToBaseJoints(const KDL::JntArray &kdl_jt_array, base::commands::Joints &joint_angles)
+    {
+        joint_angles.resize(kdl_jt_array.data.size());
+
+        for(unsigned int i = 0; i <kdl_jt_array.data.size(); i++  )
+            joint_angles.elements.at(i).position = kdl_jt_array.data(i);
+
+    }
+    
     void rbsToKdl(const base::samples::RigidBodyState &rbs, KDL::Frame &kdl)
     {
-	kdl.p.data[0] = rbs.position(0);
-	kdl.p.data[1] = rbs.position(1);
-	kdl.p.data[2] = rbs.position(2);
+		kdl.p.data[0] = rbs.position(0);
+		kdl.p.data[1] = rbs.position(1);
+		kdl.p.data[2] = rbs.position(2);
 
-	kdl.M = KDL::Rotation::Quaternion(rbs.orientation.x(), rbs.orientation.y(),
-					    rbs.orientation.z(), rbs.orientation.w() );
+		kdl.M = KDL::Rotation::Quaternion(rbs.orientation.x(), rbs.orientation.y(),
+							rbs.orientation.z(), rbs.orientation.w() );
     }
     
     void kdlToRbs(const KDL::Frame &kdl, base::samples::RigidBodyState &rbs)
     {
-	rbs.position(0) = kdl.p.data[0];
-	rbs.position(1) = kdl.p.data[1];
-	rbs.position(2) = kdl.p.data[2];
+		rbs.position(0) = kdl.p.data[0];
+		rbs.position(1) = kdl.p.data[1];
+		rbs.position(2) = kdl.p.data[2];
 
-	kdl.M.GetQuaternion(rbs.orientation.x(), rbs.orientation.y(), 
-			    rbs.orientation.z(), rbs.orientation.w());
+		kdl.M.GetQuaternion(rbs.orientation.x(), rbs.orientation.y(), 
+					rbs.orientation.z(), rbs.orientation.w());
     }
     
     void transformFrame( const KDL::Tree &kdl_tree, const std::string &base_link, const std::string &tip_link, KDL::Frame &pose)
     {
-	KDL::Chain new_chain;
+		KDL::Chain new_chain;
 
-	if(!kdl_tree.getChain(base_link , tip_link , new_chain))
-	{
-	    LOG_FATAL("[RobotKinematics]: Could not initiailise KDL transformation chain !!!!!!!");
-	    exit(1);
-	}
-	else
-	LOG_DEBUG("[RobotKinematics]: KDL transformation chain initilised");
+		if(!kdl_tree.getChain(base_link , tip_link , new_chain))
+		{
+			LOG_FATAL("[RobotKinematics]: Could not initiailise KDL transformation chain !!!!!!!");
+			exit(1);
+		}
+		else
+		LOG_DEBUG("[RobotKinematics]: KDL transformation chain initilised");
 
-	for(std::size_t i=0; i<new_chain.segments.size(); i++ )
-	{
-		pose = pose * new_chain.getSegment(i).getFrameToTip();
-	}	
+		for(std::size_t i=0; i<new_chain.segments.size(); i++ )
+		{
+			pose = pose * new_chain.getSegment(i).getFrameToTip();
+		}	
     }
     
     void convertPoseBetweenDifferentFrames(const KDL::Tree &kdl_tree, const base::samples::RigidBodyState &source_pose, base::samples::RigidBodyState &target_pose)
     {
-	target_pose.position = source_pose.position;
-	target_pose.orientation = source_pose.orientation;
+		LOG_DEBUG_S<<"[RobotKinematics]: IK function called for source pose ";
+		LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", source_pose.position(0), source_pose.position(1), source_pose.position(2));		
+		LOG_DEBUG("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
+		source_pose.orientation.x(), source_pose.orientation.y(), source_pose.orientation.z(), source_pose.orientation.w());
+		
+		target_pose.position = source_pose.position;
+		target_pose.orientation = source_pose.orientation;
 
-	if( (source_pose.sourceFrame.compare(target_pose.sourceFrame) != 0) && (!target_pose.sourceFrame.empty()) )
-	{
-	    LOG_DEBUG("[RobotKinematics]: Target basename = %s and kinematic basename = %s are not the same", 
-		      target_pose.sourceFrame.c_str(), source_pose.sourceFrame.c_str());
-	    
-	    // transform_base_tk_ -> transformation from target base to kinematic base    
-	    KDL::Frame calculated_frame, new_frame;	    
-	    KDL::Frame transform_base_tk;
-	    transform_base_tk.Identity();	
-	    
-	    rbsToKdl(target_pose, calculated_frame);
-	    
-	    transformFrame( kdl_tree, target_pose.sourceFrame.c_str(), source_pose.sourceFrame.c_str(), transform_base_tk);
+		if( (source_pose.sourceFrame.compare(target_pose.sourceFrame) != 0) && (!target_pose.sourceFrame.empty()) )
+		{
+			LOG_DEBUG("[RobotKinematics]: Target basename = %s and kinematic basename = %s are not the same", 
+				target_pose.sourceFrame.c_str(), source_pose.sourceFrame.c_str());
+			
+			// transform_base_tk_ -> transformation from target base to kinematic base    
+			KDL::Frame calculated_frame, new_frame;	    
+			KDL::Frame transform_base_tk;
+			transform_base_tk.Identity();	
+			
+			rbsToKdl(target_pose, calculated_frame);
+			
+			transformFrame( kdl_tree, target_pose.sourceFrame.c_str(), source_pose.sourceFrame.c_str(), transform_base_tk);
 
-	    new_frame = transform_base_tk * calculated_frame;
-	    
-	    kdlToRbs(new_frame, target_pose);    
+			new_frame = transform_base_tk * calculated_frame;
+			
+			kdlToRbs(new_frame, target_pose);    
 
+		}
+		
+		if( (source_pose.targetFrame.compare(target_pose.targetFrame) != 0) && (!target_pose.targetFrame.empty()) )
+		{
+			LOG_DEBUG("[RobotKinematics]: Target tipname = %s and kinematic tipname = %s are not the same", 
+				target_pose.targetFrame.c_str(), source_pose.targetFrame.c_str());
+			
+			// transform_tip_kt_  -> transformation from kinematic tip to target tip
+			KDL::Frame calculated_frame, new_frame;	    
+			KDL::Frame transform_tip_kt;
+			transform_tip_kt.Identity();
+			
+			transformFrame( kdl_tree, target_pose.targetFrame.c_str(), source_pose.targetFrame.c_str(), transform_tip_kt);
+			
+			rbsToKdl(target_pose, calculated_frame);    
+			
+			new_frame = calculated_frame * transform_tip_kt;
+			
+			kdlToRbs(new_frame, target_pose);    	    
+		}
+		
+		if( (target_pose.sourceFrame.empty()) && target_pose.targetFrame.empty())
+		{
+			target_pose.sourceFrame = source_pose.sourceFrame;
+			target_pose.targetFrame = source_pose.targetFrame;
+		}
+		
+		LOG_DEBUG_S<<"[RobotKinematics]: Target pose after frame transformation ";
+		LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", target_pose.position(0), target_pose.position(1), target_pose.position(2));		
+		LOG_DEBUG("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
+		target_pose.orientation.x(), target_pose.orientation.y(), target_pose.orientation.z(), target_pose.orientation.w());
+	
 	}
 	
-	if( (source_pose.targetFrame.compare(target_pose.targetFrame) != 0) && (!target_pose.targetFrame.empty()) )
+	void getKinematicJoints(const KDL::Chain &rev_jt_kdlchain, const base::samples::Joints &joint_angles, 
+							std::vector<std::string> jt_names, std::vector<double> &kinematic_joints)
 	{
-	    LOG_DEBUG("[RobotKinematics]: Target tipname = %s and kinematic tipname = %s are not the same", 
-		      target_pose.targetFrame.c_str(), source_pose.targetFrame.c_str());
-	    
-	    // transform_tip_kt_  -> transformation from kinematic tip to target tip
-	    KDL::Frame calculated_frame, new_frame;	    
-	    KDL::Frame transform_tip_kt;
-	    transform_tip_kt.Identity();
-	    
-	    transformFrame( kdl_tree, target_pose.targetFrame.c_str(), source_pose.targetFrame.c_str(), transform_tip_kt);
-	    
-	    rbsToKdl(target_pose, calculated_frame);    
-	    
-	    new_frame = calculated_frame * transform_tip_kt;
-	    
-	    kdlToRbs(new_frame, target_pose);    	    
+		for(unsigned int i = 0; i < rev_jt_kdlchain.segments.size(); i++)
+		{
+			kinematic_joints.at(i) = joint_angles[rev_jt_kdlchain.getSegment(i).getJoint().getName()].position;	
+            jt_names.at(i)         = rev_jt_kdlchain.getSegment(i).getJoint().getName();
+		}
 	}
-	
-	if( (target_pose.sourceFrame.empty()) && target_pose.targetFrame.empty())
+
+	void setKinematicJoints(const std::vector<double> &kinematic_joints, const std::vector<std::string> &jt_names, base::commands::Joints &joint_angles)
 	{
-	    target_pose.sourceFrame = source_pose.sourceFrame;
-	    target_pose.targetFrame = source_pose.targetFrame;
+		joint_angles = base::samples::Joints::Positions(kinematic_joints, jt_names);
+		for (std::size_t i = 0; i != joint_angles.elements.size(); ++i)
+		{
+			joint_angles[i].speed = 0.0;
+			joint_angles[i].effort = 0.0;
+		}
 	}
-	
-    }
-    
-    
-    	
-	
+
 }

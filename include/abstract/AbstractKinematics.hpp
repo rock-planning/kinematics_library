@@ -3,9 +3,11 @@
 
 #include <vector>
 #include <boost/function.hpp>
+#include <iostream>
 #include <string>
 #include <base/Eigen.hpp>
 #include "KinematicsConfig.hpp"
+#include "KinematicsHelper.hpp"
 
 /** \file AbstractKinematics.hpp
 *    \brief Abstract kinematics header.
@@ -29,10 +31,10 @@ public:
     /**
     * @brief  destructor
     */
-    virtual ~AbstractKinematics();
+    virtual ~AbstractKinematics();	
+	
     /**
-    * @brief Calculate the joint angles for a robot to reach a desired Pose.
-    * @param base_link Target Position is given respect to this link
+    * @brief Calculate the joint angles for a robot to reach a desired Pose.    
     * @param target_position Desired position for the target link
     * @param target_orientation Desired orientation for the target link in quaternion(based on euler ZYX)
     * @param joint_status Contains current joint angles.
@@ -40,29 +42,36 @@ public:
     * @param solver_status Solution status or error code
     * @return true if a inverse solution was found or else return false
     */
-    virtual bool getIK( const std::string &base_link,
-                        const base::Vector3d &target_position,
-                        const base::Quaterniond &target_orientation,
-                        const std::vector<double> &joint_status,
-                        std::vector<double> &solution,
-                        KinematicsStatus &solver_status) = 0;
+    virtual bool solveIK( 	const base::samples::RigidBodyState target_pose,
+							const base::samples::Joints &joint_status,
+							base::commands::Joints &solution,
+							KinematicsStatus &solver_status) = 0;
 
     /**
-    * @brief Calculate pose of a robot given its joint angles
-    * @param base_link FK will be calculated with respect to this link
-    * @param target_link FK will be calculated till this target_link
+    * @brief Calculate pose of a robot given its joint angles    
     * @param joint_angles joint angles of the robot
     * @param fk_position fk position
     * @param fk_orientation fk orienation in quaternion
     * @param solver_status Solution status or error code
     * @return true if a forward solution was found or else return false
     */
-    virtual bool getFK( const std::string &base_link,
-                        const std::string &target_link,
-                        const std::vector<double> &joint_angles,
-                        base::Vector3d &fk_position,
-                        base::Quaterniond &fk_orientation,
-                        KinematicsStatus &solver_status) = 0;
+    virtual bool solveFK( 	const base::samples::Joints &joint_status,
+							base::samples::RigidBodyState &fk_pose,                        
+							KinematicsStatus &solver_status) = 0;
+							
+	bool solveIKRelatively(const base::samples::Joints &joint_angles,
+					const base::samples::RigidBodyState &relative_pose,
+					base::commands::Joints &solution,
+					KinematicsStatus &solver_status);
+
+protected:
+	base::samples::RigidBodyState kinematic_pose_;
+	std::vector<double>current_jt_status_, ik_solution_;
+	std::vector<std::string> jt_names_;
+	KDL::Tree kdl_tree_;
+	KDL::Chain kdl_chain_;
+	
+	void resize_variables(const KDL::Chain &kdl_chain);
     
 };
 

@@ -4,42 +4,49 @@ namespace kinematics_library
 {
 
     IkFastSolver::IkFastSolver(const std::size_t number_of_joints, const std::vector<double> jts_weight, const std::vector<std::pair<double, double> > jts_limits,
-				bool (*_ComputeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions),
-				void (*_ComputeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot)) :
-    number_of_joints(number_of_joints), jts_weight(jts_weight), jts_limits(jts_limits), ComputeIkFn_(_ComputeIkFn), ComputeFkFn_(_ComputeFkFn)  
-    {
-	ComputeIkFn_ = _ComputeIkFn;
-    }
+							   const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, void (*_computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot),
+								bool (*_computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions)):
+								number_of_joints_(number_of_joints), jts_weight_(jts_weight), jts_limits_(jts_limits)
+    { 
+		kdl_tree_ 			= kdl_tree;
+		kdl_chain_			= kdl_chain;
+		
+		computeFkFn = _computeFkFn;
+		computeIkFn = _computeIkFn;
+		
+		resize_variables(kdl_chain_);		
+	}
 
     IkFastSolver::~IkFastSolver()
     {}
 
-
-    bool IkFastSolver::getIK(   const std::string &base_link,
-                                const base::Vector3d &target_position,
-                                const base::Quaterniond &target_orientation,
-                                const std::vector<double> &joint_status,
-                                std::vector<double> &solution,
-                                KinematicsStatus &solver_status)
+    bool IkFastSolver::solveIK(	const base::samples::RigidBodyState target_pose,
+								const base::samples::Joints &joint_status,
+								base::commands::Joints &solution,
+								KinematicsStatus &solver_status)
     {
+		convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);
+				
+		getKinematicJoints(kdl_chain_, joint_status, jt_names_, current_jt_status_);
+		
         IkReal eerot[9],eetrans[3];
 
-        eetrans[0] = target_position(0);
-        eetrans[1] = target_position(1);
-        eetrans[2] = target_position(2);
+        eetrans[0] = kinematic_pose_.position(0);
+        eetrans[1] = kinematic_pose_.position(1);
+        eetrans[2] = kinematic_pose_.position(2);
 
-        quaternionToRotationMatrixArray(target_orientation, eerot); 
-	//ikfast::IkFastFunctions<IkReal> t;
-	//t._ComputeIk = *ComputeIkFn_;
+        quaternionToRotationMatrixArray(kinematic_pose_.orientation, eerot); 
 
-        if(ComputeIkFn_(eetrans, eerot, NULL, ik_solutions))
+        if(computeIkFn(eetrans, eerot, NULL, ik_solutions_))
         {
             std::vector<std::vector<double> > optSol;
 
-            if(pickOptimalIkSolution(joint_status, ik_solutions, optSol))
+            if(pickOptimalIkSolution(current_jt_status_, ik_solutions_, optSol))
             {
-                for (std::size_t i = 0; i < number_of_joints; i++)
-                    solution.at(i) = optSol.at(0).at(i);
+				solution.resize(kdl_chain_.segments.size());
+                for (std::size_t i = 0; i < number_of_joints_; i++)
+                    solution.elements.at(i).position = optSol.at(0).at(i);
+				solution.names = jt_names_;
 
                 solver_status.statuscode = KinematicsStatus::IK_FOUND;
                 return true;
@@ -55,29 +62,25 @@ namespace kinematics_library
             solver_status.statuscode = KinematicsStatus::NO_IK_SOLUTION;
             return false;
         }
-
-
-
     }
 
-    bool IkFastSolver::getFK(   const std::string &base_link,
-                                        const std::string &target_link,
-                                        const std::vector<double> &joint_angles,
-                                        base::Vector3d &fk_position,
-                                        base::Quaterniond &fk_orientationZYX,
-                                        KinematicsStatus &solver_status)
+    bool IkFastSolver::solveFK(	const base::samples::Joints &joint_angles,
+                                base::samples::RigidBodyState &fk_pose,
+                                KinematicsStatus &solver_status)
     {
+		getKinematicJoints(kdl_chain_, joint_angles, jt_names_, current_jt_status_);
+				
         IkReal eerot[9],eetrans[3];
-        IkReal angles[joint_angles.size()];
+        IkReal angles[current_jt_status_.size()];
 
-        for (unsigned char i=0; i < joint_angles.size(); i++)
-            angles[i] = joint_angles[i];
+        for (unsigned char i=0; i < current_jt_status_.size(); i++)
+            angles[i] = current_jt_status_[i];
 
-        ComputeFkFn_(angles,eetrans,eerot);
+        computeFkFn(angles,eetrans,eerot);
 
-        fk_position(0) = eetrans[0];
-        fk_position(1) = eetrans[1];
-        fk_position(2) = eetrans[2];
+        kinematic_pose_.position(0) = eetrans[0];
+        kinematic_pose_.position(1) = eetrans[1];
+        kinematic_pose_.position(2) = eetrans[2];
 
         
 		// The below rotation conversion is based on ZYX. The user need to make sure that he useit properly.
@@ -90,11 +93,13 @@ namespace kinematics_library
 		rot_mat(2,0) = eerot[6]; 		rot_mat(2,1) = eerot[7]; 		rot_mat(2,2) = eerot[8];
 
 		base::Quaterniond quaternion_rot(rot_mat);
-		fk_orientationZYX = quaternion_rot;
-
-        solver_status.statuscode = KinematicsStatus::FK_FOUND;
+		kinematic_pose_.orientation = quaternion_rot;
+		
+		solver_status.statuscode = KinematicsStatus::FK_FOUND;
+		
+		convertPoseBetweenDifferentFrames(kdl_tree_, kinematic_pose_, fk_pose);
+      
         return true;
-
     }
 
     bool IkFastSolver::pickOptimalIkSolution(   const std::vector<double> &cur_jtang,
@@ -103,7 +108,7 @@ namespace kinematics_library
     {
 
         int num_solution = redundantSolutions.GetNumSolutions();
-        std::vector<IkReal> sol(number_of_joints);
+        std::vector<IkReal> sol(number_of_joints_);
         std::vector<std::vector<double> > all_solution, refind_solutions;
         std::vector<int> joint_limit_exceed_solution_index;
         std::vector<double> del_sol;
@@ -112,7 +117,7 @@ namespace kinematics_library
         std::vector<redundant_ik_solution> refined_ik_sol_container;
 
 
-        all_solution.resize(num_solution, std::vector<double> (number_of_joints,0.0) );
+        all_solution.resize(num_solution, std::vector<double> (number_of_joints_,0.0) );
         joint_limit_exceed_solution_index.resize(num_solution, 0);
 
         /*std::cerr << "-----  Current Joint angle --------"<<std::endl;
@@ -128,9 +133,9 @@ namespace kinematics_library
             // variable for weighted ik sol based on min joint movement
             del_sol.resize(num_solution - jt_limit_exceed_sol_ct, 0.0);                                                    
             // variable for holding the refind ik solution
-            refind_solutions.resize(num_solution - jt_limit_exceed_sol_ct, std::vector<double> (number_of_joints, 0.0) );   
+            refind_solutions.resize(num_solution - jt_limit_exceed_sol_ct, std::vector<double> (number_of_joints_, 0.0) );   
             // optimal solution - sorted ik solution based weighted ik sol
-            optSol.resize(num_solution - jt_limit_exceed_sol_ct, std::vector<double> (number_of_joints, 0.0) );             
+            optSol.resize(num_solution - jt_limit_exceed_sol_ct, std::vector<double> (number_of_joints_, 0.0) );             
             // variable used to sorting the ik solution
             redundant_ik_solution refined_ik_sol[num_solution - jt_limit_exceed_sol_ct];                                    
             // variable used to sorting the ik solution
@@ -140,9 +145,9 @@ namespace kinematics_library
             {
                 if (joint_limit_exceed_solution_index.at(i)==0)
                 {
-                    for(std::size_t j = 0; j < number_of_joints; ++j)
+                    for(std::size_t j = 0; j < number_of_joints_; ++j)
                     {
-                        del_sol.at(ct)          = del_sol.at(ct) + ( jts_weight[j] *fabs( cur_jtang[j] - all_solution[i][j] ));
+                        del_sol.at(ct)          = del_sol.at(ct) + ( jts_weight_[j] *fabs( cur_jtang[j] - all_solution[i][j] ));
                         refind_solutions[ct][j]	= all_solution[i][j];
                     }
                     refined_ik_sol[ct].opt_iksol_index_value    = del_sol.at(ct);
@@ -158,7 +163,7 @@ namespace kinematics_library
 
             for(int i = 0; i<num_solution - jt_limit_exceed_sol_ct; i++)
             {
-                for(std::size_t j = 0; j < number_of_joints; ++j)
+                for(std::size_t j = 0; j < number_of_joints_; ++j)
                     optSol.at(i).at(j) = refined_ik_sol_container.at(i).ik_sol.at(j);
             }
 
@@ -176,7 +181,7 @@ namespace kinematics_library
     {
 
         int num_solution = redundantSolutions.GetNumSolutions();
-        std::vector<IkReal> solvalues(number_of_joints);
+        std::vector<IkReal> solvalues(number_of_joints_);
 
         //std::cerr << "-----  Actual solution --------"<<std::endl;
 
@@ -188,9 +193,9 @@ namespace kinematics_library
             sol.GetSolution(&solvalues[0], vsolfree.size()>0?&vsolfree[0]:NULL);
 
             bool jt_limit_flag= false;
-            for(std::size_t jn = 0; jn < number_of_joints; jn++)
+            for(std::size_t jn = 0; jn < number_of_joints_; jn++)
             { 
-                     if( !((solvalues[jn] >= jts_limits.at(jn).first) && (solvalues[jn] <= jts_limits.at(jn).second)) )
+                     if( !((solvalues[jn] >= jts_limits_.at(jn).first) && (solvalues[jn] <= jts_limits_.at(jn).second)) )
                         jt_limit_flag= true;
             }
             if(jt_limit_flag)
@@ -199,7 +204,7 @@ namespace kinematics_library
                 jt_limit_exceed_sol_ct++;
             }
 
-            for( std::size_t j = 0; j < number_of_joints; ++j)
+            for( std::size_t j = 0; j < number_of_joints_; ++j)
             {
                 all_solution[i][j] = solvalues[j];
             }

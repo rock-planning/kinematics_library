@@ -1,6 +1,7 @@
 <package>
   <description brief="Kinematics library">
-  An abstract library for handling kinematics.   
+  A framework for handling serial robot kinematics. This framework contains state of the art kinematic solvers
+  such as kdl, ikfast, and trac_ik. This framework can handle any type of serial robots.  
   </description>
   <author>Sankaranarayanan Natarajan/sankar.natarajan@dfki.de</author>
   <license></license>

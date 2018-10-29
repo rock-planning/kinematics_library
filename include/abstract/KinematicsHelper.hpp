@@ -5,8 +5,11 @@
 #include <math.h>
 #include <Eigen/Dense>
 #include <base/Eigen.hpp>
+#include <base/samples/Joints.hpp>
+#include <base/commands/Joints.hpp>
 #include <base/samples/RigidBodyState.hpp>
 #include <kdl/frames.hpp>
+#include <kdl/jntarray.hpp>
 #include <kdl/tree.hpp>
 #include <iostream>
 #include <base-logging/Logging.hpp>
@@ -31,11 +34,16 @@ namespace kinematics_library
     void quaternionToRotationMatrixArray(const base::Quaterniond &quat, double *rot_mat);
     void getHomogeneousMatrix(const base::Vector3d &fk_position, const base::Quaterniond &fk_orientation, Eigen::Matrix4d &homogeneous_matrix);
     void inversematrix(const Eigen::Matrix4d &homogeneous_matrix, Eigen::Matrix4d &inverse_matrix);
-    void rbsToKdl(const base::samples::RigidBodyState &rbs, KDL::Frame &kdl);
+    void rbsToKdl(const base::samples::RigidBodyState &rbs, KDL::Frame &kdl);    
     void kdlToRbs(const KDL::Frame &kdl, base::samples::RigidBodyState &rbs);
     void transformFrame( const KDL::Tree &kdl_tree, const std::string &base_link, const std::string &tip_link, KDL::Frame &pose);
     void convertPoseBetweenDifferentFrames(const KDL::Tree &kdl_tree, const base::samples::RigidBodyState &source_pose, base::samples::RigidBodyState &target_pose);
-    
+    void convertVectorToKDLArray(const std::vector<double> &joint_angles, KDL::JntArray &kdl_jt_array);
+    void convertKDLArrayToVector(const KDL::JntArray &kdl_jt_array, std::vector<double> &joint_angles);
+	void convertKDLArrayToBaseJoints(const KDL::JntArray &kdl_jt_array, base::commands::Joints &joint_angles);
+	void getKinematicJoints(const KDL::Chain &rev_jt_kdlchain, const base::samples::Joints &joint_angles, 
+							std::vector<std::string> jt_names, std::vector<double> &kinematic_joints);
+	void setKinematicJoints(const std::vector<double> &kinematic_joints, const std::vector<std::string> &jt_names, base::commands::Joints &joint_angles);
 
 }
 

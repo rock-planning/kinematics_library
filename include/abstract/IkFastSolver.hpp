@@ -6,7 +6,7 @@
 #include <string>
 
 #include "abstract/AbstractKinematics.hpp"
-#include "KinematicsHelper.hpp"
+#include "abstract/KinematicsHelper.hpp"
 #include "abstract/Ikfast.h"
 
 /** \file AbstractIkFastSolver.hpp
@@ -46,8 +46,8 @@ public:
     * @brief  constructor
     */
     IkFastSolver(const std::size_t number_of_joints, const std::vector<double> jts_weight, const std::vector<std::pair<double, double> > jts_limits,
-		 bool (*_ComputeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions),
-		 void (*_ComputeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot));
+				const KDL::Tree &kdl_tree, const KDL::Chain &_kdl_chain, void (*_computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot),
+				bool (*_computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions));
     /**
     * @brief  destructor
     */
@@ -62,30 +62,22 @@ public:
     * @param solver_status Solution status or error code
     * @return true if a inverse solution was found or else return false
     */
-    bool getIK( const std::string &base_link,
-                const base::Vector3d &target_position,
-                const base::Quaterniond &target_orientation,
-                const std::vector<double> &joint_status,
-                std::vector<double> &solution,
-                KinematicsStatus &solver_status);
+    bool solveIK(	const base::samples::RigidBodyState target_pose,
+					const base::samples::Joints &joint_status,
+					base::commands::Joints &solution,
+					KinematicsStatus &solver_status);
 
     /**
-    * @brief Calculate pose of a manipulator given its joint angles
-    * @param base_link FK will be calculated with respect to this link
-    * @param target_link FK will be calculated till this target_link
+    * @brief Calculate pose of a manipulator given its joint angles    
     * @param joint_angles joint angles of the manipulator
     * @param fk_position fk position
     * @param fk_orientation fk orienation in quaternion
     * @param solver_status Solution status or error code
     * @return true if a forward solution was found or else return false
     */
-    bool getFK( const std::string &base_link,
-                const std::string &target_link,
-                const std::vector<double> &joint_angles,
-                base::Vector3d &fk_position,
-                base::Quaterniond &fk_orientationZYX,
-                KinematicsStatus &solver_status);
- 
+    bool solveFK(	const base::samples::Joints &joint_angles,
+					base::samples::RigidBodyState &fk_pose,
+					KinematicsStatus &solver_status);
 
 private:
     /**
@@ -115,15 +107,14 @@ private:
     /**
     * @brief joint weight used for checking nearest solution.
     */
-    std::size_t number_of_joints;
-    std::vector<double> jts_weight;
-    std::vector<std::pair<double,double> > jts_limits;
+    std::size_t number_of_joints_;
+    std::vector<double> jts_weight_;
+    std::vector<std::pair<double,double> > jts_limits_;
 
-    ikfast::IkSolutionList<IkReal> ik_solutions;
+    ikfast::IkSolutionList<IkReal> ik_solutions_;
 
-
-   bool (*ComputeIkFn_)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions);
-   void (*ComputeFkFn_)(const IkReal* j, IkReal* eetrans, IkReal* eerot);
+	bool (*computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions);
+	void (*computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot);
 	
 };
 

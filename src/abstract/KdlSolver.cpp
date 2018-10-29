@@ -2,73 +2,65 @@
 
 namespace kinematics_library
 {
-
-    //KdlSolver::KdlSolver(const KDL::Chain _kdl_chain):kdl_chain(_kdl_chain)
-    KdlSolver::KdlSolver(const std::size_t _number_of_joints, const std::vector< std::pair<double, double> > _jts_limits, const KDL::Chain _kdl_chain):
-    number_of_joints(_number_of_joints), jts_limits(_jts_limits), kdl_chain(_kdl_chain)
+    
+    KdlSolver::KdlSolver(const std::size_t number_of_joints, const std::vector< std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
+						 const KDL::Chain &kdl_chain, const unsigned int max_iter, const double eps): number_of_joints_(number_of_joints), 
+						 jts_limits_(jts_limits), maxiter_(max_iter), eps_(eps)
     {
-        fk_solverPos        = new KDL::ChainFkSolverPos_recursive(kdl_chain);
-        ik_solverVelPinv    = new KDL::ChainIkSolverVel_pinv(kdl_chain);
+		kdl_tree_ 			= kdl_tree;
+		kdl_chain_			= kdl_chain;
+        fk_solverPos_       = new KDL::ChainFkSolverPos_recursive(kdl_chain_);
+        ik_solverVelPinv_   = new KDL::ChainIkSolverVel_pinv(kdl_chain_);
 
-        getJointLimits(min_jtLimits, max_jtLimits);
+        getJointLimits(min_jtLimits_, max_jtLimits_);       
 
-        maxiter = 150;  //Maximum 100 iterations
-        eps=1e-6;       //stop at accuracy 1e-6
+        ik_solverPosJL_  = new KDL::ChainIkSolverPos_NR_JL(kdl_chain_, min_jtLimits_, max_jtLimits_,
+                                                          *fk_solverPos_, *ik_solverVelPinv_, maxiter_, eps_);
 
-        ik_solverPosJL  = new KDL::ChainIkSolverPos_NR_JL(kdl_chain, min_jtLimits, max_jtLimits,
-                                                          *fk_solverPos, *ik_solverVelPinv, maxiter, eps);
-
-
-        kdl_jtArray.data.resize(number_of_joints);
-        kdl_ik_jtArray.data.resize(number_of_joints);
-
+        kdl_jtArray_.data.resize(number_of_joints_);
+        kdl_ik_jtArray_.data.resize(number_of_joints_);
+		
+		resize_variables(kdl_chain_);
     }
 
     KdlSolver::~KdlSolver()
     {
-        if (fk_solverPos)
+        if (fk_solverPos_)
         {
-            fk_solverPos = NULL;
-            delete fk_solverPos;
+            fk_solverPos_ = NULL;
+            delete fk_solverPos_;
         }
 
-        if (ik_solverPosJL)
+        if (ik_solverPosJL_)
         {
-            ik_solverPosJL = NULL;
-            delete ik_solverPosJL;
+            ik_solverPosJL_ = NULL;
+            delete ik_solverPosJL_;
         }
 
-        if (ik_solverVelPinv)
+        if (ik_solverVelPinv_)
         {
-            ik_solverVelPinv = NULL;
-            delete ik_solverVelPinv;
+            ik_solverVelPinv_ = NULL;
+            delete ik_solverVelPinv_;
         }
     }
 
-    bool KdlSolver::getIK(  const std::string &base_link,
-                            const base::Vector3d &target_position,
-                            const base::Quaterniond &target_orientation,
-                            const std::vector<double> &joint_status,
-                            std::vector<double> &solution,
-                            KinematicsStatus &solver_status)
+    bool KdlSolver::solveIK(const base::samples::RigidBodyState target_pose,
+							const base::samples::Joints &joint_status,
+							base::commands::Joints &solution,
+							KinematicsStatus &solver_status)
     {
+		convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);
+		
+		getKinematicJoints(kdl_chain_, joint_status, jt_names_, current_jt_status_);
 
-        convertVectorToKDLArray(joint_status, kdl_jtArray);
-
-        kdl_frame.p.data[0] = target_position(0);
-        kdl_frame.p.data[1] = target_position(1);
-        kdl_frame.p.data[2] = target_position(2);
-
-        kdl_frame.M = KDL::Rotation::Quaternion(target_orientation.x(), target_orientation.y(),
-                                                target_orientation.z(), target_orientation.w() );
-
-
-        std::cout<<"IK found  "<<ik_solverPosJL->CartToJnt(kdl_jtArray, kdl_frame, kdl_ik_jtArray)<<std::endl;
-
-        int res = ik_solverPosJL->CartToJnt(kdl_jtArray, kdl_frame, kdl_ik_jtArray);
+        convertVectorToKDLArray(current_jt_status_, kdl_jtArray_);
+		rbsToKdl(kinematic_pose_, kdl_frame_);
+    
+        int res = ik_solverPosJL_->CartToJnt(kdl_jtArray_, kdl_frame_, kdl_ik_jtArray_);
         if( res >= 0)
         {
-            convertKDLArrayToVector(kdl_ik_jtArray, solution);
+			convertKDLArrayToBaseJoints(kdl_ik_jtArray_, solution);
+			solution.names = jt_names_;
             solver_status.statuscode = KinematicsStatus::IK_FOUND;
             return true;
         }
@@ -82,65 +74,39 @@ namespace kinematics_library
             solver_status.statuscode = KinematicsStatus::NO_IK_SOLUTION;
             return false;
         }
-
-
-
     }
 
-    bool KdlSolver::getFK( const std::string &base_link,
-                const std::string &target_link,
-                const std::vector<double> &joint_angles,
-                base::Vector3d &fk_position,
-                base::Quaterniond &fk_orientation,
-                KinematicsStatus &solver_status)
+    bool KdlSolver::solveFK(const base::samples::Joints &joint_angles,
+							base::samples::RigidBodyState &fk_pose,
+							KinematicsStatus &solver_status)
     {
-        convertVectorToKDLArray(joint_angles, kdl_jtArray);
+		getKinematicJoints(kdl_chain_, joint_angles, jt_names_, current_jt_status_);
+	
+        convertVectorToKDLArray(current_jt_status_, kdl_jtArray_);
 
-        if(fk_solverPos->JntToCart(kdl_jtArray, kdl_frame) >= 0)
+        if(fk_solverPos_->JntToCart(kdl_jtArray_, kdl_frame_) >= 0)
         {
-            fk_position(0) = kdl_frame.p.data[0];
-            fk_position(1) = kdl_frame.p.data[1];
-            fk_position(2) = kdl_frame.p.data[2];
-
-            kdl_frame.M.GetQuaternion(fk_orientation.x(), fk_orientation.y(), fk_orientation.z(), fk_orientation.w());
-
-            solver_status.statuscode = KinematicsStatus::FK_FOUND;
+			kdlToRbs(kdl_frame_, kinematic_pose_);
+			solver_status.statuscode = KinematicsStatus::FK_FOUND;
+			convertPoseBetweenDifferentFrames(kdl_tree_, kinematic_pose_, fk_pose);
             return true;
         }
-        else
-        {
-            solver_status.statuscode = KinematicsStatus::NO_FK_SOLUTION;
-            return false;
-        }
-
-    }
-
-    void KdlSolver::convertVectorToKDLArray(const std::vector<double> &joint_angles, KDL::JntArray &kdl_jt_array)
-    {
-        for(unsigned int i = 0; i <joint_angles.size(); i++  )
-            kdl_jt_array.data(i) = joint_angles.at(i);
-
-    }
-
-    void KdlSolver::convertKDLArrayToVector(const KDL::JntArray &kdl_jt_array, std::vector<double> &joint_angles)
-    {
-        joint_angles.resize(kdl_jt_array.data.size());
-
-        for(unsigned int i = 0; i <kdl_jt_array.data.size(); i++  )
-            joint_angles.at(i) = kdl_jt_array.data(i);
+        
+        solver_status.statuscode = KinematicsStatus::NO_FK_SOLUTION;
+        return false;
+        
 
     }
 
     void KdlSolver::getJointLimits(KDL::JntArray &min_jtLimits, KDL::JntArray &max_jtLimits)
     {
-        min_jtLimits.resize(number_of_joints);
-        max_jtLimits.resize(number_of_joints);
+        min_jtLimits.resize(number_of_joints_);
+        max_jtLimits.resize(number_of_joints_);
 
-        for(std::size_t i = 0; i < number_of_joints; i++)
+        for(std::size_t i = 0; i < number_of_joints_; i++)
         {
-            min_jtLimits(i) = jts_limits.at(i).first;
-            max_jtLimits(i) = jts_limits.at(i).second;
+            min_jtLimits(i) = jts_limits_.at(i).first;
+            max_jtLimits(i) = jts_limits_.at(i).second;
         }
-
     }
 }
