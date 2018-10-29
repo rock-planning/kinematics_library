@@ -15,8 +15,8 @@
 #include "abstract/AbstractKinematics.hpp"
 #include "abstract/IkFastSolver.hpp"
 #include "abstract/KdlSolver.hpp"
-#if TRACK_IK_LIB_FOUND    
-    #include "abstract/TrackIkSolver.hpp"
+#if TRAC_IK_LIB_FOUND    
+    #include "abstract/TracIkSolver.hpp"
 #endif
 
 

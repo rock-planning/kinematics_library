@@ -45,7 +45,7 @@ public:
     /**
     * @brief  constructor
     */
-    IkFastSolver(const std::size_t number_of_joints, const std::vector<double> jts_weight, const std::vector<std::pair<double, double> > jts_limits,
+    IkFastSolver(const KinematicsConfig &kinematics_config, const std::vector<std::pair<double, double> > jts_limits,
 				const KDL::Tree &kdl_tree, const KDL::Chain &_kdl_chain, void (*_computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot),
 				bool (*_computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions));
     /**
@@ -107,7 +107,6 @@ private:
     /**
     * @brief joint weight used for checking nearest solution.
     */
-    std::size_t number_of_joints_;
     std::vector<double> jts_weight_;
     std::vector<std::pair<double,double> > jts_limits_;
 

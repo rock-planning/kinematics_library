@@ -284,11 +284,11 @@ namespace kinematics_library
 
 		if(!kdl_tree.getChain(base_link , tip_link , new_chain))
 		{
-			LOG_FATAL("[RobotKinematics]: Could not initiailise KDL transformation chain !!!!!!!");
+			LOG_FATAL("[KinematicsHelper]: Could not initiailise KDL transformation chain !!!!!!!");
 			exit(1);
 		}
 		else
-		LOG_DEBUG("[RobotKinematics]: KDL transformation chain initilised");
+		LOG_DEBUG("[KinematicsHelper]: KDL transformation chain initilised");
 
 		for(std::size_t i=0; i<new_chain.segments.size(); i++ )
 		{
@@ -298,17 +298,17 @@ namespace kinematics_library
     
     void convertPoseBetweenDifferentFrames(const KDL::Tree &kdl_tree, const base::samples::RigidBodyState &source_pose, base::samples::RigidBodyState &target_pose)
     {
-		LOG_DEBUG_S<<"[RobotKinematics]: IK function called for source pose ";
-		LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", source_pose.position(0), source_pose.position(1), source_pose.position(2));		
-		LOG_DEBUG("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
-		source_pose.orientation.x(), source_pose.orientation.y(), source_pose.orientation.z(), source_pose.orientation.w());
+		//LOG_DEBUG_S<<"[KinematicsHelper]: IK function called for source pose ";
+		//LOG_DEBUG("[KinematicsHelper]: Position:/n X: %f Y: %f Z: %f", source_pose.position(0), source_pose.position(1), source_pose.position(2));		
+		//LOG_DEBUG("[KinematicsHelper]: Orientation:/n X: %f Y: %f Z: %f W: %f",
+		//source_pose.orientation.x(), source_pose.orientation.y(), source_pose.orientation.z(), source_pose.orientation.w());
 		
 		target_pose.position = source_pose.position;
 		target_pose.orientation = source_pose.orientation;
 
 		if( (source_pose.sourceFrame.compare(target_pose.sourceFrame) != 0) && (!target_pose.sourceFrame.empty()) )
 		{
-			LOG_DEBUG("[RobotKinematics]: Target basename = %s and kinematic basename = %s are not the same", 
+			LOG_DEBUG("[KinematicsHelper]: Target basename = %s and kinematic basename = %s are not the same", 
 				target_pose.sourceFrame.c_str(), source_pose.sourceFrame.c_str());
 			
 			// transform_base_tk_ -> transformation from target base to kinematic base    
@@ -351,10 +351,10 @@ namespace kinematics_library
 			target_pose.targetFrame = source_pose.targetFrame;
 		}
 		
-		LOG_DEBUG_S<<"[RobotKinematics]: Target pose after frame transformation ";
-		LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", target_pose.position(0), target_pose.position(1), target_pose.position(2));		
-		LOG_DEBUG("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
-		target_pose.orientation.x(), target_pose.orientation.y(), target_pose.orientation.z(), target_pose.orientation.w());
+		//LOG_DEBUG_S<<"[RobotKinematics]: Target pose after frame transformation ";
+		//LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", target_pose.position(0), target_pose.position(1), target_pose.position(2));		
+		//LOG_DEBUG("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
+		//target_pose.orientation.x(), target_pose.orientation.y(), target_pose.orientation.z(), target_pose.orientation.w());
 	
 	}
 	

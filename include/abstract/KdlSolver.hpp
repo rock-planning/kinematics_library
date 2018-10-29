@@ -28,7 +28,7 @@ class KdlSolver : public AbstractKinematics
         /**
         * @brief  constructor
         */
-        KdlSolver(const std::size_t number_of_joints, const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
+        KdlSolver(const KinematicsConfig &kinematics_config, const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
 				  const KDL::Chain &kdl_chain, const unsigned int max_iter = 150, const double eps=1e-6);
 
         /**
@@ -64,8 +64,7 @@ class KdlSolver : public AbstractKinematics
 
     private:
         void getJointLimits(KDL::JntArray &min_jtLimits, KDL::JntArray &max_jtLimits);
-
-        std::size_t number_of_joints_;
+        
         std::vector< std::pair<double, double> > jts_limits_;
 
         KDL::ChainFkSolverPos_recursive *fk_solverPos_;

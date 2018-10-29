@@ -20,8 +20,7 @@ enum KinematicSolver
 struct KinematicsConfig
 {
     KinematicsConfig() : kinematic_solver(KDL), base_name(""), tip_name(""),
-			 number_of_joints(0), urdf_file(""), max_iteration(100),
-			 timeout_sec(0), eps(0){}
+			 urdf_file(""), max_iteration(100), timeout_sec(0.1), eps(0.001){}
 
     // kinematics solver: currently 3 types of solvers available
     enum KinematicSolver kinematic_solver;
@@ -31,9 +30,7 @@ struct KinematicsConfig
     std::string tip_name;
     // joint weight. It is used for finding the weighted optimal inverse kinematic solution, 
     // when the inverse solver gave more than one solution.
-    std::vector <double> joints_weight;    
-    // Number of Joints
-    std::size_t number_of_joints;	
+    std::vector <double> joints_weight;    	
     //URDF file for the robot. Please give filename with absolute path
     std::string urdf_file;
     // Maximum iteration allowed for numerical solver.

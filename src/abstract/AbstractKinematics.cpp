@@ -9,11 +9,14 @@ AbstractKinematics::AbstractKinematics()
 AbstractKinematics::~AbstractKinematics()
 {}
 
-void AbstractKinematics::resize_variables(const KDL::Chain &kdl_chain)
+void AbstractKinematics::assign_variables(const KinematicsConfig &kinematics_config, const KDL::Chain &kdl_chain)
 {
-	current_jt_status_.resize(kdl_chain.segments.size(),0.0);
-	jt_names_.resize(kdl_chain.segments.size(),"");
-	ik_solution_.resize(kdl_chain.segments.size(),0.0);
+	kinematic_pose_.sourceFrame = kinematics_config.base_name;
+	kinematic_pose_.targetFrame = kinematics_config.tip_name;
+	current_jt_status_.resize(kdl_chain.getNrOfJoints(),0.0);
+	jt_names_.resize(kdl_chain.getNrOfJoints(),"");
+	ik_solution_.resize(kdl_chain.getNrOfJoints(),0.0);
+	number_of_joints_ = kdl_chain.getNrOfJoints();
 }
 
 bool AbstractKinematics::solveIKRelatively(const base::samples::Joints &joint_angles,

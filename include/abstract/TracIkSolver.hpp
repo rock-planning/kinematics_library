@@ -7,7 +7,6 @@
 
 #include<iostream>
 
-#include "trac_ik/IKSolverTaskBase.hpp"
 #include <trac_ik/trac_ik.hpp>
 
 #include "AbstractKinematics.hpp"
@@ -27,8 +26,7 @@ class TracIkSolver : public AbstractKinematics
         /**
         * @brief  constructor
         */
-        TracIkSolver(const std::string base_link, const std::string tip_link, const std::string urdf_file_path, const KDL::Tree &kdl_tree,
-					 const KDL::Chain &kdl_chain, const unsigned int max_iter, const double eps);
+        TracIkSolver(const KinematicsConfig &kinematics_config, const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain);
 
         /**
         * @brief  destructor

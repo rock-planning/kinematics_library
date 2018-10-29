@@ -22,26 +22,26 @@ SET (SRCS
 	${CMAKE_CURRENT_LIST_DIR}/abstract/KinematicsHelper.cpp
 	${CMAKE_CURRENT_LIST_DIR}/KinematicsFactory.cpp )
 
-# if track_ik is found, add it to the kinematic factory
-set(TRACK_IK_LIB_FOUND false)  #This variable need to be defined here, so that C++ complier knows about it.
-pkg_check_modules(TRACK_IK track_ik)
+# if trac_ik is found, add it to the kinematic factory
+set(TRAC_IK_LIB_FOUND false)  #This variable need to be defined here, so that C++ complier knows about it.
+pkg_check_modules(TRAC_IK trac_ik)
 
-if(${TRACK_IK_FOUND})
-    set(TRACK_IK_LIB_FOUND ${TRACK_IK_FOUND})
-    message ("TRACK_IK found !")    
-    message("TRACK_IK dir ${TRACK_IK_INCLUDE_DIRS}")
-    message(${TRACK_IK_LIBRARY_DIRS})
-    message(${TRACK_IK_LIBRARIES})
-    include_directories(${KINEMATIC_INCLUDE_PATH} ${TRACK_IK_INCLUDE_DIRS})
-    link_directories(${TRACK_IK_LIBRARY_DIRS})      
-    LIST(APPEND EXTERNAL_LIB ${TRACK_IK_LIBRARIES}) 
-    LIST(APPEND SRCS ${CMAKE_CURRENT_LIST_DIR}/abstract/TrackIkSolver.cpp)
-else(${TRACK_IK_FOUND})
-    message ("TRACK_IK not found !")    
+if(${TRAC_IK_FOUND})
+    set(TRAC_IK_LIB_FOUND ${TRAC_IK_FOUND})
+    message ("TRAC_IK found !")    
+    message("TRAC_IK dir ${TRAC_IK_INCLUDE_DIRS}")
+    message(${TRAC_IK_LIBRARY_DIRS})
+    message(${TRAC_IK_LIBRARIES})
+    include_directories(${KINEMATIC_INCLUDE_PATH} ${TRAC_IK_INCLUDE_DIRS})
+    link_directories(${TRAC_IK_LIBRARY_DIRS})      
+    LIST(APPEND EXTERNAL_LIB ${TRAC_IK_LIBRARIES}) 
+    LIST(APPEND SRCS ${CMAKE_CURRENT_LIST_DIR}/abstract/TracIkSolver.cpp)
+else(${TRAC_IK_FOUND})
+    message ("TRAC_IK not found !")    
 endif()
 
-add_definitions(-DTRACK_IK_LIB_FOUND=${TRACK_IK_LIB_FOUND})    
-message("track_ik = ${TRACK_IK_LIB_FOUND}")    
+add_definitions(-DTRAC_IK_LIB_FOUND=${TRAC_IK_LIB_FOUND})    
+message("trac_ik = ${TRAC_IK_LIB_FOUND}")    
 	    
 	    
 message (${SRCS})

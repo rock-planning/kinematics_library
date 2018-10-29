@@ -3,18 +3,19 @@
 namespace kinematics_library
 {
 
-    IkFastSolver::IkFastSolver(const std::size_t number_of_joints, const std::vector<double> jts_weight, const std::vector<std::pair<double, double> > jts_limits,
-							   const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, void (*_computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot),
+    IkFastSolver::IkFastSolver( const KinematicsConfig &kinematics_config, const std::vector<std::pair<double, double> > jts_limits,
+							    const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, void (*_computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot),
 								bool (*_computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions)):
-								number_of_joints_(number_of_joints), jts_weight_(jts_weight), jts_limits_(jts_limits)
+								jts_limits_(jts_limits)
     { 
-		kdl_tree_ 			= kdl_tree;
-		kdl_chain_			= kdl_chain;
+		jts_weight_	= kinematics_config.joints_weight;
+		kdl_tree_ 	= kdl_tree;
+		kdl_chain_	= kdl_chain;
 		
 		computeFkFn = _computeFkFn;
-		computeIkFn = _computeIkFn;
+		computeIkFn = _computeIkFn;		
 		
-		resize_variables(kdl_chain_);		
+		assign_variables(kinematics_config, kdl_chain_);
 	}
 
     IkFastSolver::~IkFastSolver()

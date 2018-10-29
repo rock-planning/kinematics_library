@@ -68,10 +68,11 @@ protected:
 	base::samples::RigidBodyState kinematic_pose_;
 	std::vector<double>current_jt_status_, ik_solution_;
 	std::vector<std::string> jt_names_;
+	std::size_t number_of_joints_;
 	KDL::Tree kdl_tree_;
 	KDL::Chain kdl_chain_;
 	
-	void resize_variables(const KDL::Chain &kdl_chain);
+	void assign_variables(const KinematicsConfig &kinematics_config, const KDL::Chain &kdl_chain);
     
 };
 
