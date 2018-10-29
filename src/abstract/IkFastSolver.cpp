@@ -27,63 +27,63 @@ namespace kinematics_library
 								KinematicsStatus &solver_status)
     {
 		convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);
-				
+
 		getKinematicJoints(kdl_chain_, joint_status, jt_names_, current_jt_status_);
-		
-        IkReal eerot[9],eetrans[3];
 
-        eetrans[0] = kinematic_pose_.position(0);
-        eetrans[1] = kinematic_pose_.position(1);
-        eetrans[2] = kinematic_pose_.position(2);
+		IkReal eerot[9],eetrans[3];
 
-        quaternionToRotationMatrixArray(kinematic_pose_.orientation, eerot); 
+		eetrans[0] = kinematic_pose_.position(0);
+		eetrans[1] = kinematic_pose_.position(1);
+		eetrans[2] = kinematic_pose_.position(2);
 
-        if(computeIkFn(eetrans, eerot, NULL, ik_solutions_))
-        {
-            std::vector<std::vector<double> > optSol;
+		quaternionToRotationMatrixArray(kinematic_pose_.orientation, eerot); 
 
-            if(pickOptimalIkSolution(current_jt_status_, ik_solutions_, optSol))
-            {
+		if(computeIkFn(eetrans, eerot, NULL, ik_solutions_))
+		{
+			std::vector<std::vector<double> > optSol;
+
+			if(pickOptimalIkSolution(current_jt_status_, ik_solutions_, optSol))
+			{
 				solution.resize(kdl_chain_.segments.size());
-                for (std::size_t i = 0; i < number_of_joints_; i++)
-                    solution.elements.at(i).position = optSol.at(0).at(i);
+				for (std::size_t i = 0; i < number_of_joints_; i++)
+				solution.elements.at(i).position = optSol.at(0).at(i);
 				solution.names = jt_names_;
 
-                solver_status.statuscode = KinematicsStatus::IK_FOUND;
-                return true;
-            }
-            else
-            {
-                solver_status.statuscode = KinematicsStatus::IK_JOINTLIMITS_VIOLATED;
-                return false;
-            }
-        }
-        else
-        {
-            solver_status.statuscode = KinematicsStatus::NO_IK_SOLUTION;
-            return false;
-        }
-    }
+				solver_status.statuscode = KinematicsStatus::IK_FOUND;
+				return true;
+			}
+			else
+			{
+				solver_status.statuscode = KinematicsStatus::IK_JOINTLIMITS_VIOLATED;
+				return false;
+			}
+		}
+		else
+		{
+			solver_status.statuscode = KinematicsStatus::NO_IK_SOLUTION;
+			return false;
+		}
+	}
 
-    bool IkFastSolver::solveFK(	const base::samples::Joints &joint_angles,
-                                base::samples::RigidBodyState &fk_pose,
-                                KinematicsStatus &solver_status)
-    {
+	bool IkFastSolver::solveFK(	const base::samples::Joints &joint_angles,
+								base::samples::RigidBodyState &fk_pose,
+							 	KinematicsStatus &solver_status)
+	{
 		getKinematicJoints(kdl_chain_, joint_angles, jt_names_, current_jt_status_);
-				
-        IkReal eerot[9],eetrans[3];
-        IkReal angles[current_jt_status_.size()];
 
-        for (unsigned char i=0; i < current_jt_status_.size(); i++)
-            angles[i] = current_jt_status_[i];
+		IkReal eerot[9],eetrans[3];
+		IkReal angles[current_jt_status_.size()];
 
-        computeFkFn(angles,eetrans,eerot);
+		for (unsigned char i=0; i < current_jt_status_.size(); i++)
+		angles[i] = current_jt_status_[i];
 
-        kinematic_pose_.position(0) = eetrans[0];
-        kinematic_pose_.position(1) = eetrans[1];
-        kinematic_pose_.position(2) = eetrans[2];
+		computeFkFn(angles,eetrans,eerot);
 
-        
+		kinematic_pose_.position(0) = eetrans[0];
+		kinematic_pose_.position(1) = eetrans[1];
+		kinematic_pose_.position(2) = eetrans[2];
+
+
 		// The below rotation conversion is based on ZYX. The user need to make sure that he useit properly.
 		// So inorder to avoid confusion. The eigen conversion will be used.
 		//rotMat2QuaternionZYX(eerot, fk_orientationZYX);
@@ -95,133 +95,130 @@ namespace kinematics_library
 
 		base::Quaterniond quaternion_rot(rot_mat);
 		kinematic_pose_.orientation = quaternion_rot;
-		
+
 		solver_status.statuscode = KinematicsStatus::FK_FOUND;
-		
+
 		convertPoseBetweenDifferentFrames(kdl_tree_, kinematic_pose_, fk_pose);
-      
-        return true;
-    }
 
-    bool IkFastSolver::pickOptimalIkSolution(   const std::vector<double> &cur_jtang,
-                                                const ikfast::IkSolutionList<IkReal> &redundantSolutions,
-                                                std::vector<std::vector<double> > &optSol)
-    {
+		return true;
+	}
 
-        int num_solution = redundantSolutions.GetNumSolutions();
-        std::vector<IkReal> sol(number_of_joints_);
-        std::vector<std::vector<double> > all_solution, refind_solutions;
-        std::vector<int> joint_limit_exceed_solution_index;
-        std::vector<double> del_sol;
-        int jt_limit_exceed_sol_ct = 0;
-        int ct = 0;
-        std::vector<redundant_ik_solution> refined_ik_sol_container;
+	bool IkFastSolver::pickOptimalIkSolution(   const std::vector<double> &cur_jtang, const ikfast::IkSolutionList<IkReal> &redundantSolutions,
+												std::vector<std::vector<double> > &optSol)
+	{
+
+		int num_solution = redundantSolutions.GetNumSolutions();
+		std::vector<IkReal> sol(number_of_joints_);
+		std::vector<std::vector<double> > all_solution, refind_solutions;
+		std::vector<int> joint_limit_exceed_solution_index;
+		std::vector<double> del_sol;
+		int jt_limit_exceed_sol_ct = 0;
+		int ct = 0;
+		std::vector<redundant_ik_solution> refined_ik_sol_container;
 
 
-        all_solution.resize(num_solution, std::vector<double> (number_of_joints_,0.0) );
-        joint_limit_exceed_solution_index.resize(num_solution, 0);
+		all_solution.resize(num_solution, std::vector<double> (number_of_joints_,0.0) );
+		joint_limit_exceed_solution_index.resize(num_solution, 0);
 
-        /*std::cerr << "-----  Current Joint angle --------"<<std::endl;
-        for(int j = 0; j < 6; ++j)
-            std::cerr <<cur_jtang.at(j)<<"    ";
-        std::cerr<<std::endl;*/
+		/*std::cerr << "-----  Current Joint angle --------"<<std::endl;
+		for(int j = 0; j < 6; ++j)
+		std::cerr <<cur_jtang.at(j)<<"    ";
+		std::cerr<<std::endl;*/
 
-        // check whether any solution is available which are within the joint limit and doesnt have any collision
-        if (checkJointLimits(redundantSolutions, all_solution, joint_limit_exceed_solution_index, jt_limit_exceed_sol_ct))
-        {
+		// check whether any solution is available which are within the joint limit and doesnt have any collision
+		if (checkJointLimits(redundantSolutions, all_solution, joint_limit_exceed_solution_index, jt_limit_exceed_sol_ct))
+		{
 
-            // variables for holding the refined IK solution after checking joint limits and collision
-            // variable for weighted ik sol based on min joint movement
-            del_sol.resize(num_solution - jt_limit_exceed_sol_ct, 0.0);                                                    
-            // variable for holding the refind ik solution
-            refind_solutions.resize(num_solution - jt_limit_exceed_sol_ct, std::vector<double> (number_of_joints_, 0.0) );   
-            // optimal solution - sorted ik solution based weighted ik sol
-            optSol.resize(num_solution - jt_limit_exceed_sol_ct, std::vector<double> (number_of_joints_, 0.0) );             
-            // variable used to sorting the ik solution
-            redundant_ik_solution refined_ik_sol[num_solution - jt_limit_exceed_sol_ct];                                    
-            // variable used to sorting the ik solution
-            refined_ik_sol_container.resize(num_solution - jt_limit_exceed_sol_ct);                                    
+			// variables for holding the refined IK solution after checking joint limits and collision
+			// variable for weighted ik sol based on min joint movement
+			del_sol.resize(num_solution - jt_limit_exceed_sol_ct, 0.0);                                                    
+			// variable for holding the refind ik solution
+			refind_solutions.resize(num_solution - jt_limit_exceed_sol_ct, std::vector<double> (number_of_joints_, 0.0) );   
+			// optimal solution - sorted ik solution based weighted ik sol
+			optSol.resize(num_solution - jt_limit_exceed_sol_ct, std::vector<double> (number_of_joints_, 0.0) );             
+			// variable used to sorting the ik solution
+			redundant_ik_solution refined_ik_sol[num_solution - jt_limit_exceed_sol_ct];                                    
+			// variable used to sorting the ik solution
+			refined_ik_sol_container.resize(num_solution - jt_limit_exceed_sol_ct);                                    
 
-            for(int i = 0; i < num_solution; ++i)
-            {
-                if (joint_limit_exceed_solution_index.at(i)==0)
-                {
-                    for(std::size_t j = 0; j < number_of_joints_; ++j)
-                    {
-                        del_sol.at(ct)          = del_sol.at(ct) + ( jts_weight_[j] *fabs( cur_jtang[j] - all_solution[i][j] ));
-                        refind_solutions[ct][j]	= all_solution[i][j];
-                    }
-                    refined_ik_sol[ct].opt_iksol_index_value    = del_sol.at(ct);
-                    refined_ik_sol[ct].ik_sol                   = refind_solutions[ct];
-                    ct++;
-                }
-            }
+			for(int i = 0; i < num_solution; ++i)
+			{
+				if (joint_limit_exceed_solution_index.at(i)==0)
+				{
+					for(std::size_t j = 0; j < number_of_joints_; ++j)
+					{
+					del_sol.at(ct)          = del_sol.at(ct) + ( jts_weight_[j] *fabs( cur_jtang[j] - all_solution[i][j] ));
+					refind_solutions[ct][j]	= all_solution[i][j];
+					}
+					refined_ik_sol[ct].opt_iksol_index_value    = del_sol.at(ct);
+					refined_ik_sol[ct].ik_sol                   = refind_solutions[ct];
+					ct++;
+				}
+			}
 
-            for(int i = 0; i<num_solution - jt_limit_exceed_sol_ct; i++)
-                refined_ik_sol_container.at(i) = refined_ik_sol[i];
+			for(int i = 0; i<num_solution - jt_limit_exceed_sol_ct; i++)
+				refined_ik_sol_container.at(i) = refined_ik_sol[i];
 
-            std::sort(refined_ik_sol_container.begin(), refined_ik_sol_container.end(), compare_result());
+			std::sort(refined_ik_sol_container.begin(), refined_ik_sol_container.end(), compare_result());
 
-            for(int i = 0; i<num_solution - jt_limit_exceed_sol_ct; i++)
-            {
-                for(std::size_t j = 0; j < number_of_joints_; ++j)
-                    optSol.at(i).at(j) = refined_ik_sol_container.at(i).ik_sol.at(j);
-            }
+			for(int i = 0; i<num_solution - jt_limit_exceed_sol_ct; i++)
+			{
+				for(std::size_t j = 0; j < number_of_joints_; ++j)
+				optSol.at(i).at(j) = refined_ik_sol_container.at(i).ik_sol.at(j);
+			}
 
-            return true;
-        }
-        else
-            return false;
+			return true;
+		}
+		else
+			return false;
+	}
 
-    }
+	bool IkFastSolver::checkJointLimits(const ikfast::IkSolutionList<IkReal> &redundantSolutions,
+										std::vector<std::vector<double> > &all_solution,
+										std::vector<int> &joint_limit_exceed_solution_index, int &jt_limit_exceed_sol_ct)
+	{
 
-    bool IkFastSolver::checkJointLimits(const ikfast::IkSolutionList<IkReal> &redundantSolutions,
-                                        std::vector<std::vector<double> > &all_solution,
-                                        std::vector<int> &joint_limit_exceed_solution_index,
-                                        int &jt_limit_exceed_sol_ct)
-    {
+		int num_solution = redundantSolutions.GetNumSolutions();
+		std::vector<IkReal> solvalues(number_of_joints_);
 
-        int num_solution = redundantSolutions.GetNumSolutions();
-        std::vector<IkReal> solvalues(number_of_joints_);
+		//std::cerr << "-----  Actual solution --------"<<std::endl;
 
-        //std::cerr << "-----  Actual solution --------"<<std::endl;
+		for(int i = 0; i < num_solution; ++i)
+		{
+			const ikfast::IkSolutionBase<IkReal>& sol = redundantSolutions.GetSolution(i);
 
-        for(int i = 0; i < num_solution; ++i)
-        {
-            const ikfast::IkSolutionBase<IkReal>& sol = redundantSolutions.GetSolution(i);
+			std::vector<IkReal> vsolfree(sol.GetFree().size());
+			sol.GetSolution(&solvalues[0], vsolfree.size()>0?&vsolfree[0]:NULL);
 
-            std::vector<IkReal> vsolfree(sol.GetFree().size());
-            sol.GetSolution(&solvalues[0], vsolfree.size()>0?&vsolfree[0]:NULL);
+			bool jt_limit_flag= false;
+			for(std::size_t jn = 0; jn < number_of_joints_; jn++)
+			{ 
+				if( !((solvalues[jn] >= jts_limits_.at(jn).first) && (solvalues[jn] <= jts_limits_.at(jn).second)) )
+				jt_limit_flag= true;
+			}
+			if(jt_limit_flag)
+			{
+				joint_limit_exceed_solution_index.at(i) = 1;
+				jt_limit_exceed_sol_ct++;
+			}
 
-            bool jt_limit_flag= false;
-            for(std::size_t jn = 0; jn < number_of_joints_; jn++)
-            { 
-                     if( !((solvalues[jn] >= jts_limits_.at(jn).first) && (solvalues[jn] <= jts_limits_.at(jn).second)) )
-                        jt_limit_flag= true;
-            }
-            if(jt_limit_flag)
-            {
-                joint_limit_exceed_solution_index.at(i) = 1;
-                jt_limit_exceed_sol_ct++;
-            }
+			for( std::size_t j = 0; j < number_of_joints_; ++j)
+			{
+				all_solution[i][j] = solvalues[j];
+			}
+		}
 
-            for( std::size_t j = 0; j < number_of_joints_; ++j)
-            {
-                all_solution[i][j] = solvalues[j];
-            }
-        }
+		if(jt_limit_exceed_sol_ct == num_solution)
+		{
+			/*std::cerr << "-----  Joint limit exceed or Collision solution index --------"<<std::endl;
+			for(int j = 0; j < num_solution; ++j)
+			std::cerr <<joint_limit_exceed_solution_index.at(j)<<"    ";
 
-        if(jt_limit_exceed_sol_ct == num_solution)
-        {
-            /*std::cerr << "-----  Joint limit exceed or Collision solution index --------"<<std::endl;
-            for(int j = 0; j < num_solution; ++j)
-                std::cerr <<joint_limit_exceed_solution_index.at(j)<<"    ";
+			std::cerr<<std::endl;*/
+			return false;
+		}
+		else
+			return true;
 
-            std::cerr<<std::endl;*/
-            return false;
-        }
-        else
-            return true;
-
-    }
-}
+		}
+	}
