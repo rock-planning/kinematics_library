@@ -20,7 +20,7 @@ enum KinematicSolver
 struct KinematicsConfig
 {
     KinematicsConfig() : kinematic_solver(KDL), base_name(""), tip_name(""),
-			 urdf_file(""), max_iteration(100), timeout_sec(0.1), eps(0.001){}
+                         urdf_file(""), max_iteration(100), timeout_sec(0.1), eps(0.001){}
 
     // kinematics solver: currently 3 types of solvers available
     enum KinematicSolver kinematic_solver;
@@ -41,26 +41,26 @@ struct KinematicsConfig
     double eps;
     // ikfast shared library absolute path
     std::string ikfast_lib;
-    
+
 };
 
 struct KinematicsStatus
 {
     enum StatusCode
     {
-		KDL_TREE_FAILED,
-		KDL_CHAIN_FAILED,
-		URDF_FAILED,
-		NO_KINEMATIC_SOLVER_FOUND,
-		IK_FOUND,
-		FK_FOUND,
-		NO_IK_SOLUTION,
-		NO_FK_SOLUTION,
-		IK_TIMEOUT,       
-		IK_JOINTLIMITS_VIOLATED,
-		IKFAST_LIB_NOT_AVAILABLE,
-		IKFAST_FUNCTION_NOT_FOUND,
-		INVALID_STATE
+        KDL_TREE_FAILED,
+        KDL_CHAIN_FAILED,
+        URDF_FAILED,
+        NO_KINEMATIC_SOLVER_FOUND,
+        IK_FOUND,
+        FK_FOUND,
+        NO_IK_SOLUTION,
+        NO_FK_SOLUTION,
+        IK_TIMEOUT,       
+        IK_JOINTLIMITS_VIOLATED,
+        IKFAST_LIB_NOT_AVAILABLE,
+        IKFAST_FUNCTION_NOT_FOUND,
+        INVALID_STATE
     }statuscode;
 
 };

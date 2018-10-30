@@ -42,10 +42,8 @@ class TracIkSolver : public AbstractKinematics
         * @param solver_status Solution status or error code
         * @return true if a inverse solution was found or else return false
         */
-        bool solveIK(	const base::samples::RigidBodyState target_pose,
-						const base::samples::Joints &joint_status,
-						base::commands::Joints &solution,
-						KinematicsStatus &solver_status);
+        bool solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status,
+                    base::commands::Joints &solution, KinematicsStatus &solver_status);
 
         /**
         * @brief Calculate pose of a manipulator given its joint angles        
@@ -55,23 +53,19 @@ class TracIkSolver : public AbstractKinematics
         * @param solver_status Solution status or error code
         * @return true if a forward solution was found or else return false
         */
-        bool solveFK(	const base::samples::Joints &joint_angles,
-						base::samples::RigidBodyState &fk_pose,
-						KinematicsStatus &solver_status);
+        bool solveFK(const base::samples::Joints &joint_angles, base::samples::RigidBodyState &fk_pose, KinematicsStatus &solver_status);
 
-    private:    
-		KDL::ChainFkSolverPos_recursive *fk_kdlsolver_pos_;
+    private:
+        KDL::ChainFkSolverPos_recursive *fk_kdlsolver_pos_;
 
-		KDL::Frame kdl_frame_;
-		KDL::JntArray kdl_jt_array_, kdl_ik_jt_array_;
-		std::shared_ptr<TRAC_IK::TRAC_IK> trac_ik_solver_;
-		std::string base_link_, tip_link_;
-		std::string  urdf_file_path_;
-		unsigned int max_iter_;
-		double eps_;
+        KDL::Frame kdl_frame_;
+        KDL::JntArray kdl_jt_array_, kdl_ik_jt_array_;
+        std::shared_ptr<TRAC_IK::TRAC_IK> trac_ik_solver_;
+        std::string base_link_, tip_link_;
+        std::string  urdf_file_path_;
+        unsigned int max_iter_;
+        double eps_;
 };
-
-
 }
 #endif
 

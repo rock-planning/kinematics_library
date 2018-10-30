@@ -46,8 +46,8 @@ public:
     * @brief  constructor
     */
     IkFastSolver(const KinematicsConfig &kinematics_config, const std::vector<std::pair<double, double> > jts_limits,
-				const KDL::Tree &kdl_tree, const KDL::Chain &_kdl_chain, void (*_computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot),
-				bool (*_computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions));
+                 const KDL::Tree &kdl_tree, const KDL::Chain &_kdl_chain, void (*_computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot),
+                 bool (*_computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions));
     /**
     * @brief  destructor
     */
@@ -62,10 +62,8 @@ public:
     * @param solver_status Solution status or error code
     * @return true if a inverse solution was found or else return false
     */
-    bool solveIK(	const base::samples::RigidBodyState target_pose,
-					const base::samples::Joints &joint_status,
-					base::commands::Joints &solution,
-					KinematicsStatus &solver_status);
+    bool solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status,
+                 base::commands::Joints &solution, KinematicsStatus &solver_status);
 
     /**
     * @brief Calculate pose of a manipulator given its joint angles    
@@ -75,9 +73,9 @@ public:
     * @param solver_status Solution status or error code
     * @return true if a forward solution was found or else return false
     */
-    bool solveFK(	const base::samples::Joints &joint_angles,
-					base::samples::RigidBodyState &fk_pose,
-					KinematicsStatus &solver_status);
+    bool solveFK(const base::samples::Joints &joint_angles,
+                 base::samples::RigidBodyState &fk_pose,
+                 KinematicsStatus &solver_status);
 
 private:
     /**
@@ -89,9 +87,9 @@ private:
     * @param optSol vector of optimal solutions.
     * @return true if optimal solution found.
     */
-    bool pickOptimalIkSolution( const std::vector<double> &cur_jtang,
-                                 const ikfast::IkSolutionList<IkReal> &redundantSolutions,
-                                 std::vector<std::vector<double> > &optSol);
+    bool pickOptimalIkSolution(const std::vector<double> &cur_jtang,
+                               const ikfast::IkSolutionList<IkReal> &redundantSolutions,
+                               std::vector<std::vector<double> > &optSol);
 
     /**
     * @brief Check joint limits.
@@ -112,9 +110,9 @@ private:
 
     ikfast::IkSolutionList<IkReal> ik_solutions_;
 
-	bool (*computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions);
-	void (*computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot);
-	
+    bool (*computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions);
+    void (*computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot);
+
 };
 
 
