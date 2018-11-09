@@ -54,7 +54,7 @@ include_directories( ${KINEMATIC_INCLUDE_PATH} ${EIGEN3_INCLUDE_DIR} ${kdl_parse
 
 
 add_library(kinematics_library SHARED ${SRCS})
-target_link_libraries(kinematics_library ${EXTERNAL_LIB} )
+target_link_libraries(kinematics_library ${EXTERNAL_LIB} ${CMAKE_DL_LIBS})
 
 #            ${CMAKE_CURRENT_LIST_DIR}/KinematicsFactory.cpp            
 #)
