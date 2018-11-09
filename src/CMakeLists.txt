@@ -3,14 +3,13 @@ project(kinematics_library)
 SET(TARGET_NAME ${PROJECT_NAME})
 CONFIGURE_FILE("${PROJECT_NAME}.pc.in" "${PROJECT_NAME}.pc" @ONLY)
 
-
 INCLUDE(FindPkgConfig)
 
 find_package(Eigen3 REQUIRED)
 pkg_check_modules(kdl_parser REQUIRED kdl_parser)
 
 #store external library name
-set (EXTERNAL_LIB ${kdl_parser_LIBRARY})
+set (EXTERNAL_LIB ${kdl_parser_LIBRARIES})
 
 # assign the available planner's path
 set (KINEMATIC_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/include)
@@ -42,37 +41,15 @@ endif()
 
 add_definitions(-DTRAC_IK_LIB_FOUND=${TRAC_IK_LIB_FOUND})    
 message("trac_ik = ${TRAC_IK_LIB_FOUND}")    
-	    
-	    
-message (${SRCS})
+#message (${SRCS})
 
 include_directories( ${KINEMATIC_INCLUDE_PATH} ${EIGEN3_INCLUDE_DIR} ${kdl_parser_INCLUDE_DIRS} )
-
-#add_library(abstract_kinematics_library SHARED ${SRCS})
-
-#target_link_libraries(abstract_kinematics_library ${EXTERNAL_LIB} )
-
+link_directories(${kdl_parser_LIBRARY_DIRS})
 
 add_library(kinematics_library SHARED ${SRCS})
-target_link_libraries(kinematics_library ${EXTERNAL_LIB} )
-
-#            ${CMAKE_CURRENT_LIST_DIR}/KinematicsFactory.cpp            
-#)
-#target_link_libraries(kinematics_library abstract_kinematics_library ${EXTERNAL_LIB} )
-
-
+target_link_libraries(kinematics_library ${EXTERNAL_LIB})
 
 set(TARGET_NAME ${PROJECT_NAME})
-#set(PKGCONFIG_CFLAGS "${PKGCONFIG_CFLAGS} -I${PCL_INCLUDE_DIRS}")
-#set(PKGCONFIG_LIBS "${PKGCONFIG_LIBS} -labstract_kinematics_library")
-CONFIGURE_FILE("${PROJECT_NAME}.pc.in" "${PROJECT_NAME}.pc" @ONLY)
-
-
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include/kinematics_library)
-#install(TARGETS abstract_kinematics_library DESTINATION lib)
 install(TARGETS kinematics_library DESTINATION lib)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig) 
-
-
-
-
