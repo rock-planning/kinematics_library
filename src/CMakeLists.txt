@@ -47,7 +47,7 @@ include_directories( ${KINEMATIC_INCLUDE_PATH} ${EIGEN3_INCLUDE_DIR} ${kdl_parse
 link_directories(${kdl_parser_LIBRARY_DIRS})
 
 add_library(kinematics_library SHARED ${SRCS})
-target_link_libraries(kinematics_library ${EXTERNAL_LIB})
+target_link_libraries(kinematics_library ${EXTERNAL_LIB} ${CMAKE_DL_LIBS})
 
 set(TARGET_NAME ${PROJECT_NAME})
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include/kinematics_library)
