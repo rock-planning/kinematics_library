@@ -353,7 +353,7 @@ void convertPoseBetweenDifferentFrames(const KDL::Tree &kdl_tree, const base::sa
 }
 
 void getKinematicJoints(const KDL::Chain &rev_jt_kdlchain, const base::samples::Joints &joint_angles, 
-                        std::vector<std::string> jt_names, std::vector<double> &kinematic_joints)
+                        std::vector<std::string> &jt_names, std::vector<double> &kinematic_joints)
 {
     for(unsigned int i = 0; i < rev_jt_kdlchain.segments.size(); i++)
     {

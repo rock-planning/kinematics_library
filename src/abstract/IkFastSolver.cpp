@@ -4,22 +4,70 @@ namespace kinematics_library
 {
 
 IkFastSolver::IkFastSolver( const KinematicsConfig &kinematics_config, const std::vector<std::pair<double, double> > jts_limits,
-                            const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, void (*_computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot),
-                            bool (*_computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions)):
+                            const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, KinematicsStatus &kinematics_status):
                             jts_limits_(jts_limits)
 { 
-    jts_weight_	= kinematics_config.joints_weight;
-    kdl_tree_ 	= kdl_tree;
-    kdl_chain_	= kdl_chain;
-
-    computeFkFn = _computeFkFn;
-    computeIkFn = _computeIkFn;		
+    jts_weight_ = kinematics_config.joints_weight;
+    kdl_tree_   = kdl_tree;
+    kdl_chain_  = kdl_chain;
 
     assign_variables(kinematics_config, kdl_chain_);
+
+    if ( !getIKFASTFunctionPtr ( kinematics_config.ikfast_lib, kinematics_status))
+    {
+        LOG_DEBUG("[KinematicsFactory]: Failed to retrieve IKfast function pointer.");
+    }
+    else
+        LOG_DEBUG("[KinematicsFactory]: IKfast function pointer is retrieved sucesfully.");
+
 }
 
 IkFastSolver::~IkFastSolver()
 {}
+
+
+bool IkFastSolver::getIKFASTFunctionPtr(const std::string ikfast_lib, KinematicsStatus &kinematics_status)
+{
+    void *handle;
+    char *error;
+
+    handle = dlopen ( ikfast_lib.c_str(), RTLD_LAZY );
+    if ( !handle )
+    {
+        LOG_ERROR ( "[KinematicsFactory]: Cannot open ikfast shared library. Error %s",dlerror() );
+        kinematics_status.statuscode = KinematicsStatus::IKFAST_LIB_NOT_AVAILABLE;
+        return false;
+    }
+    else
+        LOG_INFO("[KinematicsFactory]: IKfast shared lib successfully opened");
+
+    // get the forward kinematics fuction pointer
+    computeFkFn= ( void ( * ) ( const IkReal* , IkReal* , IkReal* ) )  dlsym ( handle, "ComputeFk" );
+
+    if ( ( error = dlerror() ) != NULL )
+    {
+        LOG_ERROR ( "[KinematicsFactory]: Cannot find ComputeFk function. Error %s",dlerror() );
+        dlclose ( handle );
+        kinematics_status.statuscode = KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND;
+        return false;
+    }
+    else
+        LOG_DEBUG("[KinematicsFactory]: Found ComputeFk function in the given ikfast shared library");
+
+    // get the inverse kinematics fuction pointer
+    computeIkFn = ( bool ( * ) ( const IkReal* , const IkReal* , const IkReal* , ikfast::IkSolutionListBase<IkReal>& ) )  dlsym ( handle, "ComputeIk" );
+    if ( ( error = dlerror() ) != NULL )
+    {
+        LOG_ERROR ( "[KinematicsFactory]: Cannot find ComputeIk function. Error %s",dlerror() );
+        dlclose ( handle );
+        kinematics_status.statuscode = KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND;
+        return false;
+    }
+    else
+        LOG_DEBUG("[KinematicsFactory]: Found ComputeIk function in the given ikfast shared library");
+
+    return true;
+}
 
 bool IkFastSolver::solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status, base::commands::Joints &solution,
                            KinematicsStatus &solver_status)
@@ -70,8 +118,8 @@ bool IkFastSolver::solveFK(const base::samples::Joints &joint_angles, base::samp
     IkReal eerot[9],eetrans[3];
     IkReal angles[current_jt_status_.size()];
 
-    for (unsigned char i=0; i < current_jt_status_.size(); i++)
-    angles[i] = current_jt_status_[i];
+    for (unsigned char i=0; i < current_jt_status_.size()-1; i++)
+        angles[i] = current_jt_status_[i];
 
     computeFkFn(angles,eetrans,eerot);
 

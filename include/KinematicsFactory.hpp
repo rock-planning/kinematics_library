@@ -48,9 +48,6 @@ class KinematicsFactory
 
         bool initiailiseURDF(std::string urdf_file);
 
-        bool getIKFASTFunctionPtr(const std::string ikfast_lib, KinematicsStatus &kinematics_status, void (*ComputeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot),
-                                                          bool (*ComputeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions));
-
         /** \brief kdl tree containing joints and links of the robot */
         KDL::Tree kdl_tree_;
         /** \brief kdl chain  containing joints and links of the robot */
@@ -61,9 +58,6 @@ class KinematicsFactory
         std::vector<std::string> jt_names_;
         urdf::ModelInterfaceSharedPtr urdf_model_;		
         std::vector< std::pair<double, double> > joints_limits_;
-
-        bool (*computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions);
-        void (*computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot);
 };
 };
 

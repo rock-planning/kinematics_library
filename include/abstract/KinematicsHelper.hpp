@@ -42,7 +42,7 @@ namespace kinematics_library
     void convertKDLArrayToVector(const KDL::JntArray &kdl_jt_array, std::vector<double> &joint_angles);
     void convertKDLArrayToBaseJoints(const KDL::JntArray &kdl_jt_array, base::commands::Joints &joint_angles);
     void getKinematicJoints(const KDL::Chain &rev_jt_kdlchain, const base::samples::Joints &joint_angles, 
-                            std::vector<std::string> jt_names, std::vector<double> &kinematic_joints);
+                            std::vector<std::string> &jt_names, std::vector<double> &kinematic_joints);
     void setKinematicJoints(const std::vector<double> &kinematic_joints, const std::vector<std::string> &jt_names, base::commands::Joints &joint_angles);
 }
 

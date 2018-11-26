@@ -9,6 +9,8 @@
 #include "abstract/KinematicsHelper.hpp"
 #include "abstract/Ikfast.h"
 
+#include <dlfcn.h>
+
 /** \file AbstractIkFastSolver.hpp
 *    \brief Interface to use ikfast generated Inverse solver.
 */
@@ -46,8 +48,7 @@ public:
     * @brief  constructor
     */
     IkFastSolver(const KinematicsConfig &kinematics_config, const std::vector<std::pair<double, double> > jts_limits,
-                 const KDL::Tree &kdl_tree, const KDL::Chain &_kdl_chain, void (*_computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot),
-                 bool (*_computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions));
+                 const KDL::Tree &kdl_tree, const KDL::Chain &_kdl_chain, KinematicsStatus &kinematics_status);
     /**
     * @brief  destructor
     */
@@ -102,6 +103,8 @@ private:
                             std::vector<std::vector<double> > &all_solution,
                             std::vector<int> &joint_limit_exceed_solution_index,
                             int &jt_limit_exceed_sol_ct);
+
+    bool getIKFASTFunctionPtr(const std::string ikfast_lib, KinematicsStatus &kinematics_status);
     /**
     * @brief joint weight used for checking nearest solution.
     */
@@ -112,7 +115,6 @@ private:
 
     bool (*computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions);
     void (*computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot);
-
 };
 
 

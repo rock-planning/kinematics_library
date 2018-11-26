@@ -25,10 +25,11 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
         {
             LOG_INFO_S<<"[KinematicsFactory]: IKFAST solver is selected";
 
-            if ( !getIKFASTFunctionPtr ( kinematics_config.ikfast_lib, kinematics_status, computeFkFn, computeIkFn ) )             
-                return NULL;
+            kinematic_solver = std::shared_ptr<IkFastSolver> ( new IkFastSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, kinematics_status ) );
 
-            kinematic_solver = std::shared_ptr<IkFastSolver> ( new IkFastSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, computeFkFn, computeIkFn ) );
+            if( (kinematics_status.statuscode == KinematicsStatus::IKFAST_LIB_NOT_AVAILABLE) || (kinematics_status.statuscode == KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND) )
+                kinematic_solver = NULL;
+
             break;
         }
         case KDL:
@@ -132,43 +133,6 @@ bool KinematicsFactory::initiailiseURDF ( std::string urdf_file )
     else
     {
         LOG_ERROR ( "[KinematicsFactory] Cannot open urdf file." );
-        return false;
-    }
-    return true;
-}
-
-bool KinematicsFactory::getIKFASTFunctionPtr (  const std::string ikfast_lib, KinematicsStatus &kinematics_status, void ( *ComputeFkFn ) ( const IkReal* j, IkReal* eetrans, IkReal* eerot ),
-                                                bool ( *ComputeIkFn ) ( const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions ) )
-{
-    void *handle;
-    char *error;
-
-    handle = dlopen ( ikfast_lib.c_str(), RTLD_LAZY );
-    if ( !handle )
-    {
-        LOG_ERROR ( "[KinematicsFactory]: Cannot open ikfst shared library. Error %s",dlerror() );
-        kinematics_status.statuscode = KinematicsStatus::IKFAST_LIB_NOT_AVAILABLE;
-        return false;
-    }
-
-    // get the forward kinematics fuction pointer
-    ComputeFkFn= ( void ( * ) ( const IkReal* , IkReal* , IkReal* ) )  dlsym ( handle, "ComputeFk" );
-
-    if ( ( error = dlerror() ) != NULL )
-    {
-        LOG_ERROR ( "[KinematicsFactory]: Cannot find ComputeFk function. Error %s",dlerror() );
-        dlclose ( handle );
-        kinematics_status.statuscode = KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND;
-        return false;
-    }
-
-    // get the inverse kinematics fuction pointer
-    ComputeIkFn = ( bool ( * ) ( const IkReal* , const IkReal* , const IkReal* , ikfast::IkSolutionListBase<IkReal>& ) )  dlsym ( handle, "ComputeIk" );
-    if ( ( error = dlerror() ) != NULL )
-    {
-        LOG_ERROR ( "[KinematicsFactory]: Cannot find ComputeIk function. Error %s",dlerror() );
-        dlclose ( handle );
-        kinematics_status.statuscode = KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND;
         return false;
     }
     return true;
