@@ -35,7 +35,7 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
         case KDL:
         {
             LOG_INFO_S<<"[KinematicsFactory]: KDL solver is selected";
-            kinematic_solver = std::shared_ptr<KdlSolver> ( new KdlSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_ ) );
+            kinematic_solver = std::shared_ptr<KdlSolver> ( new KdlSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, kdl_chain_ ) );
             break;
         }
         case TRACIK:
@@ -87,7 +87,9 @@ bool KinematicsFactory::initialise ( const KinematicsConfig &kinematics_config, 
 
     for ( std::size_t i=0; i<kdl_chain_.segments.size(); i++ )
     {
-        if ( ! ( kdl_chain_.getSegment ( i ).getJoint().getType() ==KDL::Joint::None ) )        
+        std::cout<<"Chain "<<kdl_chain_.segments.size()<<"  "<<kdl_chain_.getSegment ( i ).getJoint().getName() <<std::endl;
+        
+        if ( ! ( kdl_chain_.getSegment ( i ).getJoint().getType() ==KDL::Joint::None ) ) 
             rev_jt_kdlchain_.addSegment ( kdl_chain_.getSegment ( i ) );
     }
 
@@ -103,6 +105,8 @@ bool KinematicsFactory::initialise ( const KinematicsConfig &kinematics_config, 
     {
         joints_limits_.push_back ( std::make_pair ( urdf_model_->getJoint ( rev_jt_kdlchain_.getSegment ( jn ).getJoint().getName() )->limits->lower,
                                    urdf_model_->getJoint ( rev_jt_kdlchain_.getSegment ( jn ).getJoint().getName() )->limits->upper ) );
+        
+        std::cout<<rev_jt_kdlchain_.getNrOfJoints()<<"   "<<rev_jt_kdlchain_.getSegment ( jn ).getJoint().getName() <<std::endl;
     }
 
     LOG_DEBUG ( "[KinematicsFactory]: Initiailising finished" );

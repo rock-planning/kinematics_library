@@ -4,20 +4,20 @@ namespace kinematics_library
 {
 
 KdlSolver::KdlSolver(const KinematicsConfig &kinematics_config, const std::vector< std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
-                     const KDL::Chain &kdl_chain, const unsigned int max_iter, const double eps): jts_limits_(jts_limits), maxiter_(max_iter), eps_(eps)
+                     const KDL::Chain &kdl_chain, const KDL::Chain &kdl_newchain, const unsigned int max_iter, const double eps): jts_limits_(jts_limits), maxiter_(max_iter), eps_(eps)
 {
     kdl_tree_         = kdl_tree;
     kdl_chain_        = kdl_chain;
     maxiter_          = kinematics_config.max_iteration;
     eps_              = kinematics_config.eps;
-    fk_solverPos_     = new KDL::ChainFkSolverPos_recursive(kdl_chain_);
-    ik_solverVelPinv_ = new KDL::ChainIkSolverVel_pinv(kdl_chain_);
+    fk_solverPos_     = new KDL::ChainFkSolverPos_recursive(kdl_newchain);
+    ik_solverVelPinv_ = new KDL::ChainIkSolverVel_pinv(kdl_newchain);
 
     assign_variables(kinematics_config, kdl_chain_);
 
     getJointLimits(min_jtLimits_, max_jtLimits_);       
 
-    ik_solverPosJL_  = new KDL::ChainIkSolverPos_NR_JL(kdl_chain_, min_jtLimits_, max_jtLimits_, *fk_solverPos_, *ik_solverVelPinv_, maxiter_, eps_);
+    ik_solverPosJL_  = new KDL::ChainIkSolverPos_NR_JL(kdl_newchain, min_jtLimits_, max_jtLimits_, *fk_solverPos_, *ik_solverVelPinv_, maxiter_, eps_);
 
     kdl_jtArray_.data.resize(number_of_joints_);
     kdl_ik_jtArray_.data.resize(number_of_joints_);	

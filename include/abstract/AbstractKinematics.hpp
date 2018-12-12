@@ -56,9 +56,16 @@ public:
     virtual bool solveFK( const base::samples::Joints &joint_status, base::samples::RigidBodyState &fk_pose,                        
                           KinematicsStatus &solver_status) = 0;
 
-    bool solveIKRelatively( const base::samples::Joints &joint_angles, const base::samples::RigidBodyState &relative_pose,
+    bool solveIKRelatively( const base::samples::RigidBodyState &current_pose, const base::samples::Joints &joint_angles, 
+                            const base::samples::RigidBodyState &relative_pose,
                             base::commands::Joints &solution, KinematicsStatus &solver_status);
-
+    
+    bool solveIKLinearly( const base::samples::RigidBodyState &current_pose, const base::samples::RigidBodyState &relative_pose, 
+                          const base::samples::Joints &joint_angles, base::commands::Joints &solution, double &remaining_distance,
+                          KinematicsStatus &solver_status);
+    
+    base::samples::RigidBodyState getRelativePose( const base::samples::RigidBodyState &current_pose, 
+                                                   const base::samples::RigidBodyState &relative_pose);
 protected:
     base::samples::RigidBodyState kinematic_pose_;
     std::vector<double>current_jt_status_, ik_solution_;
@@ -68,6 +75,16 @@ protected:
     KDL::Chain kdl_chain_;
 
     void assign_variables(const KinematicsConfig &kinematics_config, const KDL::Chain &kdl_chain);
+
+private:
+    double position_tolerance_in_m_, interpolation_velocity_, sampling_time_;    
+    Eigen::Vector3d linear_target_position_, linear_start_position_;
+    bool linear_movement_;
+    double linear_eta_, linear_distance_, linear_estimated_total_time_, linear_estimated_time_; 
+    
+    const Eigen::Vector3d interpolate( const Eigen::Vector3d& current_position, const Eigen::Vector3d& target_position, 
+                                       double& remaining_distance );
+
 
 };
 

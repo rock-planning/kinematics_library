@@ -14,13 +14,27 @@ enum KinematicSolver
     TRACIK
 };
 
+struct LinearConfig
+{
+    LinearConfig(): interpolation_velocity(0.1), sampling_time(0.01), position_tolerance_in_m(0.02) {}
+
+    // Relative target: linear interpolation in m/s
+    double interpolation_velocity;
+    // Relative target: sampling time in s
+    double sampling_time;
+    // Relative target: minimum distance the interpolation should reach
+    double position_tolerance_in_m;
+};
+
+
 /**
  *  Contains the configuration for kinematics.
  */
 struct KinematicsConfig
 {
     KinematicsConfig() : kinematic_solver(KDL), base_name(""), tip_name(""),
-                         urdf_file(""), max_iteration(100), timeout_sec(0.1), eps(0.001){}
+                         urdf_file(""), max_iteration(100), timeout_sec(0.1), eps(0.001),
+                         ikfast_lib(""), linear_relative_movement(false) {}
 
     // kinematics solver: currently 3 types of solvers available
     enum KinematicSolver kinematic_solver;
@@ -41,8 +55,13 @@ struct KinematicsConfig
     double eps;
     // ikfast shared library absolute path
     std::string ikfast_lib;
-
+    // move relative target linearly
+    bool linear_relative_movement;
+    // relative movement configuration
+    LinearConfig linear_movement_config;
 };
+
+
 
 struct KinematicsStatus
 {
