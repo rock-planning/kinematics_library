@@ -26,7 +26,7 @@ class TracIkSolver : public AbstractKinematics
         /**
         * @brief  constructor
         */
-        TracIkSolver(const KinematicsConfig &kinematics_config, const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain);
+        TracIkSolver(const KinematicsConfig &kinematics_config, const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain);
 
         /**
         * @brief  destructor

@@ -29,7 +29,7 @@ class KdlSolver : public AbstractKinematics
         * @brief  constructor
         */
         KdlSolver( const KinematicsConfig &kinematics_config, const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
-                   const KDL::Chain &kdl_chain, const KDL::Chain &kdl_newchain, const unsigned int max_iter = 150, const double eps=1e-6);
+                   const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain, const unsigned int max_iter = 150, const double eps=1e-6);
 
         /**
         * @brief  destructor

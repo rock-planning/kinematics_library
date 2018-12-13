@@ -25,7 +25,8 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
         {
             LOG_INFO_S<<"[KinematicsFactory]: IKFAST solver is selected";
 
-            kinematic_solver = std::shared_ptr<IkFastSolver> ( new IkFastSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, kinematics_status ) );
+            kinematic_solver = std::shared_ptr<IkFastSolver> ( new IkFastSolver ( kinematics_config, joints_limits_, kdl_tree_, 
+                                                                                  rev_jt_kdlchain_, kinematics_status ) );
 
             if( (kinematics_status.statuscode == KinematicsStatus::IKFAST_LIB_NOT_AVAILABLE) || (kinematics_status.statuscode == KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND) )
                 kinematic_solver = NULL;
@@ -42,7 +43,7 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
         {
             LOG_INFO_S<<"[KinematicsFactory]: TRACIK solver is selected";
             #if(TRAC_IK_LIB_FOUND)
-                kinematic_solver = std::shared_ptr<TracIkSolver> ( new TracIkSolver ( kinematics_config, kdl_tree_, rev_jt_kdlchain_ ) );
+                kinematic_solver = std::shared_ptr<TracIkSolver> ( new TracIkSolver ( kinematics_config, kdl_tree_, rev_jt_kdlchain_, kdl_chain_ ) );
             #else
                 LOG_FATAL_S << "[KinematicsFactory]: TRACIK is not installed. Please select an another solver !";
                 return NULL;

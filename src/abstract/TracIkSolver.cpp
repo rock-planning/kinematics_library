@@ -3,7 +3,8 @@
 namespace kinematics_library
 {
 
-TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain )
+TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL::Tree &kdl_tree, 
+                             const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain )
 {
 
     kdl_tree_       = kdl_tree;
@@ -11,7 +12,7 @@ TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL
 
     trac_ik_solver_ = std::make_shared<TRAC_IK::TRAC_IK> ( kinematics_config.base_name, kinematics_config.tip_name, kinematics_config.urdf_file,
                                                            kinematics_config.max_iteration, kinematics_config.eps );
-    fk_kdlsolver_pos_ = new KDL::ChainFkSolverPos_recursive ( kdl_chain_ );
+    fk_kdlsolver_pos_ = new KDL::ChainFkSolverPos_recursive ( kdl_kinematic_chain );
 
     assign_variables ( kinematics_config, kdl_chain_ );
     kdl_jt_array_.resize ( kdl_chain_.getNrOfJoints() );
