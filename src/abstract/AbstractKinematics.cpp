@@ -60,6 +60,8 @@ base::samples::RigidBodyState AbstractKinematics::getRelativePose( const base::s
     Eigen::Matrix4d target_matrix = fk_matrix * relative_pose_matrix;
     
     base::samples::RigidBodyState target_pose;
+    target_pose.sourceFrame = current_pose.sourceFrame;
+    target_pose.targetFrame = relative_pose.targetFrame;
     getPositionRotation(target_matrix, target_pose.position, target_pose.orientation);
 
     eulerrot = base::Position::Zero();
