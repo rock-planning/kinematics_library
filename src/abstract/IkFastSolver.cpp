@@ -83,7 +83,9 @@ bool IkFastSolver::solveIK(const base::samples::RigidBodyState target_pose, cons
     eetrans[2] = kinematic_pose_.position(2);
 
     quaternionToRotationMatrixArray(kinematic_pose_.orientation, eerot); 
-
+    
+    //ik_solution needs to be clear orelse the container holds the old value
+    ik_solutions_.Clear();
     if(computeIkFn(eetrans, eerot, NULL, ik_solutions_))
     {
         std::vector<std::vector<double> > optSol;
@@ -94,6 +96,7 @@ bool IkFastSolver::solveIK(const base::samples::RigidBodyState target_pose, cons
             for (std::size_t i = 0; i < number_of_joints_; i++)
             solution.elements.at(i).position = optSol.at(0).at(i);
             solution.names = jt_names_;
+            
 
             solver_status.statuscode = KinematicsStatus::IK_FOUND;
             return true;
@@ -171,7 +174,6 @@ bool IkFastSolver::pickOptimalIkSolution(   const std::vector<double> &cur_jtang
     // check whether any solution is available which are within the joint limit and doesnt have any collision
     if (checkJointLimits(redundantSolutions, all_solution, joint_limit_exceed_solution_index, jt_limit_exceed_sol_ct))
     {
-
         // variables for holding the refined IK solution after checking joint limits and collision
         // variable for weighted ik sol based on min joint movement
         del_sol.resize(num_solution - jt_limit_exceed_sol_ct, 0.0);                                                    
@@ -191,13 +193,14 @@ bool IkFastSolver::pickOptimalIkSolution(   const std::vector<double> &cur_jtang
                 for(std::size_t j = 0; j < number_of_joints_; ++j)
                 {
                     del_sol.at(ct)          = del_sol.at(ct) + ( jts_weight_[j] *fabs( cur_jtang[j] - all_solution[i][j] ));
-                    refind_solutions[ct][j]	= all_solution[i][j];
-                }
+                    refind_solutions[ct][j]	= all_solution[i][j];     
+                }     
                 refined_ik_sol[ct].opt_iksol_index_value    = del_sol.at(ct);
                 refined_ik_sol[ct].ik_sol                   = refind_solutions[ct];
                 ct++;
             }
         }
+     
 
         for(int i = 0; i<num_solution - jt_limit_exceed_sol_ct; i++)
             refined_ik_sol_container.at(i) = refined_ik_sol[i];

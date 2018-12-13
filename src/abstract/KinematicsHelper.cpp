@@ -295,7 +295,8 @@ void transformFrame( const KDL::Tree &kdl_tree, const std::string &base_link, co
 
 void convertPoseBetweenDifferentFrames(const KDL::Tree &kdl_tree, const base::samples::RigidBodyState &source_pose, base::samples::RigidBodyState &target_pose)
 {
-    //LOG_DEBUG_S<<"[KinematicsHelper]: IK function called for source pose ";
+    //LOG_DEBUG_S<<"[KinematicsHelper]: IK function called for source frame "<<source_pose.sourceFrame.c_str()<<" and target frame "<<
+    //                source_pose.targetFrame.c_str()<<" for the pose";
     //LOG_DEBUG("[KinematicsHelper]: Position:/n X: %f Y: %f Z: %f", source_pose.position(0), source_pose.position(1), source_pose.position(2));		
     //LOG_DEBUG("[KinematicsHelper]: Orientation:/n X: %f Y: %f Z: %f W: %f",
     //source_pose.orientation.x(), source_pose.orientation.y(), source_pose.orientation.z(), source_pose.orientation.w());
@@ -316,6 +317,11 @@ void convertPoseBetweenDifferentFrames(const KDL::Tree &kdl_tree, const base::sa
         rbsToKdl(target_pose, calculated_frame);
 
         transformFrame( kdl_tree, target_pose.sourceFrame.c_str(), source_pose.sourceFrame.c_str(), transform_base_tk);
+        
+        //LOG_DEBUG_S<<"[KinematicsHelper]: Transformation betwwen target sourceframe to kinematic sourceframe ";
+        //LOG_DEBUG("[KinematicsHelper]: Position:/n X: %f Y: %f Z: %f", transform_base_tk.p.x(), transform_base_tk.p.y(), transform_base_tk.p.z());          
+        //LOG_DEBUG("[KinematicsHelper]: Orientation:/n X: %f Y: %f Z: %f W: %f",
+        //source_pose.orientation.x(), source_pose.orientation.y(), source_pose.orientation.z(), source_pose.orientation.w());
 
         new_frame = transform_base_tk * calculated_frame;
 
@@ -333,7 +339,11 @@ void convertPoseBetweenDifferentFrames(const KDL::Tree &kdl_tree, const base::sa
         KDL::Frame transform_tip_kt;
         transform_tip_kt.Identity();
 
-        transformFrame( kdl_tree, target_pose.targetFrame.c_str(), source_pose.targetFrame.c_str(), transform_tip_kt);
+        transformFrame( kdl_tree, source_pose.targetFrame.c_str(), target_pose.targetFrame.c_str(), transform_tip_kt);
+        
+        //LOG_DEBUG_S<<"[KinematicsHelper]: Transformation betwwen target sourceframe to kinematic sourceframe ";
+        //LOG_DEBUG("[KinematicsHelper]: Position:/n X: %f Y: %f Z: %f", transform_tip_kt.p.x(), transform_tip_kt.p.y(), transform_tip_kt.p.z());          
+        
         rbsToKdl(target_pose, calculated_frame);
         new_frame = calculated_frame * transform_tip_kt;
         kdlToRbs(new_frame, target_pose);
@@ -345,7 +355,8 @@ void convertPoseBetweenDifferentFrames(const KDL::Tree &kdl_tree, const base::sa
         target_pose.targetFrame = source_pose.targetFrame;
     }
 
-    //LOG_DEBUG_S<<"[RobotKinematics]: Target pose after frame transformation ";
+    //LOG_DEBUG_S<<"[RobotKinematics]: Target pose after frame transformation: source frame "<<target_pose.sourceFrame.c_str()<<"  target frame: "<<
+    //                target_pose.targetFrame.c_str();
     //LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", target_pose.position(0), target_pose.position(1), target_pose.position(2));		
     //LOG_DEBUG("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
     //target_pose.orientation.x(), target_pose.orientation.y(), target_pose.orientation.z(), target_pose.orientation.w());
