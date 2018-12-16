@@ -121,7 +121,7 @@ bool IkFastSolver::solveFK(const base::samples::Joints &joint_angles, base::samp
     IkReal eerot[9],eetrans[3];
     IkReal angles[current_jt_status_.size()];
 
-    for (unsigned char i=0; i < current_jt_status_.size()-1; i++)
+    for (unsigned char i=0; i < current_jt_status_.size(); i++)
         angles[i] = current_jt_status_[i];
 
     computeFkFn(angles,eetrans,eerot);
