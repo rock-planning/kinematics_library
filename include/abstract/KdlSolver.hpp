@@ -46,7 +46,7 @@ class KdlSolver : public AbstractKinematics
         * @return true if a inverse solution was found or else return false
         */
         bool solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status,
-                     base::commands::Joints &solution, KinematicsStatus &solver_status);
+                     std::vector<base::commands::Joints> &solution, KinematicsStatus &solver_status);
 
         /**
         * @brief Calculate pose of a manipulator given its joint angles        

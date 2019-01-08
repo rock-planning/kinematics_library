@@ -64,7 +64,7 @@ public:
     * @return true if a inverse solution was found or else return false
     */
     bool solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status,
-                 base::commands::Joints &solution, KinematicsStatus &solver_status);
+                 std::vector<base::commands::Joints> &solution, KinematicsStatus &solver_status);
 
     /**
     * @brief Calculate pose of a manipulator given its joint angles    
@@ -112,6 +112,7 @@ private:
     std::vector<std::pair<double,double> > jts_limits_;
 
     ikfast::IkSolutionList<IkReal> ik_solutions_;
+    void *ikfast_handle_;
 
     bool (*computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions);
     void (*computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot);

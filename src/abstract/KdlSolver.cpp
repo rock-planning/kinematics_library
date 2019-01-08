@@ -45,7 +45,7 @@ KdlSolver::~KdlSolver()
     }
 }
 
-bool KdlSolver::solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status, base::commands::Joints &solution,
+bool KdlSolver::solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status, std::vector<base::commands::Joints> &solution,
                         KinematicsStatus &solver_status)
 {
     convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);
@@ -56,10 +56,13 @@ bool KdlSolver::solveIK(const base::samples::RigidBodyState target_pose, const b
     rbsToKdl(kinematic_pose_, kdl_frame_);
 
     int res = ik_solverPosJL_->CartToJnt(kdl_jtArray_, kdl_frame_, kdl_ik_jtArray_);
+    
+    solution.resize(1);
+    
     if( res >= 0)
     {
-        convertKDLArrayToBaseJoints(kdl_ik_jtArray_, solution);
-        solution.names = jt_names_;
+        convertKDLArrayToBaseJoints(kdl_ik_jtArray_, solution[0]);
+        solution[0].names = jt_names_;
         solver_status.statuscode = KinematicsStatus::IK_FOUND;
         return true;
     }

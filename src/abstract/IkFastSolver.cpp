@@ -23,31 +23,32 @@ IkFastSolver::IkFastSolver( const KinematicsConfig &kinematics_config, const std
 }
 
 IkFastSolver::~IkFastSolver()
-{}
+{
+    dlclose(ikfast_handle_);
+}
 
 
 bool IkFastSolver::getIKFASTFunctionPtr(const std::string ikfast_lib, KinematicsStatus &kinematics_status)
 {
-    void *handle;
     char *error;
 
-    handle = dlopen ( ikfast_lib.c_str(), RTLD_LAZY );
-    if ( !handle )
+    ikfast_handle_ = dlopen ( ikfast_lib.c_str(), RTLD_LAZY );
+    if ( !ikfast_handle_ )
     {
         LOG_ERROR ( "[KinematicsFactory]: Cannot open ikfast shared library. Error %s",dlerror() );
         kinematics_status.statuscode = KinematicsStatus::IKFAST_LIB_NOT_AVAILABLE;
         return false;
     }
-    else
+    else        
         LOG_INFO("[KinematicsFactory]: IKfast shared lib successfully opened");
 
     // get the forward kinematics fuction pointer
-    computeFkFn= ( void ( * ) ( const IkReal* , IkReal* , IkReal* ) )  dlsym ( handle, "ComputeFk" );
+    computeFkFn= ( void ( * ) ( const IkReal* , IkReal* , IkReal* ) )  dlsym ( ikfast_handle_, "ComputeFk" );
 
     if ( ( error = dlerror() ) != NULL )
     {
         LOG_ERROR ( "[KinematicsFactory]: Cannot find ComputeFk function. Error %s",dlerror() );
-        dlclose ( handle );
+        dlclose ( ikfast_handle_ );
         kinematics_status.statuscode = KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND;
         return false;
     }
@@ -55,11 +56,11 @@ bool IkFastSolver::getIKFASTFunctionPtr(const std::string ikfast_lib, Kinematics
         LOG_DEBUG("[KinematicsFactory]: Found ComputeFk function in the given ikfast shared library");
 
     // get the inverse kinematics fuction pointer
-    computeIkFn = ( bool ( * ) ( const IkReal* , const IkReal* , const IkReal* , ikfast::IkSolutionListBase<IkReal>& ) )  dlsym ( handle, "ComputeIk" );
+    computeIkFn = ( bool ( * ) ( const IkReal* , const IkReal* , const IkReal* , ikfast::IkSolutionListBase<IkReal>& ) )  dlsym ( ikfast_handle_, "ComputeIk" );
     if ( ( error = dlerror() ) != NULL )
     {
         LOG_ERROR ( "[KinematicsFactory]: Cannot find ComputeIk function. Error %s",dlerror() );
-        dlclose ( handle );
+        dlclose ( ikfast_handle_ );
         kinematics_status.statuscode = KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND;
         return false;
     }
@@ -69,7 +70,7 @@ bool IkFastSolver::getIKFASTFunctionPtr(const std::string ikfast_lib, Kinematics
     return true;
 }
 
-bool IkFastSolver::solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status, base::commands::Joints &solution,
+bool IkFastSolver::solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status, std::vector<base::commands::Joints> &solution,
                            KinematicsStatus &solver_status)
 {
     convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);
@@ -92,12 +93,16 @@ bool IkFastSolver::solveIK(const base::samples::RigidBodyState target_pose, cons
 
         if(pickOptimalIkSolution(current_jt_status_, ik_solutions_, optSol))
         {
-            solution.resize(kdl_chain_.segments.size());
-            for (std::size_t i = 0; i < number_of_joints_; i++)
-            solution.elements.at(i).position = optSol.at(0).at(i);
-            solution.names = jt_names_;
-            
+            solution.resize(optSol.size());
 
+            for(std::vector<std::vector<double>>::iterator it = optSol.begin(); it != optSol.end(); ++it)
+            {
+                solution.at(it-optSol.begin()).resize(kdl_chain_.segments.size());
+
+                for (std::size_t i = 0; i < number_of_joints_; i++)
+                    solution.at(it-optSol.begin()).elements.at(i).position = it->at(i);
+                solution.at(it-optSol.begin()).names = jt_names_;
+            }
             solver_status.statuscode = KinematicsStatus::IK_FOUND;
             return true;
         }

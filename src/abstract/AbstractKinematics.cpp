@@ -25,7 +25,7 @@ void AbstractKinematics::assign_variables(const KinematicsConfig &kinematics_con
 
 bool AbstractKinematics::solveIKRelatively(const base::samples::RigidBodyState &current_pose, const base::samples::Joints &joint_angles, 
                                            const base::samples::RigidBodyState &relative_pose,
-                                           base::commands::Joints &solution, KinematicsStatus &solver_status)
+                                           std::vector<base::commands::Joints> &solution, KinematicsStatus &solver_status)
 {
     LOG_DEBUG("[AbstractKinematics]: solveIKRelatively function called ");
 
@@ -72,7 +72,7 @@ base::samples::RigidBodyState AbstractKinematics::getRelativePose( const base::s
 }
 
 bool AbstractKinematics::solveIKLinearly( const base::samples::RigidBodyState &current_pose, const base::samples::RigidBodyState &relative_pose, 
-                                          const base::samples::Joints &joint_angles, base::commands::Joints &solution, double &remaining_distance,
+                                          const base::samples::Joints &joint_angles, std::vector<base::commands::Joints> &solution, double &remaining_distance,
                                           KinematicsStatus &solver_status)
 {
     base::samples::RigidBodyState intermediate_pose;

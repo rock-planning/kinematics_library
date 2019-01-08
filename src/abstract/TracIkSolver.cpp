@@ -32,7 +32,7 @@ TracIkSolver::~TracIkSolver()
 
 bool TracIkSolver::solveIK (const base::samples::RigidBodyState target_pose, 
                             const base::samples::Joints &joint_status,
-                            base::commands::Joints &solution,
+                            std::vector<base::commands::Joints> &solution,
                             KinematicsStatus &solver_status )
 {
     convertPoseBetweenDifferentFrames ( kdl_tree_, target_pose, kinematic_pose_ );
@@ -43,10 +43,13 @@ bool TracIkSolver::solveIK (const base::samples::RigidBodyState target_pose,
     rbsToKdl ( kinematic_pose_, kdl_frame_ );
 
     int res = trac_ik_solver_->CartToJnt ( kdl_jt_array_, kdl_frame_, kdl_ik_jt_array_ );
+    
+    solution.resize(1);
+    
     if ( res >= 0 ) 
     {
-        convertKDLArrayToBaseJoints ( kdl_ik_jt_array_, solution );
-        solution.names = jt_names_;
+        convertKDLArrayToBaseJoints ( kdl_ik_jt_array_, solution[0] );
+        solution[0].names = jt_names_;
         solver_status.statuscode = KinematicsStatus::IK_FOUND;
         return true;
     }
