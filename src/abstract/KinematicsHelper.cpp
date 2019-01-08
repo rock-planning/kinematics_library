@@ -281,7 +281,7 @@ void transformFrame( const KDL::Tree &kdl_tree, const std::string &base_link, co
 
     if(!kdl_tree.getChain(base_link , tip_link , new_chain))
     {
-        LOG_FATAL("[KinematicsHelper]: Could not initiailise KDL transformation chain !!!!!!!");
+        LOG_FATAL("[KinematicsHelper]: Could not get KDL transformation chain between base_link: %s to tip_link: %s", base_link.c_str(), tip_link.c_str());
         exit(1);
     }
     else

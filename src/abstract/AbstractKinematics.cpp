@@ -77,6 +77,8 @@ bool AbstractKinematics::solveIKLinearly( const base::samples::RigidBodyState &c
 {
     base::samples::RigidBodyState intermediate_pose;
     
+    intermediate_pose = current_pose;   
+ 
     intermediate_pose.position = interpolate( current_pose.position, relative_pose.position, remaining_distance );
     
     //solve inverse kinematics
