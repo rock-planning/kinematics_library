@@ -67,6 +67,9 @@ class AbstractKinematics
         base::samples::RigidBodyState getRelativePose( const base::samples::RigidBodyState &current_pose, 
                                                        const base::samples::RigidBodyState &relative_pose);
         
+        
+        base::samples::RigidBodyState transformPose(const std::string &frame_name, const base::samples::RigidBodyState &current_pose);
+        
     protected:
         base::samples::RigidBodyState kinematic_pose_;
         std::vector<double>current_jt_status_, ik_solution_;
