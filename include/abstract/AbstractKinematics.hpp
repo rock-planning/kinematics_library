@@ -66,10 +66,11 @@ class AbstractKinematics
 
         base::samples::RigidBodyState getRelativePose( const base::samples::RigidBodyState &current_pose, 
                                                        const base::samples::RigidBodyState &relative_pose);
-        
-        
+
         base::samples::RigidBodyState transformPose(const std::string &frame_name, const base::samples::RigidBodyState &current_pose);
-        
+
+        std::string getWorldRootName(){return kdl_tree_.getRootSegment()->first;}
+
     protected:
         base::samples::RigidBodyState kinematic_pose_;
         std::vector<double>current_jt_status_, ik_solution_;
@@ -85,16 +86,12 @@ class AbstractKinematics
         Eigen::Vector3d linear_target_position_, linear_start_position_;
         bool linear_movement_;
         double linear_eta_, linear_distance_, linear_estimated_total_time_, linear_estimated_time_; 
-        
+
         const Eigen::Vector3d interpolate( const Eigen::Vector3d& current_position, const Eigen::Vector3d& target_position, 
                                         double& remaining_distance );
-
-
 };
 
 typedef std::shared_ptr<kinematics_library::AbstractKinematics> AbstractKinematicPtr;
-//typedef boost::shared_ptr<const AbstractKinematic> AbstractKinematicConstPtr;
-
 };
 
 #endif

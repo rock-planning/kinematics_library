@@ -3,6 +3,8 @@ project(kinematics_library)
 SET(TARGET_NAME ${PROJECT_NAME})
 CONFIGURE_FILE("${PROJECT_NAME}.pc.in" "${PROJECT_NAME}.pc" @ONLY)
 
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
+
 INCLUDE(FindPkgConfig)
 
 find_package(Eigen3 REQUIRED)

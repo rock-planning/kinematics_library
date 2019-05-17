@@ -63,7 +63,7 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
 
 bool KinematicsFactory::initialise ( const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status )
 {
-    LOG_DEBUG ( "[KinematicsFactory]: Initialising kinematic factory d%s", kinematics_config.urdf_file.c_str() );
+    LOG_DEBUG ( "[KinematicsFactory]: Initialising kinematic factory %s", kinematics_config.urdf_file.c_str() );
 
     if ( !kdl_parser::treeFromFile ( kinematics_config.urdf_file, kdl_tree_ ) )
     {
