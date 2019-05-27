@@ -9,9 +9,29 @@ TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL
 
     kdl_tree_       = kdl_tree;
     kdl_chain_      = kdl_chain;
-
+	
+	TRAC_IK::SolveType solverType = SPEED;
+	switch(kinematics_config.tracIKSolverType)
+	{
+		case SPEED:
+			solverType = TRAC_IK::Speed;
+			break;
+		case DISTANCE:
+			solverType = TRAC_IK::Distance;
+			break;
+		case MANIP1:
+			solverType = TRAC_IK::Manip1;
+			break;
+		case MANIP2:
+			solverType = TRAC_IK::Manip2;
+			break;
+		default:
+			LOG_WARN("Undefined TRAC_IK Solver Type configured");
+	}
+			
+		
     trac_ik_solver_ = std::make_shared<TRAC_IK::TRAC_IK> ( kinematics_config.base_name, kinematics_config.tip_name, kinematics_config.urdf_file,
-                                                           kinematics_config.max_iteration, kinematics_config.eps );
+                                                           kinematics_config.max_iteration, kinematics_config.eps, solverType);
     fk_kdlsolver_pos_ = new KDL::ChainFkSolverPos_recursive ( kdl_kinematic_chain );
 
     assign_variables ( kinematics_config, kdl_chain_ );
