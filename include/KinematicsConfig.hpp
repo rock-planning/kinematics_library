@@ -14,6 +14,14 @@ enum KinematicSolver
     TRACIK
 };
 
+enum TracIKSolverType
+{
+	SPEED = 0,
+	DISTANCE,
+	MANIP1,
+	MANIP2
+};
+
 struct LinearConfig
 {
     LinearConfig(): interpolation_velocity(0.1), sampling_time(0.01), position_tolerance_in_m(0.02) {}
@@ -33,7 +41,7 @@ struct LinearConfig
 struct KinematicsConfig
 {
     KinematicsConfig() : kinematic_solver(KDL), base_name(""), tip_name(""),
-                         urdf_file(""), max_iteration(100), timeout_sec(0.1), eps(0.001),
+                         urdf_file(""), max_iteration(100), timeout_sec(0.1), eps(0.001), tracIKSolverType(SPEED),
                          ikfast_lib(""), linear_relative_movement(false) {}
 
     // kinematics solver: currently 3 types of solvers available
@@ -55,6 +63,8 @@ struct KinematicsConfig
     double eps;
     // ikfast shared library absolute path
     std::string ikfast_lib;
+	// Type of solver for trac_ik- selecting speed gives the first ik soln selecting distance tries to minimize distance between current and solution in given time
+	TracIKSolverType tracIKSolverType;
     // move relative target linearly
     bool linear_relative_movement;
     // relative movement configuration
