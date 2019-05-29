@@ -31,7 +31,7 @@ TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL
 			
 		
     trac_ik_solver_ = std::make_shared<TRAC_IK::TRAC_IK> ( kinematics_config.base_name, kinematics_config.tip_name, kinematics_config.urdf_file,
-                                                           kinematics_config.max_iteration, kinematics_config.eps, solverType);
+                                                           kinematics_config.timeout_sec, kinematics_config.eps, solverType);
     fk_kdlsolver_pos_ = new KDL::ChainFkSolverPos_recursive ( kdl_kinematic_chain );
 
     assign_variables ( kinematics_config, kdl_chain_ );
