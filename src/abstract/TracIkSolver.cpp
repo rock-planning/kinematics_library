@@ -10,7 +10,7 @@ TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL
     kdl_tree_       = kdl_tree;
     kdl_chain_      = kdl_chain;
 	
-	TRAC_IK::SolveType solverType = SPEED;
+	TRAC_IK::SolveType solverType = TRAC_IK::Speed;
 	switch(kinematics_config.tracIKSolverType)
 	{
 		case SPEED:
