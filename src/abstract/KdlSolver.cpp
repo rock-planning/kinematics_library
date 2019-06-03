@@ -13,7 +13,7 @@ KdlSolver::KdlSolver(const KinematicsConfig &kinematics_config, const std::vecto
     fk_solverPos_     = new KDL::ChainFkSolverPos_recursive(kdl_kinematic_chain);
     ik_solverVelPinv_ = new KDL::ChainIkSolverVel_pinv(kdl_kinematic_chain);
 
-    assign_variables(kinematics_config, kdl_chain_);
+    assignVariables(kinematics_config, kdl_chain_);
 
     getJointLimits(min_jtLimits_, max_jtLimits_);       
 

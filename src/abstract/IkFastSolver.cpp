@@ -11,7 +11,7 @@ IkFastSolver::IkFastSolver( const KinematicsConfig &kinematics_config, const std
     kdl_tree_   = kdl_tree;
     kdl_chain_  = kdl_chain;
 
-    assign_variables(kinematics_config, kdl_chain_);
+    assignVariables(kinematics_config, kdl_chain_);
 
     if ( !getIKFASTFunctionPtr ( kinematics_config.ikfast_lib, kinematics_status))
     {

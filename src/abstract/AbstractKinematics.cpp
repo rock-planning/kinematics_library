@@ -9,7 +9,7 @@ AbstractKinematics::AbstractKinematics()
 AbstractKinematics::~AbstractKinematics()
 {}
 
-void AbstractKinematics::assign_variables(const KinematicsConfig &kinematics_config, const KDL::Chain &kdl_chain)
+void AbstractKinematics::assignVariables(const KinematicsConfig &kinematics_config, const KDL::Chain &kdl_chain)
 {
     kinematic_pose_.sourceFrame = kinematics_config.base_name;
     kinematic_pose_.targetFrame = kinematics_config.tip_name;    

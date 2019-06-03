@@ -79,7 +79,7 @@ class AbstractKinematics
         KDL::Tree kdl_tree_;
         KDL::Chain kdl_chain_;
 
-        void assign_variables(const KinematicsConfig &kinematics_config, const KDL::Chain &kdl_chain);
+        void assignVariables(const KinematicsConfig &kinematics_config, const KDL::Chain &kdl_chain);
 
     private:
         double position_tolerance_in_m_, interpolation_velocity_, sampling_time_;    

@@ -34,7 +34,7 @@ TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL
                                                            kinematics_config.timeout_sec, kinematics_config.eps, solverType);
     fk_kdlsolver_pos_ = new KDL::ChainFkSolverPos_recursive ( kdl_kinematic_chain );
 
-    assign_variables ( kinematics_config, kdl_chain_ );
+    assignVariables ( kinematics_config, kdl_chain_ );
     kdl_jt_array_.resize ( kdl_chain_.getNrOfJoints() );
     kdl_ik_jt_array_.resize ( kdl_chain_.getNrOfJoints() );
 
