@@ -41,8 +41,8 @@ struct LinearConfig
 struct KinematicsConfig
 {
     KinematicsConfig() : kinematic_solver(KDL), base_name(""), tip_name(""),
-                         urdf_file(""), max_iteration(100), timeout_sec(0.1), eps(0.001), tracIKSolverType(SPEED),
-                         ikfast_lib(""), linear_relative_movement(false) {}
+                         urdf_file(""), max_iteration(100), timeout_sec(0.1), eps(0.001), 
+                         ikfast_lib(""), tracIKSolverType(SPEED), linear_relative_movement(false) {}
 
     // kinematics solver: currently 3 types of solvers available
     enum KinematicSolver kinematic_solver;
