@@ -28,9 +28,15 @@ TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL
 		default:
 			LOG_WARN("Undefined TRAC_IK Solver Type configured");
 	}
-			
-		
-    trac_ik_solver_ = std::make_shared<TRAC_IK::TRAC_IK> ( kinematics_config.base_name, kinematics_config.tip_name, kinematics_config.urdf_file,
+	assert(kinematics_config.joints_weight.size() == kdl_chain_.getNrOfJoints());		
+	KDL::JntArray qerr_wt(kinematics_config.joints_weight.size());
+    
+    for(uint i = 0; i < qerr_wt.data.size(); ++i)
+    {
+        qerr_wt(i) = kinematics_config.joints_weight.at(i);
+    }
+    
+    trac_ik_solver_ = std::make_shared<TRAC_IK::TRAC_IK> ( kinematics_config.base_name, kinematics_config.tip_name, qerr_wt, kinematics_config.urdf_file,
                                                            kinematics_config.timeout_sec, kinematics_config.eps, solverType);
     fk_kdlsolver_pos_ = new KDL::ChainFkSolverPos_recursive ( kdl_kinematic_chain );
 
@@ -76,6 +82,7 @@ bool TracIkSolver::solveIK (const base::samples::RigidBodyState target_pose,
     {
         convertKDLArrayToBaseJoints(kdl_ik_jt_array_list.at(i), solution.at(i));
         solution.at(i).names = jt_names_;
+        solution.at(i).time = target_pose.time;
     }
     
     if ( res >= 0 ) 
