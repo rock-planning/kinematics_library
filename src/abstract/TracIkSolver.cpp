@@ -37,7 +37,11 @@ TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL
     assignVariables ( kinematics_config, kdl_chain_ );
     kdl_jt_array_.resize ( kdl_chain_.getNrOfJoints() );
     kdl_ik_jt_array_.resize ( kdl_chain_.getNrOfJoints() );
-
+    
+    bounds.vel = KDL::Vector(kinematics_config.tolerances[0], kinematics_config.tolerances[1], kinematics_config.tolerances[2]);
+    bounds.rot = KDL::Vector(kinematics_config.tolerances[3], kinematics_config.tolerances[4], kinematics_config.tolerances[5]);
+    
+    
 }
 
 TracIkSolver::~TracIkSolver()
@@ -64,12 +68,18 @@ bool TracIkSolver::solveIK (const base::samples::RigidBodyState target_pose,
 
     int res = trac_ik_solver_->CartToJnt ( kdl_jt_array_, kdl_frame_, kdl_ik_jt_array_ , bounds);
     
-    solution.resize(1);
+    std::vector<KDL::JntArray> kdl_ik_jt_array_list;
+    bool valid_soln = trac_ik_solver_->getSolutions(kdl_ik_jt_array_list);
+    
+    solution.resize(kdl_ik_jt_array_list.size());
+    for(unsigned i = 0; i < kdl_ik_jt_array_list.size(); ++i)
+    {
+        convertKDLArrayToBaseJoints(kdl_ik_jt_array_list.at(i), solution.at(i));
+        solution.at(i).names = jt_names_;
+    }
     
     if ( res >= 0 ) 
     {
-        convertKDLArrayToBaseJoints ( kdl_ik_jt_array_, solution[0] );
-        solution[0].names = jt_names_;
         solver_status.statuscode = KinematicsStatus::IK_FOUND;
         return true;
     }
