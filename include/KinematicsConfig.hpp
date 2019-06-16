@@ -3,6 +3,7 @@
 
 #include <string>
 #include <base/samples/RigidBodyState.hpp>
+#include <vector>
 
 namespace kinematics_library
 {   
@@ -41,7 +42,7 @@ struct LinearConfig
 struct KinematicsConfig
 {
     KinematicsConfig() : kinematic_solver(KDL), base_name(""), tip_name(""),
-                         urdf_file(""), max_iteration(100), timeout_sec(0.1), eps(0.001), 
+                         urdf_file(""), max_iteration(100), timeout_sec(0.1), eps(0.001), tolerances(6, 0.0),
                          ikfast_lib(""), tracIKSolverType(SPEED), linear_relative_movement(false) {}
 
     // kinematics solver: currently 3 types of solvers available
@@ -61,6 +62,8 @@ struct KinematicsConfig
     double timeout_sec;
     // stopping criteria for the numerical solver. Stop the solver, if the error is below the eps.              
     double eps;
+    //End Effector Pose Tolerance - used for setting the tolerances in trac_ik
+    std::vector<double> tolerances;
     // ikfast shared library absolute path
     std::string ikfast_lib;
 	// Type of solver for trac_ik- selecting speed gives the first ik soln selecting distance tries to minimize distance between current and solution in given time

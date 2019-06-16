@@ -62,7 +62,7 @@ bool TracIkSolver::solveIK (const base::samples::RigidBodyState target_pose,
     convertVectorToKDLArray ( current_jt_status_, kdl_jt_array_ );
     rbsToKdl ( kinematic_pose_, kdl_frame_ );
 
-    int res = trac_ik_solver_->CartToJnt ( kdl_jt_array_, kdl_frame_, kdl_ik_jt_array_ );
+    int res = trac_ik_solver_->CartToJnt ( kdl_jt_array_, kdl_frame_, kdl_ik_jt_array_ , bounds);
     
     solution.resize(1);
     

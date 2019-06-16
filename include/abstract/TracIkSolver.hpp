@@ -65,6 +65,7 @@ class TracIkSolver : public AbstractKinematics
         std::string  urdf_file_path_;
         unsigned int max_iter_;
         double eps_;
+        KDL::Twist bounds;
 };
 }
 #endif
