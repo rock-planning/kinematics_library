@@ -102,10 +102,12 @@ void rotMat2QuaternionZYX(const double *rotMat, base::Quaterniond &orientationZY
 void quaternionToEuler(const base::Quaterniond &q, base::Vector3d &res)
 {
     res= Eigen::Vector3d::Zero();
-
-    res(0) = atan2( (2.0*((q.w()+q.x())+(q.y()+q.z()))), (1.0-(2.0*((q.x()*q.x())+(q.y()*q.y()) ))) );
-    res(1) = asin( 2.0*( (q.w() * q.y())-(q.z() * q.x()) ));
-    res(2) = atan2( (2.0*((q.w()+q.z())+(q.x()+q.y()))), (1.0-(2.0*((q.y()*q.y())+(q.z()*q.z()) ))) );
+    
+//     res(0) = atan2( (2.0*((q.w()+q.x())+(q.y()+q.z()))), (1.0-(2.0*((q.x()*q.x())+(q.y()*q.y()) ))) );
+//     res(1) = asin( 2.0*( (q.w() * q.y())-(q.z() * q.x()) ));
+//     res(2) = atan2( (2.0*((q.w()+q.z())+(q.x()+q.y()))), (1.0-(2.0*((q.y()*q.y())+(q.z()*q.z()) ))) );
+    
+    res = base::getEuler(q);
 
 }
 
