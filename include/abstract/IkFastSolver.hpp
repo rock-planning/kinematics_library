@@ -35,6 +35,18 @@ struct compare_result
 
 };
 
+struct IkFastConfig
+{
+    IkFastConfig() : ikfast_lib_abs_path(""){}
+    // ikfast shared library absolute path
+    std::string ikfast_lib_abs_path;
+    // joint weight. It is used for finding the weighted optimal inverse kinematic solution, 
+    // when the inverse solver gave more than one solution.
+    std::vector <double> joints_weight;
+    // free joint parameter
+    std::vector <double> free_joint_param;
+};
+
 
 /**
  * @class IkFastsolver
@@ -105,10 +117,9 @@ private:
                             int &jt_limit_exceed_sol_ct);
 
     bool getIKFASTFunctionPtr(const std::string ikfast_lib, KinematicsStatus &kinematics_status);
-    /**
-    * @brief joint weight used for checking nearest solution.
-    */
-    std::vector<double> jts_weight_;
+    
+    IkFastConfig ikfast_config_;
+    
     std::vector<std::pair<double,double> > jts_limits_;
 
     ikfast::IkSolutionList<IkReal> ik_solutions_;

@@ -10,10 +10,36 @@
 #include <trac_ik/trac_ik.hpp>
 
 #include "AbstractKinematics.hpp"
-#include "KinematicsHelper.hpp"
 
 namespace kinematics_library
 {
+
+enum TracIKSolverType
+{
+    SPEED = 0,
+    DISTANCE,
+    MANIP1,
+    MANIP2
+};
+
+struct TracIkConfig
+{
+    TracIkConfig() : solver_type(SPEED), max_iteration(100), timeout_sec(0.1), eps(0.001), tolerances(6, 0.0) {}
+    
+    // Type of solver for trac_ik- selecting speed gives the first ik soln selecting distance tries 
+    // to minimize distance between current and solution in given time
+    TracIKSolverType solver_type;
+    // Maximum iteration allowed for numerical solver.
+    unsigned int max_iteration;
+    // time out - used if trac ik is available
+    double timeout_sec;
+    // stopping criteria for the numerical solver. Stop the solver, if the error is below the eps.              
+    double eps;
+    //End Effector Pose Tolerance - used for setting the tolerances in trac_ik
+    std::vector<double> tolerances;
+    std::vector <double> joints_err_weight;    
+
+};
 
 /**
  * @class TracIkSolver
@@ -66,6 +92,8 @@ class TracIkSolver : public AbstractKinematics
         unsigned int max_iter_;
         double eps_;
         KDL::Twist bounds;
+        
+        TracIkConfig trac_ik_config_;
 };
 }
 #endif

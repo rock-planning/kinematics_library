@@ -1,15 +1,22 @@
-#include <abstract/KdlSolver.hpp>
+#include "HandleKinematicConfig.hpp"
 
 namespace kinematics_library
 {
 
 KdlSolver::KdlSolver(const KinematicsConfig &kinematics_config, const std::vector< std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
-                     const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain, const unsigned int max_iter, const double eps): jts_limits_(jts_limits), maxiter_(max_iter), eps_(eps)
+                     const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain): jts_limits_(jts_limits)
 {
+    
+    // assign the config
+    YAML::Node input_config;
+    handle_kinematic_config::loadConfigFile(kinematics_config.kinematic_solver_specific_config, input_config);
+    const YAML::Node& kdl_config_node = input_config["kdl_config"];
+    kdl_config_ = handle_kinematic_config::getKdlConfig(kdl_config_node);
+    
+    
     kdl_tree_         = kdl_tree;
     kdl_chain_        = kdl_chain;
-    maxiter_          = kinematics_config.max_iteration;
-    eps_              = kinematics_config.eps;
+
     fk_solverPos_     = new KDL::ChainFkSolverPos_recursive(kdl_kinematic_chain);
     ik_solverVelPinv_ = new KDL::ChainIkSolverVel_pinv(kdl_kinematic_chain);
 
@@ -17,7 +24,8 @@ KdlSolver::KdlSolver(const KinematicsConfig &kinematics_config, const std::vecto
 
     getJointLimits(min_jtLimits_, max_jtLimits_);       
 
-    ik_solverPosJL_  = new KDL::ChainIkSolverPos_NR_JL(kdl_kinematic_chain, min_jtLimits_, max_jtLimits_, *fk_solverPos_, *ik_solverVelPinv_, maxiter_, eps_);
+    ik_solverPosJL_  = new KDL::ChainIkSolverPos_NR_JL(kdl_kinematic_chain, min_jtLimits_, max_jtLimits_, *fk_solverPos_, *ik_solverVelPinv_, 
+                                                       kdl_config_.max_iteration, kdl_config_.eps);
 
     kdl_jtArray_.data.resize(number_of_joints_);
     kdl_ik_jtArray_.data.resize(number_of_joints_);	

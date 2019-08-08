@@ -1,4 +1,4 @@
-#include <abstract/TracIkSolver.hpp>
+#include "HandleKinematicConfig.hpp"
 
 namespace kinematics_library
 {
@@ -6,12 +6,18 @@ namespace kinematics_library
 TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL::Tree &kdl_tree, 
                              const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain )
 {
-
+    // assign the config
+    YAML::Node input_config;
+    handle_kinematic_config::loadConfigFile(kinematics_config.kinematic_solver_specific_config, input_config);
+    const YAML::Node& trac_ik_config_node = input_config["trac_ik_config"];
+    trac_ik_config_ = handle_kinematic_config::getTracIkConfig(trac_ik_config_node);
+    
+    
     kdl_tree_       = kdl_tree;
     kdl_chain_      = kdl_chain;
 	
 	TRAC_IK::SolveType solverType = TRAC_IK::Speed;
-	switch(kinematics_config.tracIKSolverType)
+	switch(trac_ik_config_.solver_type)
 	{
 		case SPEED:
 			solverType = TRAC_IK::Speed;
@@ -28,24 +34,24 @@ TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL
 		default:
 			LOG_WARN("Undefined TRAC_IK Solver Type configured");
 	}
-	assert(kinematics_config.joints_weight.size() == kdl_chain_.getNrOfJoints());		
-	KDL::JntArray qerr_wt(kinematics_config.joints_weight.size());
+	assert(trac_ik_config_.joints_err_weight.size() == kdl_chain_.getNrOfJoints());		
+	KDL::JntArray qerr_wt(trac_ik_config_.joints_err_weight.size());
     
     for(uint i = 0; i < qerr_wt.data.size(); ++i)
     {
-        qerr_wt(i) = kinematics_config.joints_weight.at(i);
+        qerr_wt(i) = trac_ik_config_.joints_err_weight.at(i);
     }
     
     trac_ik_solver_ = std::make_shared<TRAC_IK::TRAC_IK> ( kinematics_config.base_name, kinematics_config.tip_name, qerr_wt, kinematics_config.urdf_file,
-                                                           kinematics_config.timeout_sec, kinematics_config.eps, solverType);
+                                                           trac_ik_config_.timeout_sec, trac_ik_config_.eps, solverType);
     fk_kdlsolver_pos_ = new KDL::ChainFkSolverPos_recursive ( kdl_kinematic_chain );
 
     assignVariables ( kinematics_config, kdl_chain_ );
     kdl_jt_array_.resize ( kdl_chain_.getNrOfJoints() );
     kdl_ik_jt_array_.resize ( kdl_chain_.getNrOfJoints() );
     
-    bounds.vel = KDL::Vector(kinematics_config.tolerances[0], kinematics_config.tolerances[1], kinematics_config.tolerances[2]);
-    bounds.rot = KDL::Vector(kinematics_config.tolerances[3], kinematics_config.tolerances[4], kinematics_config.tolerances[5]);
+    bounds.vel = KDL::Vector(trac_ik_config_.tolerances[0], trac_ik_config_.tolerances[1], trac_ik_config_.tolerances[2]);
+    bounds.rot = KDL::Vector(trac_ik_config_.tolerances[3], trac_ik_config_.tolerances[4], trac_ik_config_.tolerances[5]);
     
     
 }

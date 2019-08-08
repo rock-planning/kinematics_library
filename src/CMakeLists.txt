@@ -18,8 +18,10 @@ set (KINEMATIC_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/include)
 
 SET (SRCS 
     ${CMAKE_CURRENT_LIST_DIR}/abstract/AbstractKinematics.cpp	
+    ${CMAKE_CURRENT_LIST_DIR}/HandleKinematicConfig.cpp 
     ${CMAKE_CURRENT_LIST_DIR}/abstract/IkFastSolver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/abstract/KdlSolver.cpp
+#    ${CMAKE_CURRENT_LIST_DIR}/abstract/SRSKinematicSolver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/abstract/KinematicsHelper.cpp
     ${CMAKE_CURRENT_LIST_DIR}/KinematicsFactory.cpp )
 

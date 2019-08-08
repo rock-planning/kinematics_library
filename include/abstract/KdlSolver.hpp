@@ -16,6 +16,17 @@
 
 namespace kinematics_library
 {
+    
+    
+struct KdlConfig
+{
+    KdlConfig() : max_iteration(150), eps(1e-6){}
+
+    // Maximum iteration allowed for numerical solver.
+    unsigned int max_iteration;
+    // stopping criteria for the numerical solver. Stop the solver, if the error is below the eps.              
+    double eps;
+};
 
 /**
  * @class AbstractKdlSolver
@@ -29,7 +40,7 @@ class KdlSolver : public AbstractKinematics
         * @brief  constructor
         */
         KdlSolver( const KinematicsConfig &kinematics_config, const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
-                   const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain, const unsigned int max_iter = 150, const double eps=1e-6);
+                   const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain);
 
         /**
         * @brief  destructor
@@ -73,6 +84,8 @@ class KdlSolver : public AbstractKinematics
         KDL::Frame kdl_frame_;        
         unsigned int maxiter_;
         double eps_;
+        
+        KdlConfig kdl_config_;
 };
 
 

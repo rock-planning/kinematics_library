@@ -1,4 +1,4 @@
-#include <abstract/IkFastSolver.hpp>
+#include "HandleKinematicConfig.hpp"
 
 namespace kinematics_library
 {
@@ -7,13 +7,20 @@ IkFastSolver::IkFastSolver( const KinematicsConfig &kinematics_config, const std
                             const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, KinematicsStatus &kinematics_status):
                             jts_limits_(jts_limits)
 { 
-    jts_weight_ = kinematics_config.joints_weight;
+   
+    // assign the config
+    YAML::Node input_config;
+    handle_kinematic_config::loadConfigFile(kinematics_config.kinematic_solver_specific_config, input_config);
+    const YAML::Node& ikfast_config_node = input_config["ikfast_config"];
+    ikfast_config_ = handle_kinematic_config::getIkFastConfig(ikfast_config_node);
+
+
     kdl_tree_   = kdl_tree;
     kdl_chain_  = kdl_chain;
 
     assignVariables(kinematics_config, kdl_chain_);
 
-    if ( !getIKFASTFunctionPtr ( kinematics_config.ikfast_lib, kinematics_status))
+    if ( !getIKFASTFunctionPtr ( ikfast_config_.ikfast_lib_abs_path, kinematics_status))
     {
         LOG_DEBUG("[KinematicsFactory]: Failed to retrieve IKfast function pointer.");
     }
@@ -197,7 +204,7 @@ bool IkFastSolver::pickOptimalIkSolution(   const std::vector<double> &cur_jtang
             {
                 for(std::size_t j = 0; j < number_of_joints_; ++j)
                 {
-                    del_sol.at(ct)          = del_sol.at(ct) + ( jts_weight_[j] *fabs( cur_jtang[j] - all_solution[i][j] ));
+                    del_sol.at(ct)          = del_sol.at(ct) + ( ikfast_config_.joints_weight[j] *fabs( cur_jtang[j] - all_solution[i][j] ));
                     refind_solutions[ct][j]	= all_solution[i][j];     
                 }     
                 refined_ik_sol[ct].opt_iksol_index_value    = del_sol.at(ct);

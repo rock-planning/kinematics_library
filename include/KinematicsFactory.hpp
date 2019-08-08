@@ -13,12 +13,7 @@
 #include <base-logging/Logging.hpp>
 
 #include "abstract/AbstractKinematics.hpp"
-#include "abstract/IkFastSolver.hpp"
-#include "abstract/KdlSolver.hpp"
-#if TRAC_IK_LIB_FOUND    
-    #include "abstract/TracIkSolver.hpp"
-#endif
-
+#include "HandleKinematicConfig.hpp"
 
 namespace kinematics_library
 {
