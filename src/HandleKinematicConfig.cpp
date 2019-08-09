@@ -68,7 +68,7 @@ kinematics_library::TracIkConfig getTracIkConfig(const YAML::Node &yaml_data)
 {
     kinematics_library::TracIkConfig config;
 
-    config.solver_type      = handle_kinematic_config::getValue<kinematics_library::PlannerType>(yaml_data, "solver_type");  
+    config.solver_type      = handle_kinematic_config::getValue<kinematics_library::TracIKSolverType>(yaml_data, "solver_type");  
     config.max_iteration    = handle_kinematic_config::getValue<unsigned int>(yaml_data, "max_iteration");    
     config.timeout_sec      = handle_kinematic_config::getValue<double>(yaml_data, "timeout_sec");
     config.eps              = handle_kinematic_config::getValue<double>(yaml_data, "eps");   
