@@ -34,7 +34,7 @@ struct LinearConfig
  */
 struct KinematicsConfig
 {
-    KinematicsConfig() : base_name(""), tip_name(""), kinematic_solver(KDL), kinematic_solver_specific_config(""),
+    KinematicsConfig() : base_name(""), tip_name(""), kinematic_solver(KDL), solver_config_filename(""),
                          urdf_file(""), linear_relative_movement(false) {}
 
 
@@ -44,8 +44,10 @@ struct KinematicsConfig
     std::string tip_name;
     // kinematics solver: currently 3 types of solvers available
     enum KinematicSolver kinematic_solver;
-    // config specific to the kinematic solver
-    std::string kinematic_solver_specific_config;
+    // please specify the absolute path where all the config is located
+    std::string solver_config_abs_path;
+    // config file name specific to the kinematic solver - only file name
+    std::string solver_config_filename;
     //URDF file for the robot. Please give filename with absolute path
     std::string urdf_file;
     // move relative target linearly

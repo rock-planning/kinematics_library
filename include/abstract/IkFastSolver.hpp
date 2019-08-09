@@ -37,13 +37,15 @@ struct compare_result
 
 struct IkFastConfig
 {
-    IkFastConfig() : ikfast_lib_abs_path(""){}
+    IkFastConfig() : ikfast_lib(""), use_current_value_as_free_joint_param(false){}
     // ikfast shared library absolute path
-    std::string ikfast_lib_abs_path;
+    std::string ikfast_lib;
     // joint weight. It is used for finding the weighted optimal inverse kinematic solution, 
     // when the inverse solver gave more than one solution.
     std::vector <double> joints_weight;
-    // free joint parameter
+    // use the current value as free joint param. CAUTION: Index need to match
+    bool use_current_value_as_free_joint_param;
+    // use this value as free joint parameter
     std::vector <double> free_joint_param;
 };
 
@@ -118,15 +120,18 @@ private:
 
     bool getIKFASTFunctionPtr(const std::string ikfast_lib, KinematicsStatus &kinematics_status);
     
-    IkFastConfig ikfast_config_;
-    
+    IkFastConfig ikfast_config_;    
     std::vector<std::pair<double,double> > jts_limits_;
-
     ikfast::IkSolutionList<IkReal> ik_solutions_;
+    std::vector<IkReal> vfree_;
+    int *freeparams_;
     void *ikfast_handle_;
 
     bool (*computeIkFn)(const IkReal* eetrans, const IkReal* eerot, const IkReal* pfree, ikfast::IkSolutionListBase<IkReal>& solutions);
     void (*computeFkFn)(const IkReal* j, IkReal* eetrans, IkReal* eerot);
+    int (*getNumFreeParametersFn)();
+    int *(*getFreeParametersFn)();
+    
 };
 
 

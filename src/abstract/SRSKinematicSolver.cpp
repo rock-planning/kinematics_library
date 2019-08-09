@@ -3,8 +3,7 @@
 namespace kinematics_library
 {
 
-SRSKinematicSolver::SRSKinematicSolver ( const KinematicsConfig &kinematics_config,  const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree, 
-                                         q
+SRSKinematicSolver::SRSKinematicSolver ( const KinematicsConfig &kinematics_config,  const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,                                          
                                          const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain )
 {
 
@@ -55,4 +54,5 @@ bool SRSKinematicSolver::solveFK (const base::samples::Joints &joint_angles, bas
     solver_status.statuscode = KinematicsStatus::NO_FK_SOLUTION;
     return false;
 }
+
 }

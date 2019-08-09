@@ -6,9 +6,11 @@ namespace kinematics_library
 TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL::Tree &kdl_tree, 
                              const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain )
 {
+    
+
     // assign the config
     YAML::Node input_config;
-    handle_kinematic_config::loadConfigFile(kinematics_config.kinematic_solver_specific_config, input_config);
+    handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config);
     const YAML::Node& trac_ik_config_node = input_config["trac_ik_config"];
     trac_ik_config_ = handle_kinematic_config::getTracIkConfig(trac_ik_config_node);
     

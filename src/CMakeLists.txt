@@ -9,6 +9,7 @@ INCLUDE(FindPkgConfig)
 
 find_package(Eigen3 REQUIRED)
 pkg_check_modules(kdl_parser REQUIRED kdl_parser)
+pkg_check_modules(YAML REQUIRED yaml-cpp)
 
 #store external library name
 set (EXTERNAL_LIB ${kdl_parser_LIBRARIES})
@@ -21,7 +22,7 @@ SET (SRCS
     ${CMAKE_CURRENT_LIST_DIR}/HandleKinematicConfig.cpp 
     ${CMAKE_CURRENT_LIST_DIR}/abstract/IkFastSolver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/abstract/KdlSolver.cpp
-#    ${CMAKE_CURRENT_LIST_DIR}/abstract/SRSKinematicSolver.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/abstract/SRSKinematicSolver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/abstract/KinematicsHelper.cpp
     ${CMAKE_CURRENT_LIST_DIR}/KinematicsFactory.cpp )
 
@@ -47,11 +48,11 @@ add_definitions(-DTRAC_IK_LIB_FOUND=${TRAC_IK_LIB_FOUND})
 message("trac_ik = ${TRAC_IK_LIB_FOUND}")
 #message (${SRCS})
 
-include_directories( ${KINEMATIC_INCLUDE_PATH} ${EIGEN3_INCLUDE_DIR} ${kdl_parser_INCLUDE_DIRS} )
+include_directories( ${KINEMATIC_INCLUDE_PATH} ${EIGEN3_INCLUDE_DIR} ${kdl_parser_INCLUDE_DIRS} ${YAML_INCLUDE_DIRS})
 link_directories(${kdl_parser_LIBRARY_DIRS})
 
 add_library(kinematics_library SHARED ${SRCS})
-target_link_libraries(kinematics_library ${EXTERNAL_LIB} ${CMAKE_DL_LIBS})
+target_link_libraries(kinematics_library ${EXTERNAL_LIB} ${CMAKE_DL_LIBS} ${YAML_LIBRARIES})
 
 set(TARGET_NAME ${PROJECT_NAME})
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include/kinematics_library)

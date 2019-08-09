@@ -35,16 +35,22 @@ struct convert<kinematics_library::TracIKSolverType>
 namespace handle_kinematic_config
 {
 
-kinematics_library::IkFastConfig getIkFastConfig(const YAML::Node &yaml_data)
+kinematics_library::IkFastConfig getIkFastConfig(const std::string &dir_path, const YAML::Node &yaml_data)
 {
     kinematics_library::IkFastConfig config;
-    
-    config.ikfast_lib_abs_path    = handle_kinematic_config::getValue<std::string>(yaml_data, "ikfast_lib_abs_path"); 
+
+    std::string filename    = handle_kinematic_config::getValue<std::string>(yaml_data, "ikfast_lib"); 
+
+    std::stringstream config_file;
+    config_file << dir_path << "/" << filename;
+    config.ikfast_lib = config_file.str();
     
     const YAML::Node &joints_weight_node    = yaml_data["joints_weight"];
     config.joints_weight.resize(joints_weight_node.size());
     for(std::size_t i = 0; i < joints_weight_node.size(); i++)
         config.joints_weight.at(i) = joints_weight_node[i].as<double>();
+    
+    config.use_current_value_as_free_joint_param = handle_kinematic_config::getValue<bool>(yaml_data, "use_current_value_as_free_joint_param"); 
     
     const YAML::Node &free_joint_param_node    = yaml_data["free_joint_param"];
     config.free_joint_param.resize(free_joint_param_node.size());
@@ -67,10 +73,11 @@ kinematics_library::KdlConfig getKdlConfig(const YAML::Node &yaml_data)
 kinematics_library::TracIkConfig getTracIkConfig(const YAML::Node &yaml_data)
 {
     kinematics_library::TracIkConfig config;
-
-    config.solver_type      = handle_kinematic_config::getValue<kinematics_library::TracIKSolverType>(yaml_data, "solver_type");  
-    config.max_iteration    = handle_kinematic_config::getValue<unsigned int>(yaml_data, "max_iteration");    
+    
+    config.solver_type      = handle_kinematic_config::getValue<kinematics_library::TracIKSolverType>(yaml_data, "solver_type");
+    
     config.timeout_sec      = handle_kinematic_config::getValue<double>(yaml_data, "timeout_sec");
+    
     config.eps              = handle_kinematic_config::getValue<double>(yaml_data, "eps");   
     
     const YAML::Node &tolerances_node    = yaml_data["tolerances"];

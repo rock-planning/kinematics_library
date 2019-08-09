@@ -10,9 +10,9 @@ IkFastSolver::IkFastSolver( const KinematicsConfig &kinematics_config, const std
    
     // assign the config
     YAML::Node input_config;
-    handle_kinematic_config::loadConfigFile(kinematics_config.kinematic_solver_specific_config, input_config);
+    handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config);
     const YAML::Node& ikfast_config_node = input_config["ikfast_config"];
-    ikfast_config_ = handle_kinematic_config::getIkFastConfig(ikfast_config_node);
+    ikfast_config_ = handle_kinematic_config::getIkFastConfig(kinematics_config.solver_config_abs_path, ikfast_config_node);
 
 
     kdl_tree_   = kdl_tree;
@@ -20,7 +20,7 @@ IkFastSolver::IkFastSolver( const KinematicsConfig &kinematics_config, const std
 
     assignVariables(kinematics_config, kdl_chain_);
 
-    if ( !getIKFASTFunctionPtr ( ikfast_config_.ikfast_lib_abs_path, kinematics_status))
+    if ( !getIKFASTFunctionPtr ( ikfast_config_.ikfast_lib, kinematics_status))
     {
         LOG_DEBUG("[KinematicsFactory]: Failed to retrieve IKfast function pointer.");
     }
@@ -73,6 +73,42 @@ bool IkFastSolver::getIKFASTFunctionPtr(const std::string ikfast_lib, Kinematics
     }
     else
         LOG_DEBUG("[KinematicsFactory]: Found ComputeIk function in the given ikfast shared library");
+    
+    
+    getNumFreeParametersFn = ( int ( * ) () )  dlsym ( ikfast_handle_, "GetNumFreeParameters" );
+    if ( ( error = dlerror() ) != NULL )
+    {
+        LOG_ERROR ( "[KinematicsFactory]: Cannot find getNumFreeParameters function. Error %s",dlerror() );
+        dlclose ( ikfast_handle_ );
+        kinematics_status.statuscode = KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND;
+        return false;
+    }
+    else
+    {
+        LOG_DEBUG("[KinematicsFactory]: Found getNumFreeParameters function in the given ikfast shared library");
+        vfree_.resize(getNumFreeParametersFn());
+        
+        if(!ikfast_config_.use_current_value_as_free_joint_param)
+        {
+            assert(vfree_.size() == ikfast_config_.free_joint_param.size());
+            vfree_ = ikfast_config_.free_joint_param;
+        }
+    }
+    
+    getFreeParametersFn = ( int *( * ) ( ) )  dlsym ( ikfast_handle_, "GetFreeParameters" );
+    if ( ( error = dlerror() ) != NULL )
+    {
+        LOG_ERROR ( "[KinematicsFactory]: Cannot find getFreeParameters function. Error %s",dlerror() );
+        dlclose ( ikfast_handle_ );
+        kinematics_status.statuscode = KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND;
+        return false;
+    }
+    else    
+    {
+        LOG_DEBUG("[KinematicsFactory]: Found getFreeParameters function in the given ikfast shared library");
+        freeparams_ = getFreeParametersFn();
+    }
+        
 
     return true;
 }
@@ -94,7 +130,17 @@ bool IkFastSolver::solveIK(const base::samples::RigidBodyState target_pose, cons
     
     //ik_solution needs to be clear orelse the container holds the old value
     ik_solutions_.Clear();
-    if(computeIkFn(eetrans, eerot, NULL, ik_solutions_))
+    // copy the current status as free joint param    
+//     std::cout<<(int)sizeof(freeparams_)/sizeof(freeparams_[0])<<"  "<<freeparams_[0]<<"  "<<current_jt_status_[freeparams_[0]]<<std::endl;    
+   
+    if(ikfast_config_.use_current_value_as_free_joint_param)
+    {
+        for(size_t i = 0; i < (int)(sizeof(freeparams_)/sizeof(freeparams_[0])); i++)        
+            vfree_[i] = current_jt_status_[freeparams_[i]];
+    }   
+    
+    // calling ik function
+    if(computeIkFn(eetrans, eerot, vfree_.size() > 0 ? &vfree_[0] : NULL, ik_solutions_))
     {
         std::vector<std::vector<double> > optSol;
 

@@ -24,13 +24,11 @@ enum TracIKSolverType
 
 struct TracIkConfig
 {
-    TracIkConfig() : solver_type(SPEED), max_iteration(100), timeout_sec(0.1), eps(0.001), tolerances(6, 0.0) {}
+    TracIkConfig() : solver_type(SPEED), timeout_sec(0.1), eps(0.001), tolerances(6, 0.0) {}
     
     // Type of solver for trac_ik- selecting speed gives the first ik soln selecting distance tries 
     // to minimize distance between current and solution in given time
     TracIKSolverType solver_type;
-    // Maximum iteration allowed for numerical solver.
-    unsigned int max_iteration;
     // time out - used if trac ik is available
     double timeout_sec;
     // stopping criteria for the numerical solver. Stop the solver, if the error is below the eps.              

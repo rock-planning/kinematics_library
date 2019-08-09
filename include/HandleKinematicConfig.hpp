@@ -18,11 +18,14 @@
 namespace handle_kinematic_config
 {
     
-inline void loadConfigFile(std::string filename, YAML::Node &config)
+inline void loadConfigFile(const std::string &filepath, const std::string &filename, YAML::Node &config)
 {
+    std::stringstream config_file;
+    config_file << filepath << "/" << filename;
+
     try
     {
-        config = YAML::LoadFile(filename);
+        config = YAML::LoadFile(config_file.str());
     }
     catch (YAML::ParserException& e)
     {
@@ -61,7 +64,7 @@ T getValue (const YAML::Node &yaml_data, std::string name, const T& df)
 
 }
 
-kinematics_library::IkFastConfig getIkFastConfig(const YAML::Node &yaml_data);
+kinematics_library::IkFastConfig getIkFastConfig(const std::string &dir_path, const YAML::Node &yaml_data);
 
 kinematics_library::KdlConfig getKdlConfig(const YAML::Node &yaml_data);
 

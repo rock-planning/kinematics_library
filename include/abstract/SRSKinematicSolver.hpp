@@ -78,23 +78,23 @@ class SRSKinematicSolver : public AbstractKinematics
         std::string base_link_, tip_link_;
         std::string  urdf_file_path_;
         
-        double dist_base_shoulder;              // DBS - distance between base to shoulder
-        double dist_shoulder_elbow;             // DSE - distance between shoulder to elbow
-        double dist_elbow_wrist;                // DEW - distance between elbow to wrist
-        double dist_wrist_tool;                 // DWT - distance between wrist to tool
-//         std::vector<double> l_bs, l_se, l_ew, l_wt;     // vector holding the link length
-        std::vector<double> link_base_shoulder, link_shoulder_elbow, link_elbow_wrist, link_wrist_tool;     // vector holding the link length
-        double link_offset[7];                              // link offsets
-
-        double min_j1, max_j1;                          // minimum and maximum values for joint 1
-        double min_j2, max_j2;                          // minimum and maximum values for joint 2
-        double min_j3, max_j3;                          // minimum and maximum values for joint 3
-        double min_j5, max_j5;                          // minimum and maximum values for joint 5
-        double max_j6, min_j6;                          // minimum and maximum values for joint 6
-        double max_j7, min_j7;                          // minimum and maximum values for joint 7
-
-        std::vector< ArmAngle > feasible_psi;
-        std::vector< ArmAngle > infeasible_psi;
+//         double dist_base_shoulder;              // DBS - distance between base to shoulder
+//         double dist_shoulder_elbow;             // DSE - distance between shoulder to elbow
+//         double dist_elbow_wrist;                // DEW - distance between elbow to wrist
+//         double dist_wrist_tool;                 // DWT - distance between wrist to tool
+// //         std::vector<double> l_bs, l_se, l_ew, l_wt;     // vector holding the link length
+//         std::vector<double> link_base_shoulder, link_shoulder_elbow, link_elbow_wrist, link_wrist_tool;     // vector holding the link length
+//         double link_offset[7];                              // link offsets
+// 
+//         double min_j1, max_j1;                          // minimum and maximum values for joint 1
+//         double min_j2, max_j2;                          // minimum and maximum values for joint 2
+//         double min_j3, max_j3;                          // minimum and maximum values for joint 3
+//         double min_j5, max_j5;                          // minimum and maximum values for joint 5
+//         double max_j6, min_j6;                          // minimum and maximum values for joint 6
+//         double max_j7, min_j7;                          // minimum and maximum values for joint 7
+// 
+//         std::vector< ArmAngle > feasible_psi;
+//         std::vector< ArmAngle > infeasible_psi;
 
 };
 }
