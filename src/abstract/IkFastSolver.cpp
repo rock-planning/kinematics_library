@@ -22,10 +22,10 @@ IkFastSolver::IkFastSolver( const KinematicsConfig &kinematics_config, const std
 
     if ( !getIKFASTFunctionPtr ( ikfast_config_.ikfast_lib, kinematics_status))
     {
-        LOG_DEBUG("[KinematicsFactory]: Failed to retrieve IKfast function pointer.");
+        LOG_DEBUG("[IkFastSolver]: Failed to retrieve IKfast function pointer.");
     }
     else
-        LOG_DEBUG("[KinematicsFactory]: IKfast function pointer is retrieved sucesfully.");
+        LOG_DEBUG("[IkFastSolver]: IKfast function pointer is retrieved sucesfully.");
 
 }
 
@@ -42,50 +42,50 @@ bool IkFastSolver::getIKFASTFunctionPtr(const std::string ikfast_lib, Kinematics
     ikfast_handle_ = dlopen ( ikfast_lib.c_str(), RTLD_LAZY );
     if ( !ikfast_handle_ )
     {
-        LOG_ERROR ( "[KinematicsFactory]: Cannot open ikfast shared library. Error %s",dlerror() );
+        LOG_ERROR ( "[IkFastSolver]: Cannot open ikfast shared library. Error %s",dlerror() );
         kinematics_status.statuscode = KinematicsStatus::IKFAST_LIB_NOT_AVAILABLE;
         return false;
     }
     else        
-        LOG_INFO("[KinematicsFactory]: IKfast shared lib successfully opened");
+        LOG_INFO("[IkFastSolver]: IKfast shared lib successfully opened");
 
     // get the forward kinematics fuction pointer
     computeFkFn= ( void ( * ) ( const IkReal* , IkReal* , IkReal* ) )  dlsym ( ikfast_handle_, "ComputeFk" );
 
     if ( ( error = dlerror() ) != NULL )
     {
-        LOG_ERROR ( "[KinematicsFactory]: Cannot find ComputeFk function. Error %s",dlerror() );
+        LOG_ERROR ( "[IkFastSolver]: Cannot find ComputeFk function. Error %s",dlerror() );
         dlclose ( ikfast_handle_ );
         kinematics_status.statuscode = KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND;
         return false;
     }
     else
-        LOG_DEBUG("[KinematicsFactory]: Found ComputeFk function in the given ikfast shared library");
+        LOG_DEBUG("[IkFastSolver]: Found ComputeFk function in the given ikfast shared library");
 
     // get the inverse kinematics fuction pointer
     computeIkFn = ( bool ( * ) ( const IkReal* , const IkReal* , const IkReal* , ikfast::IkSolutionListBase<IkReal>& ) )  dlsym ( ikfast_handle_, "ComputeIk" );
     if ( ( error = dlerror() ) != NULL )
     {
-        LOG_ERROR ( "[KinematicsFactory]: Cannot find ComputeIk function. Error %s",dlerror() );
+        LOG_ERROR ( "[IkFastSolver]: Cannot find ComputeIk function. Error %s",dlerror() );
         dlclose ( ikfast_handle_ );
         kinematics_status.statuscode = KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND;
         return false;
     }
     else
-        LOG_DEBUG("[KinematicsFactory]: Found ComputeIk function in the given ikfast shared library");
+        LOG_DEBUG("[IkFastSolver]: Found ComputeIk function in the given ikfast shared library");
     
     
     getNumFreeParametersFn = ( int ( * ) () )  dlsym ( ikfast_handle_, "GetNumFreeParameters" );
     if ( ( error = dlerror() ) != NULL )
     {
-        LOG_ERROR ( "[KinematicsFactory]: Cannot find getNumFreeParameters function. Error %s",dlerror() );
+        LOG_ERROR ( "[IkFastSolver]: Cannot find getNumFreeParameters function. Error %s",dlerror() );
         dlclose ( ikfast_handle_ );
         kinematics_status.statuscode = KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND;
         return false;
     }
     else
     {
-        LOG_DEBUG("[KinematicsFactory]: Found getNumFreeParameters function in the given ikfast shared library");
+        LOG_DEBUG("[IkFastSolver]: Found getNumFreeParameters function in the given ikfast shared library");
         vfree_.resize(getNumFreeParametersFn());
         
         if(!ikfast_config_.use_current_value_as_free_joint_param)
@@ -98,14 +98,14 @@ bool IkFastSolver::getIKFASTFunctionPtr(const std::string ikfast_lib, Kinematics
     getFreeParametersFn = ( int *( * ) ( ) )  dlsym ( ikfast_handle_, "GetFreeParameters" );
     if ( ( error = dlerror() ) != NULL )
     {
-        LOG_ERROR ( "[KinematicsFactory]: Cannot find getFreeParameters function. Error %s",dlerror() );
+        LOG_ERROR ( "[IkFastSolver]: Cannot find getFreeParameters function. Error %s",dlerror() );
         dlclose ( ikfast_handle_ );
         kinematics_status.statuscode = KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND;
         return false;
     }
     else    
     {
-        LOG_DEBUG("[KinematicsFactory]: Found getFreeParameters function in the given ikfast shared library");
+        LOG_DEBUG("[IkFastSolver]: Found getFreeParameters function in the given ikfast shared library");
         freeparams_ = getFreeParametersFn();
     }
         

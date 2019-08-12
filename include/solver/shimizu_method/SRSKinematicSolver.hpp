@@ -10,7 +10,7 @@
 /*                                                                         */
 /*                                                                         */
 /*  Author: Sankaranarayanan Natarajan                                     */
-/*  DFKI - BREMEN 2019                                                     */
+/*  DFKI - BREMEN 2009                                                     */
 /***************************************************************************/
 
 #ifndef _SRSKINEMATICSOLVER_HPP_
@@ -24,15 +24,21 @@
 #include <kdl/chainfksolverpos_recursive.hpp>
 
 #include <abstract/AbstractKinematics.hpp>
-#include <abstract/KinematicsHelper.hpp>
-#include <solver/SRSKinematicHelper.hpp>
-
-
-#define DEBUG 1                 // simply debug stuff. need to be removed soon
-#define ZERO std::numeric_limits<double>::epsilon()
+#include <solver/shimizu_method/SRSKinematicHelper.hpp>
 
 namespace kinematics_library
 {
+
+struct SRSKinematicConfig
+{
+    double offset_base_shoulder;   // distance between base to shoulder
+    double offset_shoulder_elbow;  // distance between shoulder to elbow
+    double offset_elbow_wrist;     // distance between elbow to wrist
+    double offset_wrist_tool;      // distance between wrist to tool
+
+    bool save_psi;                  // save the psi and cosine and tangent function for debugging
+    std::string save_psi_path;      // path for saving the psi
+};
 
 /**
  * @class SRSKinematicSolver
@@ -75,6 +81,28 @@ class SRSKinematicSolver : public AbstractKinematics
         */
         bool solveFK(const base::samples::Joints &joint_angles, base::samples::RigidBodyState &fk_pose, KinematicsStatus &solver_status);
 
+    private:
+        KDL::ChainFkSolverPos_recursive *fk_kdlsolver_pos_;
+        KDL::Frame kdl_frame_;
+        KDL::JntArray kdl_jt_array_, kdl_ik_jt_array_;
+        std::string base_link_, tip_link_;
+        std::string  urdf_file_path_;
+
+        double offset_base_shoulder_;   // distance between base to shoulder
+        double offset_shoulder_elbow_;  // distance between shoulder to elbow
+        double offset_elbow_wrist_;     // distance between elbow to wrist
+        double offset_wrist_tool_;      // distance between wrist to tool
+
+        std::vector<double> l_bs, l_se, l_ew, l_wt;     // vector holding the link length
+        
+        std::vector<std::pair<double,double> > jts_limits_; // minimum and maximum values for joints
+
+        std::vector< ArmAngle > feasible_psi;
+        std::vector< ArmAngle > infeasible_psi;
+        
+        SRSKinematicConfig srs_config_;
+        
+        
         /*! Calculates the inverse kinematics for a 7-DOF Anthropomorphic Manipulator with Joint Limits
         *   Input  - pos and rot contains information about the desired position and rotation
         *   Output - The joint angles for the pos and rot will be stored in an two dimensional array "jointangles"
@@ -83,7 +111,7 @@ class SRSKinematicSolver : public AbstractKinematics
         *   Return - 0 if successful, -99 if out of reach or a number between -1 and -6 specifying the single joint which ran into limits
         *            or -66 no armangle feasible due to joint limits
         */
-        int invkin(const double pos[3], const double rot[3], double jointangles[7]);
+        int invkin(const base::Position &pos, const base::Quaterniond &rot, base::commands::Joints &jointangles);
 
         /*! Calculates the Arm Angle range
         *   Input  - As,Bs,Cs-represent the shoulder and Aw,Bw,Cw represent the wrist and array debg gives which joint had singularity and
@@ -134,56 +162,15 @@ class SRSKinematicSolver : public AbstractKinematics
         int psi_picker(std::pair<double, double> act_psi, const std::string& limit, double &result);
         int check_psi_range_bw_negPI_posPI(std::pair<double, double> &act_psi);
 
-
-    private:
-        KDL::ChainFkSolverPos_recursive *fk_kdlsolver_pos_;
-
-        KDL::Frame kdl_frame_;
-        KDL::JntArray kdl_jt_array_, kdl_ik_jt_array_;
-        std::string base_link_, tip_link_;
-        std::string  urdf_file_path_;
-        
-        double DBS;                                     // distance between base to shoulder
-        double DSE;                                     // distance between shoulder to elbow
-        double DEW;                                     // distance between elbow to wrist
-        double DWT;                                     // distance between wrist to tool
-        std::vector<double> l_bs, l_se, l_ew, l_wt;     // vector holding the link length
-        
-        
-        
-        //helper function
-        void save_tangent_joint_function(const double &an, const double &bn, const double &cn,
-                                            const double &ad, const double &bd, const double &cd,
-                                            const double &min_jtag, const double &max_jtag, const char *outputdata_file);
-
-        void save_cosine_joint_function(const double &a, const double &b, const double &c,
-                                        const double &min_jtag, const double &max_jtag, const char *outputdata_file);
+        //helper function       
+        void save_joint_function(const double &an, const double &bn, const double &cn,
+                                 const double &ad, const double &bd, const double &cd,
+                                 const double &min_jtag, const double &max_jtag, const char *outputdata_file, 
+                                 const std::string &type);
 
         void save_psi_file();
         void save_psi_file_helper(const char* outputdata_file, double min, double max, double min_jt, double max_jt);
-        
         std::string printError(int err);
-        
-//         double dist_base_shoulder;              // DBS - distance between base to shoulder
-//         double dist_shoulder_elbow;             // DSE - distance between shoulder to elbow
-//         double dist_elbow_wrist;                // DEW - distance between elbow to wrist
-//         double dist_wrist_tool;                 // DWT - distance between wrist to tool
-// //         std::vector<double> l_bs, l_se, l_ew, l_wt;     // vector holding the link length
-//         std::vector<double> link_base_shoulder, link_shoulder_elbow, link_elbow_wrist, link_wrist_tool;     // vector holding the link length
-//         double link_offset[7];                              // link offsets
-
-        double min_j1, max_j1;                          // minimum and maximum values for joint 1
-        double min_j2, max_j2;                          // minimum and maximum values for joint 2
-        double min_j3, max_j3;                          // minimum and maximum values for joint 3
-        double min_j5, max_j5;                          // minimum and maximum values for joint 5
-        double max_j6, min_j6;                          // minimum and maximum values for joint 6
-        double max_j7, min_j7;                          // minimum and maximum values for joint 7
-
-        std::vector< ArmAngle > feasible_psi;
-        std::vector< ArmAngle > infeasible_psi;
-
-protected:
-    int ERR_REACH;
 };
 }
 #endif

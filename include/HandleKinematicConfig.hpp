@@ -12,6 +12,7 @@
 #if TRAC_IK_LIB_FOUND    
     #include "abstract/TracIkSolver.hpp"  
 #endif
+#include "solver/shimizu_method/SRSKinematicSolver.hpp"
 
 
 
@@ -71,6 +72,8 @@ kinematics_library::KdlConfig getKdlConfig(const YAML::Node &yaml_data);
 #if(TRAC_IK_LIB_FOUND)
     kinematics_library::TracIkConfig getTracIkConfig(const YAML::Node &yaml_data);    
 #endif
+    
+kinematics_library::SRSKinematicConfig getSRSConfig(const YAML::Node &yaml_data);    
 
 
 }

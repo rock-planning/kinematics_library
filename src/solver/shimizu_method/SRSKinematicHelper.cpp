@@ -1,4 +1,4 @@
-#include <solver/SRSKinematicHelper.hpp>
+#include <solver/shimizu_method/SRSKinematicHelper.hpp>
 
 
 
@@ -9,6 +9,21 @@ void Eul2RotMat(const double eul_zyx[3], std::vector<double> &rot_mat)
     rot_mat.at(0)= ca*cb;   rot_mat.at(3)=(ca*sb*sg)-(sa*cg);     rot_mat.at(6)=(ca*sb*cg)+(sa*sg);
     rot_mat.at(1)= sa*cb;   rot_mat.at(4)=(sa*sb*sg)+(ca*cg);     rot_mat.at(7)=(sa*sb*cg)-(ca*sg);
     rot_mat.at(2)=-sb;      rot_mat.at(5)=cb*sg;                  rot_mat.at(8)=cb*cg;
+}
+
+void quaternionToRotMat(const Eigen::Quaternion<double> &quat, std::vector<double> &rot_mat)
+{
+    rot_mat.at(0) = 1-2*((quat.y()*quat.y()) +(quat.z()*quat.z()));  rot_mat.at(3) = 2*((quat.x()*quat.y()) - (quat.z()*quat.w()));   rot_mat.at(6) = 2*((quat.x()*quat.z()) + (quat.y()*quat.w()));
+    rot_mat.at(1) = 2*((quat.x()*quat.y()) + (quat.z()*quat.w()));   rot_mat.at(4) = 1-2*((quat.x()*quat.x()) +(quat.z()*quat.z()));  rot_mat.at(7) = 2*((quat.y()*quat.z()) - (quat.x()*quat.w()));
+    rot_mat.at(2) = 2*((quat.x()*quat.z()) - (quat.y()*quat.w()));   rot_mat.at(5) = 2*((quat.y()*quat.z()) + (quat.x()*quat.w()));   rot_mat.at(8) =  1-2*((quat.x()*quat.x()) +(quat.y()*quat.y()));
+
+    //use of eigen library
+//     Eigen::Matrix3d quat_rot_mat = quat.normalized().toRotationMatrix();
+//     for(int i = 0; i < 3; i++)
+//     {
+//         for(int j = 0; j < 3; j++)
+//             rot_mat.at(i+j) = quat_rot_mat(j,i);
+//     }
 }
 
 void Tra2Eul_pos(double tra[16], double *rot, double *pos)
@@ -39,7 +54,7 @@ void Mult_mat_vec(const std::vector<double> &mat, const std::vector<double> &vec
     res.at(2)=(mat.at(2)*vec.at(0))+(mat.at(5)*vec.at(1))+(mat.at(8)*vec.at(2));
 }
 
-void rot_matrix(double theta, double alpha, std::vector<double> &res)
+void rot_matrix(const double &theta, const double &alpha, std::vector<double> &res)
 {
     double ca=cos(alpha), sa=sin(alpha), ct=cos(theta), st=sin(theta);
 
@@ -57,19 +72,21 @@ void rot_matrix(double theta, double alpha, std::vector<double> &res)
     res.at(3) = -st;  res.at(4) =  ct*ca;    res.at(5) = ct*sa;
     res.at(6) = 0.0;   res.at(7) =  -sa;       res.at(8) =  ca;*/
 }
+
 void Mult_vec_tslvec(const std::vector<double> &vec, std::vector<double> &res)
 {
     res.at(0)=vec.at(0)*vec.at(0);  res.at(3)=vec.at(0)*vec.at(1);   res.at(6)=vec.at(0)*vec.at(2);
     res.at(1)=vec.at(1)*vec.at(0);  res.at(4)=vec.at(1)*vec.at(1);   res.at(7)=vec.at(1)*vec.at(2);
     res.at(2)=vec.at(2)*vec.at(0);  res.at(5)=vec.at(2)*vec.at(1);   res.at(8)=vec.at(2)*vec.at(2);
-
 }
+
 void trans_mat(const std::vector<double> &mat, std::vector<double> &res)
 {
     res.at(0)=mat.at(0);  res.at(3)=mat.at(1);   res.at(6)=mat.at(2);
     res.at(1)=mat.at(3);  res.at(4)=mat.at(4);   res.at(7)=mat.at(5);
     res.at(2)=mat.at(6);  res.at(5)=mat.at(7);   res.at(8)=mat.at(8);
 }
+
 void identityMatrix(std::vector<double> &dest)
 {
 	for(int i = 0; i < 16; i++)

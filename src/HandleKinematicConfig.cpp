@@ -94,4 +94,19 @@ kinematics_library::TracIkConfig getTracIkConfig(const YAML::Node &yaml_data)
 }
 #endif
 
+kinematics_library::SRSKinematicConfig getSRSConfig(const YAML::Node &yaml_data)
+{
+    kinematics_library::SRSKinematicConfig config;
+    
+    config.offset_base_shoulder     = handle_kinematic_config::getValue<double>(yaml_data, "offset_base_shoulder");
+    config.offset_shoulder_elbow    = handle_kinematic_config::getValue<double>(yaml_data, "offset_shoulder_elbow");
+    config.offset_elbow_wrist       = handle_kinematic_config::getValue<double>(yaml_data, "offset_elbow_wrist");
+    config.offset_wrist_tool        = handle_kinematic_config::getValue<double>(yaml_data, "offset_wrist_tool");
+    config.save_psi                 = handle_kinematic_config::getValue<bool>(yaml_data, "save_psi");
+    config.save_psi_path            = handle_kinematic_config::getValue<std::string>(yaml_data, "save_psi_path");
+    
+    return config;
+
+}
+
 }
