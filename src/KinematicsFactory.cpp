@@ -1,4 +1,4 @@
-#include "KinematicsFactory.hpp"
+#include "kinematics_library/KinematicsFactory.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 

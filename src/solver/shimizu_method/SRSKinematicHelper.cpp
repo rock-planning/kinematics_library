@@ -1,6 +1,4 @@
-#include <solver/shimizu_method/SRSKinematicHelper.hpp>
-
-
+#include "kinematics_library/solver/shimizu_method/SRSKinematicHelper.hpp"
 
 void Eul2RotMat(const double eul_zyx[3], std::vector<double> &rot_mat)
 {

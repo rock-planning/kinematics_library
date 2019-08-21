@@ -9,7 +9,7 @@
 
 #include <trac_ik/trac_ik.hpp>
 
-#include "AbstractKinematics.hpp"
+#include "kinematics_library/abstract/AbstractKinematics.hpp"
 
 namespace kinematics_library
 {

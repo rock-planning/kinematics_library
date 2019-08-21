@@ -23,8 +23,8 @@
 #include<iostream>
 #include <kdl/chainfksolverpos_recursive.hpp>
 
-#include <abstract/AbstractKinematics.hpp>
-#include <solver/shimizu_method/SRSKinematicHelper.hpp>
+#include "kinematics_library/abstract/AbstractKinematics.hpp"
+#include "kinematics_library/solver/shimizu_method/SRSKinematicHelper.hpp"
 
 namespace kinematics_library
 {

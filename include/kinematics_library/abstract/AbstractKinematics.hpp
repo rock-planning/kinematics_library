@@ -6,8 +6,8 @@
 #include <iostream>
 #include <string>
 #include <base/Eigen.hpp>
-#include "KinematicsConfig.hpp"
-#include "KinematicsHelper.hpp"
+#include "kinematics_library/KinematicsConfig.hpp"
+#include "kinematics_library/abstract/KinematicsHelper.hpp"
 
 /** \file AbstractKinematics.hpp
 *    \brief Abstract kinematics header.

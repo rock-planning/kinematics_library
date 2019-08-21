@@ -1,4 +1,4 @@
-#include <HandleKinematicConfig.hpp>
+#include "kinematics_library/HandleKinematicConfig.hpp"
 
 #if(TRAC_IK_LIB_FOUND)
 namespace YAML {

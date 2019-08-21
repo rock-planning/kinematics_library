@@ -12,7 +12,7 @@
 #include <kdl/chainiksolvervel_pinv.hpp>
 #include <kdl/frames.hpp>
 
-#include "AbstractKinematics.hpp"
+#include "kinematics_library/abstract/AbstractKinematics.hpp"
 
 namespace kinematics_library
 {

@@ -5,9 +5,9 @@
 #include <boost/function.hpp>
 #include <string>
 
-#include "abstract/AbstractKinematics.hpp"
-#include "abstract/KinematicsHelper.hpp"
-#include "abstract/Ikfast.h"
+#include "kinematics_library/abstract/AbstractKinematics.hpp"
+#include "kinematics_library/abstract/KinematicsHelper.hpp"
+#include "kinematics_library/abstract/Ikfast.h"
 
 #include <dlfcn.h>
 

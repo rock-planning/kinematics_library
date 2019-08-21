@@ -1,4 +1,4 @@
-#include "HandleKinematicConfig.hpp"
+#include "kinematics/library/HandleKinematicConfig.hpp"
 
 namespace kinematics_library
 {

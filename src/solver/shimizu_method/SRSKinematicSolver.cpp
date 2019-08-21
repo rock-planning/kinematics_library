@@ -1,5 +1,4 @@
-// #include <solver/SRSKinematicSolver.hpp>
-#include "HandleKinematicConfig.hpp"
+#include "kinematics_library/HandleKinematicConfig.hpp"
 
 namespace kinematics_library
 {
@@ -204,7 +203,7 @@ int SRSKinematicSolver::invkin(const base::Position &pos, const base::Quaternion
         Mult_mat_mat(usw_sk, R_03_R, As);
         Mult_mat_mat(usw_sk, usw_sk, t_Bs);
 
-        for(int i=0; i<9; i++)
+        for(std::size_t i=0; i<9; i++)
         t_Bs.at(i) = -1.0 * t_Bs.at(i);
 
         Mult_mat_mat(t_Bs, R_03_R, Bs);
@@ -426,16 +425,16 @@ int SRSKinematicSolver::cal_armangle(   const std::vector<double> &As, const std
     
     LOG_DEBUG("[SRSKinematicSolver]: compliment infeasbile psi");
 
-    for(int i = 0; i< single_feasible_result.size(); i++)
+    for(std::size_t i = 0; i< single_feasible_result.size(); i++)
     {
-        for(int j = 0; j< single_feasible_result.at(i).psi.size(); j++)
+        for(std::size_t j = 0; j< single_feasible_result.at(i).psi.size(); j++)
             LOG_DEBUG("[SRSKinematicSolver]: Joint %i %s %d %d",single_feasible_result.at(i).joint_number, single_feasible_result.at(i).joint_name, 
                 single_feasible_result.at(i).psi.at(j).first*SRSKinematic::RTD,single_feasible_result.at(i).psi.at(j).second*SRSKinematic::RTD);
     }
 
     LOG_DEBUG("[SRSKinematicSolver]: Final feasbile psi %i", final_feasible_armangle.size());
 
-    for(int i = 0; i< final_feasible_armangle.size(); i++)
+    for(std::size_t i = 0; i< final_feasible_armangle.size(); i++)
         LOG_DEBUG("[SRSKinematicSolver]: %d %d",final_feasible_armangle.at(i).first*SRSKinematic::RTD, final_feasible_armangle.at(i).second*SRSKinematic::RTD);
 
     return succeeded;
@@ -1266,7 +1265,7 @@ void SRSKinematicSolver::save_joint_function(const double &an, const double &bn,
 void SRSKinematicSolver::save_psi_file()
 {
 
-    for(int i = 0; i< feasible_psi.size(); i++)
+    for(std::size_t i = 0; i< feasible_psi.size(); i++)
     {
         if(feasible_psi.at(i).joint_number == 1)                        
             save_psi_file_helper((feasible_psi.at(i).joint_name).c_str(), feasible_psi.at(i).psi.at(0).first, feasible_psi.at(i).psi.at(0).second, jts_limits_[0].first, jts_limits_[0].second);
@@ -1282,7 +1281,7 @@ void SRSKinematicSolver::save_psi_file()
             save_psi_file_helper((feasible_psi.at(i).joint_name).c_str(), feasible_psi.at(i).psi.at(0).first, feasible_psi.at(i).psi.at(0).second, jts_limits_[6].first, jts_limits_[6].second);
     }
 
-    for(int i = 0; i< infeasible_psi.size(); i++)
+    for(std::size_t i = 0; i< infeasible_psi.size(); i++)
     {
         if(infeasible_psi.at(i).joint_number == 1)
             save_psi_file_helper((infeasible_psi.at(i).joint_name).c_str(), infeasible_psi.at(i).psi.at(0).first, infeasible_psi.at(i).psi.at(0).second, jts_limits_[0].first, jts_limits_[0].second);

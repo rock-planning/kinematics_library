@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef MATH_MISC_H_
-#define MATH_MISC_H_
+#ifndef SRSKINEMATICS_HELPER_H_
+#define SRSKINEMATICS_HELPER_H_
 
 #include <iostream>
 #include <vector>

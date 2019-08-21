@@ -1,4 +1,4 @@
-#include <abstract/AbstractKinematics.hpp>
+#include "kinematics_library/abstract/AbstractKinematics.hpp"
 
 namespace kinematics_library
 {

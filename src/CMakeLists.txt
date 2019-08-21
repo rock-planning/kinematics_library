@@ -56,6 +56,6 @@ add_library(kinematics_library SHARED ${SRCS})
 target_link_libraries(kinematics_library ${EXTERNAL_LIB} ${CMAKE_DL_LIBS} ${YAML_LIBRARIES})
 
 set(TARGET_NAME ${PROJECT_NAME})
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include/kinematics_library)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/kinematics_library DESTINATION include)
 install(TARGETS kinematics_library DESTINATION lib)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig) 
