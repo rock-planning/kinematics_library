@@ -10,7 +10,7 @@ SRSKinematicSolver::SRSKinematicSolver ( const KinematicsConfig &kinematics_conf
     // assign the config
     YAML::Node input_config;
     handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config);
-    const YAML::Node& srs_config_node = input_config["srs_kinematic_config"];
+    const YAML::Node& srs_config_node = input_config["srs_config"];
     srs_config_ = handle_kinematic_config::getSRSConfig(srs_config_node);
     
 
@@ -24,21 +24,25 @@ SRSKinematicSolver::SRSKinematicSolver ( const KinematicsConfig &kinematics_conf
     kdl_ik_jt_array_.resize ( kdl_chain_.getNrOfJoints() );
 
     // base-shoulder vector
+    l_bs.resize(3, 0.0);
     l_bs.at(0) = 0;
     l_bs.at(1) = 0;
     l_bs.at(2) = srs_config_.offset_base_shoulder;
 
     // shoulder-elbow vector
+    l_se.resize(3, 0.0);
     l_se.at(0) = 0;
     l_se.at(1) = -srs_config_.offset_shoulder_elbow;
     l_se.at(2) = 0;
 
     // elbow-wrist vector
+    l_ew.resize(3, 0.0);
     l_ew.at(0) = 0;
     l_ew.at(1) = 0.0;
     l_ew.at(2) = srs_config_.offset_elbow_wrist;
 
     // wrist-tool vector
+    l_wt.resize(3, 0.0);
     l_wt.at(0) = 0;
     l_wt.at(1) = 0;
     l_wt.at(2) = srs_config_.offset_wrist_tool;
@@ -65,6 +69,7 @@ bool SRSKinematicSolver::solveIK (const base::samples::RigidBodyState target_pos
     // The solver could give "all" the possible solutions by incrementing the arm angle, thats the beauty of this solver
     solution.resize(1);
     solution[0].names = jt_names_;
+    solution[0].elements.resize(jt_names_.size());
     
     int res = invkin(target_pose.position, target_pose.orientation, solution[0]);
         
@@ -153,7 +158,7 @@ int SRSKinematicSolver::invkin(const base::Position &pos, const base::Quaternion
         jointangles.elements.at(3).position = -acos(thet4);  //using cosine law
 
 
-        //std::cout<< "JOINT 4 = "<<jointangles(3).position*SRSKinematic::RTD<<"   "<<thet4<<"  "<<sqrt(1-(thet4*thet4))<<std::endl;
+        std::cout<< "JOINT 4 = "<<jointangles.elements.at(3).position*SRSKinematic::RTD<<"   "<<thet4<<"  "<<sqrt(1-(thet4*thet4))<<std::endl;
 
         //Below calculate the reference shoulder angle
         rot_matrix(jointangles.elements.at(3).position, SRSKinematic::PI /2.0, R34);
@@ -428,14 +433,14 @@ int SRSKinematicSolver::cal_armangle(   const std::vector<double> &As, const std
     for(std::size_t i = 0; i< single_feasible_result.size(); i++)
     {
         for(std::size_t j = 0; j< single_feasible_result.at(i).psi.size(); j++)
-            LOG_DEBUG("[SRSKinematicSolver]: Joint %i %s %d %d",single_feasible_result.at(i).joint_number, single_feasible_result.at(i).joint_name, 
+            LOG_DEBUG("[SRSKinematicSolver]: Joint %i %s %f %f",single_feasible_result.at(i).joint_number, single_feasible_result.at(i).joint_name.c_str(), 
                 single_feasible_result.at(i).psi.at(j).first*SRSKinematic::RTD,single_feasible_result.at(i).psi.at(j).second*SRSKinematic::RTD);
     }
 
     LOG_DEBUG("[SRSKinematicSolver]: Final feasbile psi %i", final_feasible_armangle.size());
 
     for(std::size_t i = 0; i< final_feasible_armangle.size(); i++)
-        LOG_DEBUG("[SRSKinematicSolver]: %d %d",final_feasible_armangle.at(i).first*SRSKinematic::RTD, final_feasible_armangle.at(i).second*SRSKinematic::RTD);
+        LOG_DEBUG("[SRSKinematicSolver]: %f %f",final_feasible_armangle.at(i).first*SRSKinematic::RTD, final_feasible_armangle.at(i).second*SRSKinematic::RTD);
 
     return succeeded;
 }
@@ -449,7 +454,7 @@ int SRSKinematicSolver::tangenttype_armangle(   const double &an, const double b
 {
     int succeeded = 0;
 
-    LOG_DEBUG("[SRSKinematicSolver]: Joint number %i with condition %d", jointnumber, condition);
+    LOG_DEBUG("[SRSKinematicSolver]: Joint number %i with condition %f", jointnumber, condition);
     
 
     if ((condition < SRSKinematic::PAC) && (condition > SRSKinematic::NAC))
@@ -504,7 +509,7 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_stationarycase(const doubl
     left_jtlimit    = atan2( (( (at * bn) - (bt * an)) / -ct), ( ((at * bd) - (bt * ad)) / -ct ) );
     right_jtlimit   = atan2( (( (at * bn) - (bt * an)) /  ct), ( ((at * bd) - (bt * ad)) /  ct ) );
 
-    LOG_DEBUG("[SRSKinematicSolver]: SINGULAR CASE with psi_stationary %d", psi_stationary*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: SINGULAR CASE with psi_stationary %f", psi_stationary*SRSKinematic::RTD);
 
     return 0;
 }
@@ -565,7 +570,7 @@ int SRSKinematicSolver::feasible_armangle_monotonicfunction(const double &an, co
         return succeeded;
 
     //feasible_psi.push_back(calculated_psi);
-    LOG_DEBUG("[SRSKinematicSolver]: Calculated PSI %d", calculated_psi.psi.at(0).first*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: Calculated PSI %f", calculated_psi.psi.at(0).first*SRSKinematic::RTD);
     
     if ( fabs(max_jtag - SRSKinematic::PI /2.0) < SRSKinematic::ZERO) //+90
     {
@@ -601,7 +606,7 @@ int SRSKinematicSolver::feasible_armangle_monotonicfunction(const double &an, co
 
     feasible_psi.push_back(calculated_psi);
 
-    LOG_DEBUG("[SRSKinematicSolver]: Calculated PSI %d", calculated_psi.psi.at(0).second*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: Calculated PSI %f", calculated_psi.psi.at(0).second*SRSKinematic::RTD);
 
     return succeeded;
 
@@ -639,14 +644,14 @@ int SRSKinematicSolver::feasible_armangle_cosinetype_cyclicfunction(const double
     global_min = acos((at * sin(psi_min)) + (bt * cos(psi_min)) + ct);
     global_max = acos((at * sin(psi_max)) + (bt * cos(psi_max)) + ct);
 
-    LOG_DEBUG("[SRSKinematicSolver]: global_min = %d global_max = %d", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
 
     if(global_min > global_max)
     {
         std::swap(global_min, global_max);
         swap_flag = true;
 
-        LOG_DEBUG("[SRSKinematicSolver]: \n Swapping global_min = %d global_max = %d \n", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
+        LOG_DEBUG("[SRSKinematicSolver]: \n Swapping global_min = %f global_max = %f \n", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
     }
 
 //     std::cout<< t_sqrt<<"  "<<at<<"  "<<bt<<"  "<<ct<<"  "<<SRSKinematic::ZERO<<std::endl;
@@ -699,9 +704,9 @@ int SRSKinematicSolver::feasible_armangle_cosinetype_cyclicfunction(const double
             succeeded = -(jointnumber);
 
             LOG_DEBUG("[SRSKinematicSolver]: Failed in boundary condition in cosine function");
-            LOG_DEBUG("[SRSKinematicSolver]: psi_min = %d psi_max = %d",psi_min*SRSKinematic::RTD, psi_max*SRSKinematic::RTD );
-            LOG_DEBUG("[SRSKinematicSolver]: global_min = %d global_max = %d", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
-            LOG_DEBUG("[SRSKinematicSolver]: psi.first = %d psi.second = %d", psi.first*SRSKinematic::RTD, psi.second*SRSKinematic::RTD);
+            LOG_DEBUG("[SRSKinematicSolver]: psi_min = %f psi_max = %f",psi_min*SRSKinematic::RTD, psi_max*SRSKinematic::RTD );
+            LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
+            LOG_DEBUG("[SRSKinematicSolver]: psi.first = %f psi.second = %f", psi.first*SRSKinematic::RTD, psi.second*SRSKinematic::RTD);
 
             return succeeded;
         }
@@ -834,7 +839,7 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_cyclicfunction(const doubl
     psi_min = 2.0*(atan( (at-t_sqrt) / (bt-ct)) );
     psi_max = 2.0*(atan( (at+t_sqrt) / (bt-ct)) );
 
-    LOG_DEBUG("[SRSKinematicSolver]: psi_min = %d psi_max = %d",psi_min*SRSKinematic::RTD, psi_max*SRSKinematic::RTD );
+    LOG_DEBUG("[SRSKinematicSolver]: psi_min = %f psi_max = %f",psi_min*SRSKinematic::RTD, psi_max*SRSKinematic::RTD );
 
     global_min = atan2( ( (an * sin(psi_min))+(bn * cos(psi_min))+cn ), ( (ad * sin(psi_min))+(bd * cos(psi_min))+cd ) );
     global_max = atan2( ( (an * sin(psi_max))+(bn * cos(psi_max))+cn ), ( (ad * sin(psi_max))+(bd * cos(psi_max))+cd ) );
@@ -848,7 +853,7 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_cyclicfunction(const doubl
 
     }*/
 
-    LOG_DEBUG("[SRSKinematicSolver]: global_min = %d global_max = %d", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
 
     calculated_psi.joint_name = jointname;
     calculated_psi.joint_number = jointnumber;
@@ -920,8 +925,8 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_cyclicfunction(const doubl
         feasible_psi.push_back(calculated_psi);
     }
 
-    LOG_DEBUG("[SRSKinematicSolver]: psi_min = %d psi_max = %d",psi_min*SRSKinematic::RTD, psi_max*SRSKinematic::RTD );
-    LOG_DEBUG("[SRSKinematicSolver]: global_min = %d global_max = %d", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: psi_min = %f psi_max = %f",psi_min*SRSKinematic::RTD, psi_max*SRSKinematic::RTD );
+    LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
 
     return succeeded;
 }
@@ -970,7 +975,7 @@ int SRSKinematicSolver::calculate_region_armAngle_tangentcylic(const double &an,
 
     psi_pair = std::make_pair(psi.first, psi.second);
 
-    LOG_DEBUG("[SRSKinematicSolver]: psi.first = %d psi.second = %d",psi.first*SRSKinematic::RTD, psi.second*SRSKinematic::RTD );
+    LOG_DEBUG("[SRSKinematicSolver]: psi.first = %f psi.second = %f",psi.first*SRSKinematic::RTD, psi.second*SRSKinematic::RTD );
 
     return succeeded;
 }
@@ -1023,9 +1028,9 @@ int SRSKinematicSolver::solve_transcendental_equation(const double a, const doub
         transcendental_solutions.second = psi_1 + psi_2;
     }
     
-    LOG_DEBUG("[SRSKinematicSolver]: transc_equ: psi_1 = %d psi_2 = %d sqrt = %d a = %d b = %d c = %d",psi_1*SRSKinematic::RTD, psi_2*SRSKinematic::RTD, 
+    LOG_DEBUG("[SRSKinematicSolver]: transc_equ: psi_1 = %f psi_2 = %f sqrt = %f a = %f b = %f c = %f",psi_1*SRSKinematic::RTD, psi_2*SRSKinematic::RTD, 
                                                                                                                   sqrt(((a * a) + (b * b) - (c * c)) ), a, b, c);
-    LOG_DEBUG("[SRSKinematicSolver]: transc_equ solu %d %d", transcendental_solutions.first*SRSKinematic::RTD, transcendental_solutions.second*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: transc_equ solu %f %f", transcendental_solutions.first*SRSKinematic::RTD, transcendental_solutions.second*SRSKinematic::RTD);
     
     return succeeded;
 }
@@ -1061,9 +1066,9 @@ int SRSKinematicSolver::solve_transcendental_equation_newmethod(const double a, 
         transcendental_solutions.second = acos(temp_cos) + alpha;
     }
     
-    LOG_DEBUG("[SRSKinematicSolver]: new transc_equ: R = %d sin_alpha = %d cos_alpha = %d alpha = %d a = %d b = %d c = %d",R, sin_alpha, cos_alpha, 
+    LOG_DEBUG("[SRSKinematicSolver]: new transc_equ: R = %f sin_alpha = %f cos_alpha = %f alpha = %f a = %f b = %f c = %f",R, sin_alpha, cos_alpha, 
                                                                                                                           alpha*SRSKinematic::RTD, a, b, c);
-    LOG_DEBUG("[SRSKinematicSolver]: new transc_equ solu %d %d", transcendental_solutions.first*SRSKinematic::RTD, transcendental_solutions.second*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: new transc_equ solu %f %f", transcendental_solutions.first*SRSKinematic::RTD, transcendental_solutions.second*SRSKinematic::RTD);
     
     return succeeded;
 }

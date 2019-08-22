@@ -36,7 +36,7 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
         case SRS:
         {
             LOG_INFO_S<<"[KinematicsFactory]: SRS solver is selected";
-            //kinematic_solver = std::shared_ptr<SRSKinematicSolver> ( new SRSKinematicSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, kdl_chain_ ) );
+            kinematic_solver = std::shared_ptr<SRSKinematicSolver> ( new SRSKinematicSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, kdl_chain_ ) );
             break;
         }
         case KDL:
@@ -80,7 +80,7 @@ bool KinematicsFactory::initialise ( const KinematicsConfig &kinematics_config, 
     if ( !kdl_tree_.getChain ( kinematics_config.base_name, kinematics_config.tip_name, kdl_chain_ ) )
     {
         kinematics_status.statuscode = KinematicsStatus::KDL_CHAIN_FAILED;
-        LOG_FATAL ( "[KinematicsFactory]: Could not initiailise KDL chain !" );
+        LOG_FATAL ( "[KinematicsFactory]: Could not initialise KDL chain !" );
         return false;
     }
     else
@@ -114,7 +114,7 @@ bool KinematicsFactory::initialise ( const KinematicsConfig &kinematics_config, 
 
     }
 
-    LOG_DEBUG ( "[KinematicsFactory]: Initiailising finished" );
+    LOG_DEBUG ( "[KinematicsFactory]: Kinematics initialisation finished" );
     return true;
 }
 

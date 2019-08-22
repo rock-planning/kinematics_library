@@ -31,6 +31,8 @@ namespace kinematics_library
 
 struct SRSKinematicConfig
 {
+    SRSKinematicConfig(): offset_base_shoulder(0.0), offset_shoulder_elbow(0.0), offset_elbow_wrist(0.0), 
+                          offset_wrist_tool(0.0), save_psi(false), save_psi_path("") {}
     double offset_base_shoulder;   // distance between base to shoulder
     double offset_shoulder_elbow;  // distance between shoulder to elbow
     double offset_elbow_wrist;     // distance between elbow to wrist
