@@ -13,7 +13,8 @@ enum KinematicSolver
     IKFAST,
     SRS,
     KDL,
-    TRACIK
+    TRACIK,
+    IK7DOF
 };
 
 struct LinearConfig

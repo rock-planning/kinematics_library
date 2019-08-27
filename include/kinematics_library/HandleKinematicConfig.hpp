@@ -12,8 +12,8 @@
 #if TRAC_IK_LIB_FOUND    
     #include "abstract/TracIkSolver.hpp"  
 #endif
-#include "solver/shimizu_method/SRSKinematicSolver.hpp"
-
+//#include "solver/shimizu_method/SRSKinematicSolver.hpp"
+#include "solver/asfour_method/IK7DoFSolver.hpp"
 
 
 namespace handle_kinematic_config
@@ -73,7 +73,9 @@ kinematics_library::KdlConfig getKdlConfig(const YAML::Node &yaml_data);
     kinematics_library::TracIkConfig getTracIkConfig(const YAML::Node &yaml_data);    
 #endif
     
-kinematics_library::SRSKinematicConfig getSRSConfig(const YAML::Node &yaml_data);    
+//kinematics_library::SRSKinematicConfig getSRSConfig(const YAML::Node &yaml_data);    
+
+kinematics_library::IK7DoFConfig getIK7DoFConfig(const YAML::Node &yaml_data);
 
 
 }
