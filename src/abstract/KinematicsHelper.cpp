@@ -172,16 +172,15 @@ void getPositionRotation(const Eigen::Matrix4d &hom_mat, base::Vector3d &fk_posi
     }
 }
 
-void getPositionRotation(const Eigen::Matrix4d &hom_mat, base::Vector3d &fk_position, base::Quaterniond &fk_orientationZYX)
+void getPositionRotation(const Eigen::Matrix4d &hom_mat, base::Vector3d &fk_position, base::Quaterniond &fk_orientation)
 {
     // position
     fk_position(0) = hom_mat(0,3);
     fk_position(1) = hom_mat(1,3);
     fk_position(2) = hom_mat(2,3);
 
-    //rotation
-    base::Quaterniond quaternion_rot(hom_mat.topLeftCorner<3,3>());
-    fk_orientationZYX = quaternion_rot;        
+    //rotation    
+    fk_orientation = base::Quaterniond(hom_mat.topLeftCorner<3,3>());
 }
 
 void getPositionRotation(const Eigen::Matrix4d &hom_mat, base::samples::RigidBodyState rbs_pose)
@@ -212,11 +211,9 @@ void quaternionToRotationMatrixArray(const base::Quaterniond &quat, double *rot_
 
 void getHomogeneousMatrix(const base::Vector3d &fk_position, const base::Quaterniond &fk_orientation, Eigen::Matrix4d &matrix)
 {
-    Eigen::Matrix3d rot_matrix = fk_orientation.toRotationMatrix();
-
     matrix = Eigen::Matrix4d::Zero();
-    matrix.topLeftCorner<3,3>() 	= rot_matrix;
-    matrix.topRightCorner<3,1>() 	= fk_position;		
+    matrix.topLeftCorner<3,3>()  = fk_orientation.toRotationMatrix();
+    matrix.topRightCorner<3,1>() = fk_position;
     matrix(3,3) = 1.0;		
 
 }

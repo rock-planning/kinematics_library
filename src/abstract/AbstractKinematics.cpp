@@ -34,6 +34,16 @@ base::samples::RigidBodyState AbstractKinematics::transformPose(const std::strin
     return target_pose;
 }
 
+base::samples::RigidBodyState AbstractKinematics::transformPose(const std::string &source_frame, const std::string &target_frame, const base::samples::RigidBodyState &source_pose)
+{
+    base::samples::RigidBodyState target_pose;
+    target_pose.sourceFrame = source_frame;
+    target_pose.targetFrame = target_frame;
+    
+    convertPoseBetweenDifferentFrames(kdl_tree_, source_pose, target_pose);
+    return target_pose;
+}
+
 bool AbstractKinematics::solveIKRelatively(const base::samples::RigidBodyState &current_pose, const base::samples::Joints &joint_angles, 
                                            const base::samples::RigidBodyState &relative_pose,
                                            std::vector<base::commands::Joints> &solution, KinematicsStatus &solver_status)

@@ -68,6 +68,8 @@ class AbstractKinematics
                                                        const base::samples::RigidBodyState &relative_pose);
 
         base::samples::RigidBodyState transformPose(const std::string &frame_name, const base::samples::RigidBodyState &current_pose);
+        
+        base::samples::RigidBodyState transformPose(const std::string &source_frame, const std::string &target_frame, const base::samples::RigidBodyState &source_pose);
 
         std::string getWorldRootName(){return kdl_tree_.getRootSegment()->first;}
 
