@@ -6,8 +6,8 @@
 #include <vector>
 
 namespace kinematics_library
-{   
-   
+{
+
 enum KinematicSolver
 {
     IKFAST,
@@ -68,10 +68,13 @@ struct KinematicsStatus
         FK_FOUND,
         NO_IK_SOLUTION,
         NO_FK_SOLUTION,
-        IK_TIMEOUT,       
+        IK_TIMEOUT,
         IK_JOINTLIMITS_VIOLATED,
         IKFAST_LIB_NOT_AVAILABLE,
         IKFAST_FUNCTION_NOT_FOUND,
+        NO_CONFIG_FILE,
+        CONFIG_READ_ERROR,
+        SUCCESS,
         INVALID_STATE
     }statuscode;
 

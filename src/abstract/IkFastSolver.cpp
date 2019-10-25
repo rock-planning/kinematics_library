@@ -10,10 +10,11 @@ IkFastSolver::IkFastSolver( const KinematicsConfig &kinematics_config, const std
    
     // assign the config
     YAML::Node input_config;
-    handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config);
+    // check whether the config could be loaded or not.
+    if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
+        return;
     const YAML::Node& ikfast_config_node = input_config["ikfast_config"];
     ikfast_config_ = handle_kinematic_config::getIkFastConfig(kinematics_config.solver_config_abs_path, ikfast_config_node);
-
 
     kdl_tree_   = kdl_tree;
     kdl_chain_  = kdl_chain;

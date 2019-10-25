@@ -11,9 +11,9 @@ void Eul2RotMat(const double eul_zyx[3], std::vector<double> &rot_mat)
 
 void quaternionToRotMat(const Eigen::Quaternion<double> &quat, std::vector<double> &rot_mat)
 {
-    rot_mat.at(0) = 1-2*((quat.y()*quat.y()) +(quat.z()*quat.z()));  rot_mat.at(3) = 2*((quat.x()*quat.y()) - (quat.z()*quat.w()));   rot_mat.at(6) = 2*((quat.x()*quat.z()) + (quat.y()*quat.w()));
-    rot_mat.at(1) = 2*((quat.x()*quat.y()) + (quat.z()*quat.w()));   rot_mat.at(4) = 1-2*((quat.x()*quat.x()) +(quat.z()*quat.z()));  rot_mat.at(7) = 2*((quat.y()*quat.z()) - (quat.x()*quat.w()));
-    rot_mat.at(2) = 2*((quat.x()*quat.z()) - (quat.y()*quat.w()));   rot_mat.at(5) = 2*((quat.y()*quat.z()) + (quat.x()*quat.w()));   rot_mat.at(8) =  1-2*((quat.x()*quat.x()) +(quat.y()*quat.y()));
+//     rot_mat.at(0) = 1-2*((quat.y()*quat.y()) +(quat.z()*quat.z()));  rot_mat.at(3) = 2*((quat.x()*quat.y()) - (quat.z()*quat.w()));   rot_mat.at(6) = 2*((quat.x()*quat.z()) + (quat.y()*quat.w()));
+//     rot_mat.at(1) = 2*((quat.x()*quat.y()) + (quat.z()*quat.w()));   rot_mat.at(4) = 1-2*((quat.x()*quat.x()) +(quat.z()*quat.z()));  rot_mat.at(7) = 2*((quat.y()*quat.z()) - (quat.x()*quat.w()));
+//     rot_mat.at(2) = 2*((quat.x()*quat.z()) - (quat.y()*quat.w()));   rot_mat.at(5) = 2*((quat.y()*quat.z()) + (quat.x()*quat.w()));   rot_mat.at(8) =  1-2*((quat.x()*quat.x()) +(quat.y()*quat.y()));
 
     //use of eigen library
 //     Eigen::Matrix3d quat_rot_mat = quat.normalized().toRotationMatrix();
@@ -22,6 +22,12 @@ void quaternionToRotMat(const Eigen::Quaternion<double> &quat, std::vector<doubl
 //         for(int j = 0; j < 3; j++)
 //             rot_mat.at(i+j) = quat_rot_mat(j,i);
 //     }
+    
+    Eigen::Matrix3d mat = quat.toRotationMatrix();
+    rot_mat.at(0) = mat(0,0); rot_mat.at(3) = mat(0,1); rot_mat.at(6) = mat(0,2);
+    rot_mat.at(1) = mat(1,0); rot_mat.at(4) = mat(1,1); rot_mat.at(7) = mat(1,2);
+    rot_mat.at(2) = mat(2,0); rot_mat.at(5) = mat(2,1); rot_mat.at(8) = mat(2,2);
+    
 }
 
 void Tra2Eul_pos(double tra[16], double *rot, double *pos)
@@ -114,6 +120,26 @@ void multMatrix(const std::vector<double> &src1, const std::vector<double> &src2
     dest[13] = src1.at(1)*src2[12] + src1.at(5)*src2[13] + src1.at(9)*src2[14] + src1[13]*src2[15];
     dest[14] = src1.at(2)*src2[12] + src1.at(6)*src2[13] + src1.at(10)*src2[14] + src1[14]*src2[15];
     dest[15] = src1.at(3)*src2[12] + src1.at(7)*src2[13] + src1.at(11)*src2[14] + src1[15]*src2[15];
+}
+
+void multMatrix(double src1[16], double src2[16], double *dest)
+{
+    dest[0]  = src1[0]*src2[0] + src1[4]*src2[1] + src1[8]*src2[2] + src1[12]*src2[3];
+    dest[1]  = src1[1]*src2[0] + src1[5]*src2[1] + src1[9]*src2[2] + src1[13]*src2[3];
+    dest[2]  = src1[2]*src2[0] + src1[6]*src2[1] + src1[10]*src2[2] + src1[14]*src2[3];
+    dest[3]  = src1[3]*src2[0] + src1[7]*src2[1] + src1[11]*src2[2] + src1[15]*src2[3];
+    dest[4]  = src1[0]*src2[4] + src1[4]*src2[5] + src1[8]*src2[6] + src1[12]*src2[7];
+    dest[5]  = src1[1]*src2[4] + src1[5]*src2[5] + src1[9]*src2[6] + src1[13]*src2[7];
+    dest[6]  = src1[2]*src2[4] + src1[6]*src2[5] + src1[10]*src2[6] + src1[14]*src2[7];
+    dest[7]  = src1[3]*src2[4] + src1[7]*src2[5] + src1[11]*src2[6] + src1[15]*src2[7];
+    dest[8]  = src1[0]*src2[8] + src1[4]*src2[9] + src1[8]*src2[10] + src1[12]*src2[11];
+    dest[9]  = src1[1]*src2[8] + src1[5]*src2[9] + src1[9]*src2[10] + src1[13]*src2[11];
+    dest[10] = src1[2]*src2[8] + src1[6]*src2[9] + src1[10]*src2[10] + src1[14]*src2[11];
+    dest[11] = src1[3]*src2[8] + src1[7]*src2[9] + src1[11]*src2[10] + src1[15]*src2[11];
+    dest[12] = src1[0]*src2[12] + src1[4]*src2[13] + src1[8]*src2[14] + src1[12]*src2[15];
+    dest[13] = src1[1]*src2[12] + src1[5]*src2[13] + src1[9]*src2[14] + src1[13]*src2[15];
+    dest[14] = src1[2]*src2[12] + src1[6]*src2[13] + src1[10]*src2[14] + src1[14]*src2[15];
+    dest[15] = src1[3]*src2[12] + src1[7]*src2[13] + src1[11]*src2[14] + src1[15]*src2[15];
 }
 
 int complement_of_infeasible_psi( const std::vector < ArmAngle > &infeasible_psi, std::vector< ArmAngle > &complimented_infeasbile_psi)

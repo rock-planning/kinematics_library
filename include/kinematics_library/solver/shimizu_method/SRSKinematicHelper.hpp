@@ -76,6 +76,7 @@ void Mult_vec_tslvec(const std::vector<double> &vec, std::vector<double> &res);
 void trans_mat(const std::vector<double> &mat, std::vector<double> &res);
 void identityMatrix(std::vector<double> &dest);
 void multMatrix(const std::vector<double> &src1, const std::vector<double> &src2, std::vector<double> &dest);
+void multMatrix(double src1[16], double src2[16], double *dest);
 int complement_of_infeasible_psi( const std::vector< ArmAngle > &infeasible_psi, std::vector< ArmAngle > &complimented_infeasbile_psi);
 int union_joints_with_only_one_feasible_armangle(const std::vector< ArmAngle > &feasbile_armangle, std::vector< ArmAngle > &result);
 int union_of_all_feasible_armangle(const std::vector< ArmAngle > &unsorted_feasible_psi, std::vector< std::pair<double,double>  > &final_feasible_armangle);

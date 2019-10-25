@@ -15,22 +15,17 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
 {
     AbstractKinematicPtr kinematic_solver = NULL;
 
-    if ( !initialise ( kinematics_config, kinematics_status ) )     
+    if ( !initialise ( kinematics_config, kinematics_status ) )
         return NULL;
     
+    kinematics_status.statuscode = KinematicsStatus::SUCCESS;
 
     switch ( kinematics_config.kinematic_solver )
     {
         case IKFAST:
         {
             LOG_INFO_S<<"[KinematicsFactory]: IKFAST solver is selected";
-
-            kinematic_solver = std::shared_ptr<IkFastSolver> ( new IkFastSolver ( kinematics_config, joints_limits_, kdl_tree_, 
-                                                                                  rev_jt_kdlchain_, kinematics_status ) );
-
-            if( (kinematics_status.statuscode == KinematicsStatus::IKFAST_LIB_NOT_AVAILABLE) || (kinematics_status.statuscode == KinematicsStatus::IKFAST_FUNCTION_NOT_FOUND) )
-                kinematic_solver = NULL;
-
+            kinematic_solver = std::shared_ptr<IkFastSolver> ( new IkFastSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, kinematics_status ) );
             break;
         }
         case SRS:
@@ -64,6 +59,11 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
             return NULL;
         }
     }
+
+    // make sure there is not error in loading kinematics yaml file or loading ikfast library.
+    if (kinematics_status.statuscode != KinematicsStatus::SUCCESS)
+        kinematic_solver = NULL;
+
     return kinematic_solver;
 }
 

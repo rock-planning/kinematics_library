@@ -7,6 +7,15 @@ SRSKinematicSolver::SRSKinematicSolver ( const KinematicsConfig &kinematics_conf
                                          const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain ): jts_limits_(jts_limits)
 {
     
+//     jts_limits_[0].first = -90*SRSKinematic::DTR; jts_limits_[0].second = 90*SRSKinematic::DTR;
+//     jts_limits_[1].first = -45*SRSKinematic::DTR; jts_limits_[1].second = 45*SRSKinematic::DTR;
+//     jts_limits_[2].first = -120*SRSKinematic::DTR; jts_limits_[2].second = 120*SRSKinematic::DTR;
+//     jts_limits_[3].first =  0*SRSKinematic::DTR; jts_limits_[3].second = 135*SRSKinematic::DTR;
+//     jts_limits_[4].first = -90*SRSKinematic::DTR; jts_limits_[4].second = 90*SRSKinematic::DTR;
+//     jts_limits_[5].first = -90*SRSKinematic::DTR; jts_limits_[5].second = 90*SRSKinematic::DTR;
+//     jts_limits_[6].first = -120*SRSKinematic::DTR; jts_limits_[6].second = 120*SRSKinematic::DTR;
+    
+    
     // assign the config
     YAML::Node input_config;
     handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config);
@@ -72,7 +81,27 @@ bool SRSKinematicSolver::solveIK (const base::samples::RigidBodyState target_pos
     solution[0].elements.resize(jt_names_.size());
     
     int res = invkin(target_pose.position, target_pose.orientation, solution[0]);
-        
+    
+//     base::Position pos_test;    
+//     Eigen::Matrix3d rot_mat;
+    
+//     pos_test(0) = 0.5; pos_test(1) = 0.2; pos_test(2) = 0.7;
+//     
+//     rot_mat(0,0) = 0.067; rot_mat(0,1) = 0.933; rot_mat(0,2) = 0.354;
+//     rot_mat(1,0) = 0.932; rot_mat(1,1) = 0.067; rot_mat(1,2) =-0.354;
+//     rot_mat(2,0) =-0.354; rot_mat(2,1) = 0.354; rot_mat(2,2) =-0.866;
+//     
+//     pos_test(0) = 0.65; pos_test(1) = 0.0; pos_test(2) = 0.5;
+//     
+//     rot_mat(0,0) = 0.0; rot_mat(0,1) =-1.0; rot_mat(0,2) = 0.0;
+//     rot_mat(1,0) =-1.0; rot_mat(1,1) = 0.0; rot_mat(1,2) = 0.0;
+//     rot_mat(2,0) = 0.0; rot_mat(2,1) = 0.0; rot_mat(2,2) =-1.0;
+//     
+//     Eigen::Quaternion<double> g;
+//     g= rot_mat;
+//     
+//     int res = invkin(pos_test, g, solution[0]);
+//         
     if( res == SRSKinematic::SUCCESS)
     {
         solver_status.statuscode = KinematicsStatus::IK_FOUND;
@@ -93,18 +122,99 @@ bool SRSKinematicSolver::solveFK (const base::samples::Joints &joint_angles, bas
 
     convertVectorToKDLArray ( current_jt_status_, kdl_jt_array_ );
 
-    if ( fk_kdlsolver_pos_->JntToCart ( kdl_jt_array_, kdl_frame_ ) >= 0 ) 
-    {
-        kdlToRbs ( kdl_frame_, kinematic_pose_ );
+//     if ( fk_kdlsolver_pos_->JntToCart ( kdl_jt_array_, kdl_frame_ ) >= 0 ) 
+//     {
+//         kdlToRbs ( kdl_frame_, kinematic_pose_ );
         solver_status.statuscode = KinematicsStatus::FK_FOUND;
-        convertPoseBetweenDifferentFrames ( kdl_tree_, kinematic_pose_, fk_pose );
+//         convertPoseBetweenDifferentFrames ( kdl_tree_, kinematic_pose_, fk_pose );
+        fk_pose = SRSKinematicSolver::direct(joint_angles);
         return true;
-    }
+//     }
 
     solver_status.statuscode = KinematicsStatus::NO_FK_SOLUTION;
     return false;
 }
 
+
+base::samples::RigidBodyState SRSKinematicSolver::direct(const base::samples::Joints &joint_angles)
+{
+   double fk[7][16];//variable for forward kinemtaics 
+   double sa[7], ca[7];                            // sine and cosine array used on forward kinematics
+   double lk_ofst[7];                              // link offsets
+   
+   // initialising the link offsets
+    lk_ofst[0] = srs_config_.offset_base_shoulder;
+    lk_ofst[1] = 0;
+    lk_ofst[2] = srs_config_.offset_shoulder_elbow;
+    lk_ofst[3] = 0;
+    lk_ofst[4] = srs_config_.offset_elbow_wrist;
+    lk_ofst[5] = 0;
+    lk_ofst[6] = srs_config_.offset_wrist_tool;
+
+    // initialising the sine and cosine array used in forward kinematics
+    sa[0] = sin(-SRSKinematic::PI/2.0);
+    sa[1] = sin( SRSKinematic::PI/2.0);
+    sa[2] = sin(-SRSKinematic::PI/2.0);
+    sa[3] = sin( SRSKinematic::PI/2.0);
+    sa[4] = sin(-SRSKinematic::PI/2.0);
+    sa[5] = sin( SRSKinematic::PI/2.0);
+    sa[6] = sin(0.0);
+    ca[0] = cos(-SRSKinematic::PI/2.0);
+    ca[1] = cos( SRSKinematic::PI/2.0);
+    ca[2] = cos(-SRSKinematic::PI/2.0);
+    ca[3] = cos( SRSKinematic::PI/2.0);
+    ca[4] = cos(-SRSKinematic::PI/2.0);
+    ca[5] = cos( SRSKinematic::PI/2.0);
+    ca[6] = cos(0.0);
+    
+    
+    double ct=0.0, st=0.0;
+    double tmpMat[16] = {   1.0f, 0.0f, 0.0f, 0.0f,
+                            0.0f, 1.0f, 0.0f, 0.0f,
+                            0.0f, 0.0f, 1.0f, 0.0f,
+                            0.0f, 0.0f, 0.0f, 1.0f  };
+
+    ct = cos(joint_angles.elements[0].position);
+    st = sin(joint_angles.elements[0].position);
+
+    // calculate the joint matrix
+    fk[0][0] = ct;  fk[0][4] = -st* ca[0];  fk[0][8] = st * sa[0];  fk[0][12] = 0;
+    fk[0][1] = st;  fk[0][5] =  ct * ca[0]; fk[0][9] =-ct * sa[0];  fk[0][13] = 0;
+    fk[0][2] = 0;   fk[0][6] =  sa[0];      fk[0][10]= ca[0];       fk[0][14] = lk_ofst[0];
+    fk[0][3] = 0;   fk[0][7] =  0;          fk[0][11]= 0;           fk[0][15] = 1;
+
+    for(int i = 1; i < 7; i++)
+    {
+            ct = cos(joint_angles.elements[i].position);
+            st = sin(joint_angles.elements[i].position);
+
+            // calculate the joint matrix
+            tmpMat[0] = ct;         tmpMat[4] = -st * ca[i];        tmpMat[8] = st * sa[i];
+            tmpMat[1] = st;         tmpMat[5] =  ct * ca[i];        tmpMat[9] =-ct * sa[i];
+                                    tmpMat[6] = sa[i];              tmpMat[10]= ca[i];              tmpMat[14] = lk_ofst[i];
+
+            // accumulate it
+            multMatrix(fk[i-1], tmpMat, fk[i]);
+    }
+    
+    
+    base::samples::RigidBodyState fk_pose;
+       
+        
+    Eigen::Matrix3d rot_mat;
+
+    rot_mat(0,0) = fk[6][0]; rot_mat(0,1) = fk[6][4]; rot_mat(0,2) = fk[6][8];
+    rot_mat(1,0) = fk[6][1]; rot_mat(1,1) = fk[6][5]; rot_mat(1,2) = fk[6][9];
+    rot_mat(2,0) = fk[6][2]; rot_mat(2,1) = fk[6][6]; rot_mat(2,2) = fk[6][10];    
+    
+    fk_pose.orientation = rot_mat;
+    
+    fk_pose.position(0) = fk[6][12];fk_pose.position(1) = fk[6][13];fk_pose.position(2) = fk[6][14];
+    
+    return fk_pose;
+    
+
+}
 
 
 int SRSKinematicSolver::invkin(const base::Position &pos, const base::Quaterniond &rot, base::commands::Joints &jointangles)
@@ -138,11 +248,16 @@ int SRSKinematicSolver::invkin(const base::Position &pos, const base::Quaternion
     //Eul2RotMat(rot,Rd);  //eul_zyx
     quaternionToRotMat(rot,Rd);
     Mult_mat_vec(Rd,l_wt,t_Xsw);
-
+std::cout<<"Pos = "<<pos<<std::endl;
     Xsw.at(0) = pos(0)-l_bs.at(0)-t_Xsw.at(0);
     Xsw.at(1) = pos(1)-l_bs.at(1)-t_Xsw.at(1);
     Xsw.at(2) = pos(2)-l_bs.at(2)-t_Xsw.at(2);
-
+    
+    std::cout<<"l_bs = "<<l_bs.at(0)<<"  "<<l_bs.at(1)<<"  "<<l_bs.at(2)<<std::endl;
+    std::cout<<"t_x = "<<t_Xsw.at(0)<<"  "<<t_Xsw.at(1)<<"  "<<t_Xsw.at(2)<<std::endl;
+    std::cout<<pos(0)-l_bs.at(0)-t_Xsw.at(0)<<std::endl;
+    std::cout<<pos(1)-l_bs.at(1)-t_Xsw.at(1)<<std::endl;
+    std::cout<<pos(2)-l_bs.at(2)-t_Xsw.at(2)<<std::endl;
 
     t_thet4=((Xsw.at(0)*Xsw.at(0))+(Xsw.at(1)*Xsw.at(1))+(Xsw.at(2)*Xsw.at(2)));
 
@@ -155,10 +270,10 @@ int SRSKinematicSolver::invkin(const base::Position &pos, const base::Quaternion
         thet4=((t_thet4 - (srs_config_.offset_shoulder_elbow * srs_config_.offset_shoulder_elbow) 
                         - (srs_config_.offset_elbow_wrist * srs_config_.offset_elbow_wrist)) / (2.0 * srs_config_.offset_shoulder_elbow * srs_config_.offset_elbow_wrist) );
 
-        jointangles.elements.at(3).position = -acos(thet4);  //using cosine law
+        jointangles.elements.at(3).position = acos(thet4);  //using cosine law
 
 
-        std::cout<< "JOINT 4 = "<<jointangles.elements.at(3).position*SRSKinematic::RTD<<"   "<<thet4<<"  "<<sqrt(1-(thet4*thet4))<<std::endl;
+        std::cout<< "JOINT 4 = "<<jointangles.elements.at(3).position*SRSKinematic::RTD<<"   "<<t_thet4<<"  "<<sqrt(1-(thet4*thet4))<<std::endl;
 
         //Below calculate the reference shoulder angle
         rot_matrix(jointangles.elements.at(3).position, SRSKinematic::PI /2.0, R34);
@@ -319,6 +434,10 @@ int SRSKinematicSolver::invkin(const base::Position &pos, const base::Quaternion
             jointangles.elements.at(4).position = atan2(((Aw[7]*sin(AA))+(Bw[7]*cos(AA))+(Cw[7])),((Aw[6]*sin(AA))+(Bw[6]*cos(AA))+(Cw[6])));
             jointangles.elements.at(5).position = acos(((Aw[8]*sin(AA))+(Bw[8]*cos(AA))+(Cw[8])));
             jointangles.elements.at(6).position = atan2(((Aw[5]*sin(AA))+(Bw[5]*cos(AA))+(Cw[5])),(-(Aw.at(2)*sin(AA))-(Bw.at(2)*cos(AA))-(Cw.at(2))));
+            
+            for(int i = 0; i < 7; i++)
+                std::cout<<jointangles.elements.at(i).position*SRSKinematic::RTD<<"  ";
+            std::cout<<std::endl;
         }
         else
             succeeded = armAngle_result;
@@ -388,23 +507,23 @@ int SRSKinematicSolver::cal_armangle(   const std::vector<double> &As, const std
     // if (succeeded != 0) return succeeded;
 
     // debugging
-//     std::cout<<"Feasible Psi "<<std::endl;
-//     for(int i = 0; i< feasible_psi.size(); i++)
-//     {
-//         for(int j = 0; j< feasible_psi.at(i).psi.size(); j++)
-//             std::cout<<"Joint "<<feasible_psi.at(i).joint_number<<"  "<<feasible_psi.at(i).joint_name<<"  "<< "Psi = "<<feasible_psi.at(i).psi.at(j).first*SRSKinematic::RTD<<"  "<<feasible_psi.at(i).psi.at(j).second*SRSKinematic::RTD<<std::endl;
-//     }
-// 
-//     std::cout<<std::endl;
-//     std::cout<<std::endl;
-//     std::cout<<"Infeasible Psi "<<std::endl;
-//     for(int i = 0; i< infeasible_psi.size(); i++)
-//     {                        
-//         for(int j = 0; j< infeasible_psi.at(i).psi.size(); j++)
-//             std::cout<<"Joint "<<infeasible_psi.at(i).joint_number<<"  "<<infeasible_psi.at(i).joint_name<<"  "<< "Psi = "<<infeasible_psi.at(i).psi.at(j).first*SRSKinematic::RTD<<"  "<<infeasible_psi.at(i).psi.at(j).second*SRSKinematic::RTD<<std::endl;
-//     }
-//     std::cout<<std::endl;
-//     std::cout<<std::endl;
+    std::cout<<"Feasible Psi "<<std::endl;
+    for(size_t i = 0; i< feasible_psi.size(); i++)
+    {
+        for(size_t j = 0; j< feasible_psi.at(i).psi.size(); j++)
+            std::cout<<"Joint "<<feasible_psi.at(i).joint_number<<"  "<<feasible_psi.at(i).joint_name<<"  "<< "Psi = "<<feasible_psi.at(i).psi.at(j).first*SRSKinematic::RTD<<"  "<<feasible_psi.at(i).psi.at(j).second*SRSKinematic::RTD<<std::endl;
+    }
+
+    std::cout<<std::endl;
+    std::cout<<std::endl;
+    std::cout<<"Infeasible Psi "<<std::endl;
+    for(size_t i = 0; i< infeasible_psi.size(); i++)
+    {                        
+        for(size_t j = 0; j< infeasible_psi.at(i).psi.size(); j++)
+            std::cout<<"Joint "<<infeasible_psi.at(i).joint_number<<"  "<<infeasible_psi.at(i).joint_name<<"  "<< "Psi = "<<infeasible_psi.at(i).psi.at(j).first*SRSKinematic::RTD<<"  "<<infeasible_psi.at(i).psi.at(j).second*SRSKinematic::RTD<<std::endl;
+    }
+    std::cout<<std::endl;
+    std::cout<<std::endl;
     
 
     //std::pair<double, double> single_feasible_result;
@@ -412,13 +531,13 @@ int SRSKinematicSolver::cal_armangle(   const std::vector<double> &As, const std
     int intesection_result = union_joints_with_only_one_feasible_armangle(feasible_psi, single_feasible_result);
 
 
-//     std::cout<<"intersected Feasible Psi "<<std::endl;
-// 
-//     for(int i = 0; i< single_feasible_result.size(); i++)
-//     {
-//         for(int j = 0; j< single_feasible_result.at(i).psi.size(); j++)
-//             std::cout<<"Joint "<<single_feasible_result.at(i).joint_number<<"  "<<single_feasible_result.at(i).joint_name<<"    "<< single_feasible_result.at(i).psi.at(j).first*SRSKinematic::RTD<<"  "<<single_feasible_result.at(i).psi.at(j).second*SRSKinematic::RTD<<std::endl;
-//     }
+    std::cout<<"intersected Feasible Psi "<<intesection_result<<std::endl;
+
+    for(size_t i = 0; i< single_feasible_result.size(); i++)
+    {
+        for(size_t j = 0; j< single_feasible_result.at(i).psi.size(); j++)
+            std::cout<<"Joint "<<single_feasible_result.at(i).joint_number<<"  "<<single_feasible_result.at(i).joint_name<<"    "<< single_feasible_result.at(i).psi.at(j).first*SRSKinematic::RTD<<"  "<<single_feasible_result.at(i).psi.at(j).second*SRSKinematic::RTD<<std::endl;
+    }
 
 
     complement_of_infeasible_psi(infeasible_psi, single_feasible_result);
@@ -482,6 +601,7 @@ int SRSKinematicSolver::tangenttype_armangle(   const double &an, const double b
         if (succeeded != 0)
             return succeeded;
     }
+    return succeeded;
 
 }
 
@@ -491,7 +611,7 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_stationarycase(const doubl
                                                                     const int &jointnumber, const std::string& jointname)
 {
     double psi_stationary = 0.0;
-    double left_jtlimit = 0.0, right_jtlimit = 0.0;
+//     double left_jtlimit = 0.0, right_jtlimit = 0.0;
     ArmAngle calculated_psi;
 
     psi_stationary = 2 * atan( at / (bt - ct) );
@@ -506,8 +626,8 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_stationarycase(const doubl
     //infeasible_psi.push_back(std::make_pair(psi_stationary,psi_stationary));
     //todo: find the use of this limit
 
-    left_jtlimit    = atan2( (( (at * bn) - (bt * an)) / -ct), ( ((at * bd) - (bt * ad)) / -ct ) );
-    right_jtlimit   = atan2( (( (at * bn) - (bt * an)) /  ct), ( ((at * bd) - (bt * ad)) /  ct ) );
+//     /*left_jtlimit    = atan2( (( (at * bn) - (bt * an)) / -ct), ( ((at * bd) - (bt * ad)) / -ct ) );
+//     right_jtlimit   = atan2( (( (at * bn) - (bt * an)) /  ct), ( ((at * bd) - (bt * ad)) /  ct ) );*/
 
     LOG_DEBUG("[SRSKinematicSolver]: SINGULAR CASE with psi_stationary %f", psi_stationary*SRSKinematic::RTD);
 

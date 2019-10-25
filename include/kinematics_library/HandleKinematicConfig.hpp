@@ -19,25 +19,36 @@
 namespace handle_kinematic_config
 {
     
-inline void loadConfigFile(const std::string &filepath, const std::string &filename, YAML::Node &config)
+inline bool loadConfigFile(const std::string &filepath, const std::string &filename, YAML::Node &config)
 {
     std::stringstream config_file;
     config_file << filepath << "/" << filename;
 
     try
     {
-        config = YAML::LoadFile(config_file.str());
+        // YAML::LoadFile is not throwing any exception if the file doesn't exist.
+        // std::iftream is used here in order to check the input file existence.
+        std::ifstream input_file(config_file.str().c_str());
+        if(input_file)
+        {
+            input_file.close();
+            config = YAML::LoadFile(config_file.str());
+        }
+        else
+            return false;
     }
     catch (YAML::ParserException& e)
     {
         std::cout << e.what() << "\n";
     }
+    
+    return true;
 }
 
 template<typename T>
 T getValue (const YAML::Node &yaml_data, std::string name)
 {
-        T value;
+        T value = T();
 
         if (const YAML::Node data = yaml_data[name])
         {
@@ -52,7 +63,7 @@ T getValue (const YAML::Node &yaml_data, std::string name)
 template<typename T>
 T getValue (const YAML::Node &yaml_data, std::string name, const T& df)
 {
-        T value;
+        T value = T();
 
         if (const YAML::Node data = yaml_data[name])
         {

@@ -82,6 +82,8 @@ class SRSKinematicSolver : public AbstractKinematics
         * @return true if a forward solution was found or else return false
         */
         bool solveFK(const base::samples::Joints &joint_angles, base::samples::RigidBodyState &fk_pose, KinematicsStatus &solver_status);
+        
+        base::samples::RigidBodyState direct(const base::samples::Joints &joint_angles);
 
     private:
         KDL::ChainFkSolverPos_recursive *fk_kdlsolver_pos_;
