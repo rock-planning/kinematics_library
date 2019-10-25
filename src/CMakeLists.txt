@@ -23,8 +23,10 @@ SET (SRCS
     ${CMAKE_CURRENT_LIST_DIR}/abstract/IkFastSolver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/abstract/KdlSolver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/abstract/KinematicsHelper.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/solver/shimizu_method/SRSKinematicSolver.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/solver/shimizu_method/SRSKinematicHelper.cpp
+   # ${CMAKE_CURRENT_LIST_DIR}/solver/shimizu_method/SRSKinematicSolver.cpp
+   # ${CMAKE_CURRENT_LIST_DIR}/solver/shimizu_method/SRSKinematicHelper.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/solver/asfour_method/math_misc.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/solver/asfour_method/IK7DoFSolver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/KinematicsFactory.cpp )
 
 # if trac_ik is found, add it to the kinematic factory

@@ -32,6 +32,38 @@ struct convert<kinematics_library::TracIKSolverType>
 }
 #endif
 
+
+namespace YAML 
+{
+    template<>
+    struct convert<kinematics_library::ZE_MODE> 
+    {
+        static Node encode(const kinematics_library::ZE_MODE& ze_mode) 
+        {
+            Node node;
+            node.push_back(ze_mode);   
+            return node;
+        }
+        
+        static bool decode(const Node& node, kinematics_library::ZE_MODE& ze_mode) 
+        {
+            
+            if(!node.IsScalar())
+                return false;  
+            
+            std::unordered_map<std::string, kinematics_library::ZE_MODE> stringToenum;
+            stringToenum.insert({":AUTO_ZSTABLE", kinematics_library::AUTO_ZSTABLE});
+            stringToenum.insert({":AUTO_ZMAX", kinematics_library::AUTO_ZMAX});
+            stringToenum.insert({":AUTO_YMAX", kinematics_library::AUTO_YMAX});
+            stringToenum.insert({":MANUAL", kinematics_library::MANUAL});
+            
+            LOG_INFO_S<<"[getIK7DoFConfig]: Selected ZE Mode Type = "<<stringToenum.at(node.Scalar());
+            ze_mode  = stringToenum.at(node.Scalar());
+            return true;
+        }
+    };
+}
+
 namespace handle_kinematic_config
 {
 
@@ -94,7 +126,7 @@ kinematics_library::TracIkConfig getTracIkConfig(const YAML::Node &yaml_data)
 }
 #endif
 
-kinematics_library::SRSKinematicConfig getSRSConfig(const YAML::Node &yaml_data)
+/*kinematics_library::SRSKinematicConfig getSRSConfig(const YAML::Node &yaml_data)
 {
     kinematics_library::SRSKinematicConfig config;
     
@@ -107,6 +139,23 @@ kinematics_library::SRSKinematicConfig getSRSConfig(const YAML::Node &yaml_data)
     
     return config;
 
+}*/
+
+kinematics_library::IK7DoFConfig getIK7DoFConfig(const YAML::Node& yaml_data)
+{
+    kinematics_library::IK7DoFConfig config;
+    
+    config.ze_mode                  = handle_kinematic_config::getValue<kinematics_library::ZE_MODE>(yaml_data, "ze_mode");
+    config.offset_base_shoulder     = handle_kinematic_config::getValue<double>(yaml_data, "offset_base_shoulder");
+    config.offset_shoulder_elbow    = handle_kinematic_config::getValue<double>(yaml_data, "offset_shoulder_elbow");
+    config.offset_elbow_wrist       = handle_kinematic_config::getValue<double>(yaml_data, "offset_elbow_wrist");
+    config.offset_wrist_tool        = handle_kinematic_config::getValue<double>(yaml_data, "offset_wrist_tool");
+    config.theta_offsets            = handle_kinematic_config::getValue<std::vector<double>>(yaml_data, "theta_offsets");
+    config.joint_names              = yaml_data["joint_names"].as<std::vector<std::string>>();  
+    
+    return config;
+
 }
+
 
 }
