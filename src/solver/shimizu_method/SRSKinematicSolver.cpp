@@ -7,18 +7,20 @@ SRSKinematicSolver::SRSKinematicSolver ( const KinematicsConfig &kinematics_conf
                                          const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain ): jts_limits_(jts_limits)
 {
     
-//     jts_limits_[0].first = -90*SRSKinematic::DTR; jts_limits_[0].second = 90*SRSKinematic::DTR;
-//     jts_limits_[1].first = -45*SRSKinematic::DTR; jts_limits_[1].second = 45*SRSKinematic::DTR;
-//     jts_limits_[2].first = -120*SRSKinematic::DTR; jts_limits_[2].second = 120*SRSKinematic::DTR;
-//     jts_limits_[3].first =  0*SRSKinematic::DTR; jts_limits_[3].second = 135*SRSKinematic::DTR;
-//     jts_limits_[4].first = -90*SRSKinematic::DTR; jts_limits_[4].second = 90*SRSKinematic::DTR;
-//     jts_limits_[5].first = -90*SRSKinematic::DTR; jts_limits_[5].second = 90*SRSKinematic::DTR;
-//     jts_limits_[6].first = -120*SRSKinematic::DTR; jts_limits_[6].second = 120*SRSKinematic::DTR;
+//     jts_limits_[0].first = -90*kinematics_library::DTR; jts_limits_[0].second = 90*kinematics_library::DTR;
+//     jts_limits_[1].first = -45*kinematics_library::DTR; jts_limits_[1].second = 45*kinematics_library::DTR;
+//     jts_limits_[2].first = -120*kinematics_library::DTR; jts_limits_[2].second = 120*kinematics_library::DTR;
+//     jts_limits_[3].first =  0*kinematics_library::DTR; jts_limits_[3].second = 135*kinematics_library::DTR;
+//     jts_limits_[4].first = -90*kinematics_library::DTR; jts_limits_[4].second = 90*kinematics_library::DTR;
+//     jts_limits_[5].first = -90*kinematics_library::DTR; jts_limits_[5].second = 90*kinematics_library::DTR;
+//     jts_limits_[6].first = -120*kinematics_library::DTR; jts_limits_[6].second = 120*kinematics_library::DTR;
     
     
     // assign the config
     YAML::Node input_config;
-    handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config);
+    // check whether the config could be loaded or not.
+    if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
+        return;
     const YAML::Node& srs_config_node = input_config["srs_config"];
     srs_config_ = handle_kinematic_config::getSRSConfig(srs_config_node);
     
@@ -152,19 +154,19 @@ base::samples::RigidBodyState SRSKinematicSolver::direct(const base::samples::Jo
     lk_ofst[6] = srs_config_.offset_wrist_tool;
 
     // initialising the sine and cosine array used in forward kinematics
-    sa[0] = sin(-SRSKinematic::PI/2.0);
-    sa[1] = sin( SRSKinematic::PI/2.0);
-    sa[2] = sin(-SRSKinematic::PI/2.0);
-    sa[3] = sin( SRSKinematic::PI/2.0);
-    sa[4] = sin(-SRSKinematic::PI/2.0);
-    sa[5] = sin( SRSKinematic::PI/2.0);
+    sa[0] = sin(-kinematics_library::PI/2.0);
+    sa[1] = sin( kinematics_library::PI/2.0);
+    sa[2] = sin(-kinematics_library::PI/2.0);
+    sa[3] = sin( kinematics_library::PI/2.0);
+    sa[4] = sin(-kinematics_library::PI/2.0);
+    sa[5] = sin( kinematics_library::PI/2.0);
     sa[6] = sin(0.0);
-    ca[0] = cos(-SRSKinematic::PI/2.0);
-    ca[1] = cos( SRSKinematic::PI/2.0);
-    ca[2] = cos(-SRSKinematic::PI/2.0);
-    ca[3] = cos( SRSKinematic::PI/2.0);
-    ca[4] = cos(-SRSKinematic::PI/2.0);
-    ca[5] = cos( SRSKinematic::PI/2.0);
+    ca[0] = cos(-kinematics_library::PI/2.0);
+    ca[1] = cos( kinematics_library::PI/2.0);
+    ca[2] = cos(-kinematics_library::PI/2.0);
+    ca[3] = cos( kinematics_library::PI/2.0);
+    ca[4] = cos(-kinematics_library::PI/2.0);
+    ca[5] = cos( kinematics_library::PI/2.0);
     ca[6] = cos(0.0);
     
     
@@ -185,16 +187,16 @@ base::samples::RigidBodyState SRSKinematicSolver::direct(const base::samples::Jo
 
     for(int i = 1; i < 7; i++)
     {
-            ct = cos(joint_angles.elements[i].position);
-            st = sin(joint_angles.elements[i].position);
+        ct = cos(joint_angles.elements[i].position);
+        st = sin(joint_angles.elements[i].position);
 
-            // calculate the joint matrix
-            tmpMat[0] = ct;         tmpMat[4] = -st * ca[i];        tmpMat[8] = st * sa[i];
-            tmpMat[1] = st;         tmpMat[5] =  ct * ca[i];        tmpMat[9] =-ct * sa[i];
-                                    tmpMat[6] = sa[i];              tmpMat[10]= ca[i];              tmpMat[14] = lk_ofst[i];
+        // calculate the joint matrix
+        tmpMat[0] = ct;         tmpMat[4] = -st * ca[i];        tmpMat[8] = st * sa[i];
+        tmpMat[1] = st;         tmpMat[5] =  ct * ca[i];        tmpMat[9] =-ct * sa[i];
+                                tmpMat[6] = sa[i];              tmpMat[10]= ca[i];              tmpMat[14] = lk_ofst[i];
 
-            // accumulate it
-            multMatrix(fk[i-1], tmpMat, fk[i]);
+        // accumulate it
+        multMatMat(fk[i-1], tmpMat, fk[i]);
     }
     
     
@@ -247,8 +249,8 @@ int SRSKinematicSolver::invkin(const base::Position &pos, const base::Quaternion
 
     //Eul2RotMat(rot,Rd);  //eul_zyx
     quaternionToRotMat(rot,Rd);
-    Mult_mat_vec(Rd,l_wt,t_Xsw);
-std::cout<<"Pos = "<<pos<<std::endl;
+    multMatVec(Rd,l_wt,t_Xsw);
+    std::cout<<"Pos = "<<pos<<std::endl;
     Xsw.at(0) = pos(0)-l_bs.at(0)-t_Xsw.at(0);
     Xsw.at(1) = pos(1)-l_bs.at(1)-t_Xsw.at(1);
     Xsw.at(2) = pos(2)-l_bs.at(2)-t_Xsw.at(2);
@@ -273,12 +275,12 @@ std::cout<<"Pos = "<<pos<<std::endl;
         jointangles.elements.at(3).position = acos(thet4);  //using cosine law
 
 
-        std::cout<< "JOINT 4 = "<<jointangles.elements.at(3).position*SRSKinematic::RTD<<"   "<<t_thet4<<"  "<<sqrt(1-(thet4*thet4))<<std::endl;
+        std::cout<< "JOINT 4 = "<<jointangles.elements.at(3).position*kinematics_library::RTD<<"   "<<t_thet4<<"  "<<sqrt(1-(thet4*thet4))<<std::endl;
 
         //Below calculate the reference shoulder angle
-        rot_matrix(jointangles.elements.at(3).position, SRSKinematic::PI /2.0, R34);
+        rotMatrix(jointangles.elements.at(3).position, kinematics_library::PI /2.0, R34);
 
-        Mult_mat_vec(R34, l_ew, t_R34);
+        multMatVec(R34, l_ew, t_R34);
 
         t_refthe2.at(0) = l_se.at(0) + t_R34.at(0);
         t_refthe2.at(1) = l_se.at(1) + t_R34.at(1);
@@ -287,7 +289,7 @@ std::cout<<"Pos = "<<pos<<std::endl;
         the2_R=atan2(t_refthe2.at(0),t_refthe2.at(1)) - atan2(sqrt((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2))),-Xsw.at(2));
         //the2_R=atan2(-t_refthe2.at(0),-t_refthe2.at(1)) - atan2(sqrt((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2))),Xsw.at(2));
         //the2_R = 2*atan( (t_refthe2.at(0) + ( sqrt((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2))) ) ) / (Xsw.at(2) - t_refthe2.at(0)) );
-        //the2_R = the2_R +(SRSKinematic::PI );
+        //the2_R = the2_R +(kinematics_library::PI );
 
         c2 = cos(the2_R); s2 = sin(the2_R);
 
@@ -297,18 +299,18 @@ std::cout<<"Pos = "<<pos<<std::endl;
 
         the1_R=atan2(s1,c1);
 
-//         std::cout<< "the1_R = "<<the1_R*SRSKinematic::RTD<<"  the2_R = "<<the2_R*SRSKinematic::RTD<<std::endl;
+//         std::cout<< "the1_R = "<<the1_R*kinematics_library::RTD<<"  the2_R = "<<the2_R*kinematics_library::RTD<<std::endl;
 //         std::cout<<"t_refthe2= "<<t_refthe2.at(0)<<"  "<<t_refthe2[1]<<"  "<<t_refthe2.at(2)<<"  "<<(t_refthe2.at(0)+Xsw.at(2))<<"  "<<((t_refthe2.at(1)*t_refthe2.at(1))-(t_refthe2.at(0)*t_refthe2.at(0))-(Xsw.at(2)*Xsw.at(2))) <<"  "<<std::endl;
-//         std::cout<< "atan2 ="<<atan2(t_refthe2.at(0),t_refthe2.at(1))*SRSKinematic::RTD<<"   "<<"next= "
-//                              <<atan2(sqrt((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2))),-Xsw.at(2))*SRSKinematic::RTD<<"  "<<
+//         std::cout<< "atan2 ="<<atan2(t_refthe2.at(0),t_refthe2.at(1))*kinematics_library::RTD<<"   "<<"next= "
+//                              <<atan2(sqrt((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2))),-Xsw.at(2))*kinematics_library::RTD<<"  "<<
 //                              ((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2)))<<"  "<<Xsw.at(2)<<std::endl;
         
 
-        rot_matrix(the1_R, -SRSKinematic::PI /2.0, R01);
-        rot_matrix(the2_R, SRSKinematic::PI /2.0, R12);
-        rot_matrix(0.0     , -SRSKinematic::PI /2.0, R23);
-        Mult_mat_mat(R01, R12, t_r03_r);
-        Mult_mat_mat(t_r03_r, R23, R_03_R);
+        rotMatrix(the1_R, -kinematics_library::PI /2.0, R01);
+        rotMatrix(the2_R, kinematics_library::PI /2.0, R12);
+        rotMatrix(0.0     , -kinematics_library::PI /2.0, R23);
+        multMatMat(R01, R12, t_r03_r);
+        multMatMat(t_r03_r, R23, R_03_R);
 
         m_Xsw=sqrt( (Xsw.at(0) * Xsw.at(0)) + (Xsw.at(1) * Xsw.at(1)) + (Xsw.at(2) * Xsw.at(2)) );
         usw.at(0)=Xsw.at(0) / m_Xsw;
@@ -320,15 +322,15 @@ std::cout<<"Pos = "<<pos<<std::endl;
         usw_sk.at(2) = -usw.at(1);      usw_sk.at(5) = usw.at(0);       usw_sk.at(8) = 0.0;
 
         //Shoulder joint
-        Mult_mat_mat(usw_sk, R_03_R, As);
-        Mult_mat_mat(usw_sk, usw_sk, t_Bs);
+        multMatMat(usw_sk, R_03_R, As);
+        multMatMat(usw_sk, usw_sk, t_Bs);
 
         for(std::size_t i=0; i<9; i++)
         t_Bs.at(i) = -1.0 * t_Bs.at(i);
 
-        Mult_mat_mat(t_Bs, R_03_R, Bs);
-        Mult_vec_tslvec(usw, t_Cs);                        
-        Mult_mat_mat(t_Cs, R_03_R, Cs);
+        multMatMat(t_Bs, R_03_R, Bs);
+        multVecTSLvec(usw, t_Cs);                        
+        multMatMat(t_Cs, R_03_R, Cs);
 
 //         std::cout<<std::endl;
 //         for(int i = 0; i < 3; i++)
@@ -336,17 +338,17 @@ std::cout<<"Pos = "<<pos<<std::endl;
 //         std::cout<<std::endl;
 
         //Wrist Joint
-        trans_mat(R34, tsl_R34);
-        trans_mat(As, tsl_As);
-        trans_mat(Bs, tsl_Bs);
-        trans_mat(Cs, tsl_Cs);
+        transMat(R34, tsl_R34);
+        transMat(As, tsl_As);
+        transMat(Bs, tsl_Bs);
+        transMat(Cs, tsl_Cs);
 
-        Mult_mat_mat(tsl_R34, tsl_As, t_Aw);
-        Mult_mat_mat(t_Aw, Rd, Aw);
-        Mult_mat_mat(tsl_R34, tsl_Bs, t_Bw);
-        Mult_mat_mat(t_Bw, Rd, Bw);
-        Mult_mat_mat(tsl_R34, tsl_Cs, t_Cw);
-        Mult_mat_mat(t_Cw, Rd, Cw);
+        multMatMat(tsl_R34, tsl_As, t_Aw);
+        multMatMat(t_Aw, Rd, Aw);
+        multMatMat(tsl_R34, tsl_Bs, t_Bw);
+        multMatMat(t_Bw, Rd, Bw);
+        multMatMat(tsl_R34, tsl_Cs, t_Cw);
+        multMatMat(t_Cw, Rd, Cw);
 
 //         std::cout<<"  Xsw "<<std::endl;
 //         std::cout<<Xsw.at(0)<<"  "<<Xsw.at(1)<<"  "<<Xsw.at(2)<<std::endl;
@@ -356,7 +358,7 @@ std::cout<<"Pos = "<<pos<<std::endl;
 // 
 //         std::cout<<"m_Xww = "<<m_Xsw<<std::endl;
 // 
-//         std::cout<<"the1_R = "<<the1_R*SRSKinematic::RTD<<"   the2_R="<<the2_R*SRSKinematic::RTD<<std::endl;
+//         std::cout<<"the1_R = "<<the1_R*kinematics_library::RTD<<"   the2_R="<<the2_R*kinematics_library::RTD<<std::endl;
 // 
 //         std::cout<<"  R01 "<<std::endl;
 //         for(int i = 0; i < 3; i++)
@@ -436,7 +438,7 @@ std::cout<<"Pos = "<<pos<<std::endl;
             jointangles.elements.at(6).position = atan2(((Aw[5]*sin(AA))+(Bw[5]*cos(AA))+(Cw[5])),(-(Aw.at(2)*sin(AA))-(Bw.at(2)*cos(AA))-(Cw.at(2))));
             
             for(int i = 0; i < 7; i++)
-                std::cout<<jointangles.elements.at(i).position*SRSKinematic::RTD<<"  ";
+                std::cout<<jointangles.elements.at(i).position*kinematics_library::RTD<<"  ";
             std::cout<<std::endl;
         }
         else
@@ -511,7 +513,7 @@ int SRSKinematicSolver::cal_armangle(   const std::vector<double> &As, const std
     for(size_t i = 0; i< feasible_psi.size(); i++)
     {
         for(size_t j = 0; j< feasible_psi.at(i).psi.size(); j++)
-            std::cout<<"Joint "<<feasible_psi.at(i).joint_number<<"  "<<feasible_psi.at(i).joint_name<<"  "<< "Psi = "<<feasible_psi.at(i).psi.at(j).first*SRSKinematic::RTD<<"  "<<feasible_psi.at(i).psi.at(j).second*SRSKinematic::RTD<<std::endl;
+            std::cout<<"Joint "<<feasible_psi.at(i).joint_number<<"  "<<feasible_psi.at(i).joint_name<<"  "<< "Psi = "<<feasible_psi.at(i).psi.at(j).first*kinematics_library::RTD<<"  "<<feasible_psi.at(i).psi.at(j).second*kinematics_library::RTD<<std::endl;
     }
 
     std::cout<<std::endl;
@@ -520,7 +522,7 @@ int SRSKinematicSolver::cal_armangle(   const std::vector<double> &As, const std
     for(size_t i = 0; i< infeasible_psi.size(); i++)
     {                        
         for(size_t j = 0; j< infeasible_psi.at(i).psi.size(); j++)
-            std::cout<<"Joint "<<infeasible_psi.at(i).joint_number<<"  "<<infeasible_psi.at(i).joint_name<<"  "<< "Psi = "<<infeasible_psi.at(i).psi.at(j).first*SRSKinematic::RTD<<"  "<<infeasible_psi.at(i).psi.at(j).second*SRSKinematic::RTD<<std::endl;
+            std::cout<<"Joint "<<infeasible_psi.at(i).joint_number<<"  "<<infeasible_psi.at(i).joint_name<<"  "<< "Psi = "<<infeasible_psi.at(i).psi.at(j).first*kinematics_library::RTD<<"  "<<infeasible_psi.at(i).psi.at(j).second*kinematics_library::RTD<<std::endl;
     }
     std::cout<<std::endl;
     std::cout<<std::endl;
@@ -536,7 +538,7 @@ int SRSKinematicSolver::cal_armangle(   const std::vector<double> &As, const std
     for(size_t i = 0; i< single_feasible_result.size(); i++)
     {
         for(size_t j = 0; j< single_feasible_result.at(i).psi.size(); j++)
-            std::cout<<"Joint "<<single_feasible_result.at(i).joint_number<<"  "<<single_feasible_result.at(i).joint_name<<"    "<< single_feasible_result.at(i).psi.at(j).first*SRSKinematic::RTD<<"  "<<single_feasible_result.at(i).psi.at(j).second*SRSKinematic::RTD<<std::endl;
+            std::cout<<"Joint "<<single_feasible_result.at(i).joint_number<<"  "<<single_feasible_result.at(i).joint_name<<"    "<< single_feasible_result.at(i).psi.at(j).first*kinematics_library::RTD<<"  "<<single_feasible_result.at(i).psi.at(j).second*kinematics_library::RTD<<std::endl;
     }
 
 
@@ -553,13 +555,13 @@ int SRSKinematicSolver::cal_armangle(   const std::vector<double> &As, const std
     {
         for(std::size_t j = 0; j< single_feasible_result.at(i).psi.size(); j++)
             LOG_DEBUG("[SRSKinematicSolver]: Joint %i %s %f %f",single_feasible_result.at(i).joint_number, single_feasible_result.at(i).joint_name.c_str(), 
-                single_feasible_result.at(i).psi.at(j).first*SRSKinematic::RTD,single_feasible_result.at(i).psi.at(j).second*SRSKinematic::RTD);
+                single_feasible_result.at(i).psi.at(j).first*kinematics_library::RTD,single_feasible_result.at(i).psi.at(j).second*kinematics_library::RTD);
     }
 
     LOG_DEBUG("[SRSKinematicSolver]: Final feasbile psi %i", final_feasible_armangle.size());
 
     for(std::size_t i = 0; i< final_feasible_armangle.size(); i++)
-        LOG_DEBUG("[SRSKinematicSolver]: %f %f",final_feasible_armangle.at(i).first*SRSKinematic::RTD, final_feasible_armangle.at(i).second*SRSKinematic::RTD);
+        LOG_DEBUG("[SRSKinematicSolver]: %f %f",final_feasible_armangle.at(i).first*kinematics_library::RTD, final_feasible_armangle.at(i).second*kinematics_library::RTD);
 
     return succeeded;
 }
@@ -576,7 +578,7 @@ int SRSKinematicSolver::tangenttype_armangle(   const double &an, const double b
     LOG_DEBUG("[SRSKinematicSolver]: Joint number %i with condition %f", jointnumber, condition);
     
 
-    if ((condition < SRSKinematic::PAC) && (condition > SRSKinematic::NAC))
+    if ((condition < kinematics_library::PAC) && (condition > kinematics_library::NAC))
     {    
         //std::cout<<"Cond 1"<<std::endl;
         succeeded = feasible_armangle_tangenttype_stationarycase(an, bn, cn, ad, bd, cd, at, bt, ct, jointnumber, jointname);
@@ -629,7 +631,7 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_stationarycase(const doubl
 //     /*left_jtlimit    = atan2( (( (at * bn) - (bt * an)) / -ct), ( ((at * bd) - (bt * ad)) / -ct ) );
 //     right_jtlimit   = atan2( (( (at * bn) - (bt * an)) /  ct), ( ((at * bd) - (bt * ad)) /  ct ) );*/
 
-    LOG_DEBUG("[SRSKinematicSolver]: SINGULAR CASE with psi_stationary %f", psi_stationary*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: SINGULAR CASE with psi_stationary %f", psi_stationary*kinematics_library::RTD);
 
     return 0;
 }
@@ -648,19 +650,19 @@ int SRSKinematicSolver::feasible_armangle_monotonicfunction(const double &an, co
     LOG_DEBUG("[SRSKinematicSolver]: MONOTONIC \n");
 
     // +90 and -90 can be made in to one if loop
-    if (fabs(min_jtag - SRSKinematic::PI /2.0) < SRSKinematic::ZERO) //+90
+    if (fabs(min_jtag - kinematics_library::PI /2.0) < kinematics_library::EPSILON) //+90
     {
         a = bd;
         b = ad;
         c = -cd;
     }
-    else if (fabs(min_jtag + SRSKinematic::PI /2.0) < SRSKinematic::ZERO) //-90
+    else if (fabs(min_jtag + kinematics_library::PI /2.0) < kinematics_library::EPSILON) //-90
     {
         a = -bd;
         b = -ad;
         c = cd;
     }
-    else if ((fabs(min_jtag - SRSKinematic::PI ) < SRSKinematic::ZERO) || (fabs(min_jtag + SRSKinematic::PI ) < SRSKinematic::ZERO) ) //180|| -180
+    else if ((fabs(min_jtag - kinematics_library::PI ) < kinematics_library::EPSILON) || (fabs(min_jtag + kinematics_library::PI ) < kinematics_library::EPSILON) ) //180|| -180
     {
         a =  bn;
         b =  an;
@@ -690,17 +692,17 @@ int SRSKinematicSolver::feasible_armangle_monotonicfunction(const double &an, co
         return succeeded;
 
     //feasible_psi.push_back(calculated_psi);
-    LOG_DEBUG("[SRSKinematicSolver]: Calculated PSI %f", calculated_psi.psi.at(0).first*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: Calculated PSI %f", calculated_psi.psi.at(0).first*kinematics_library::RTD);
     
-    if ( fabs(max_jtag - SRSKinematic::PI /2.0) < SRSKinematic::ZERO) //+90
+    if ( fabs(max_jtag - kinematics_library::PI /2.0) < kinematics_library::EPSILON) //+90
     {
         a = bd; b = ad; c = -cd;
     }
-    else if (fabs(max_jtag + SRSKinematic::PI /2.0) < SRSKinematic::ZERO) //-90
+    else if (fabs(max_jtag + kinematics_library::PI /2.0) < kinematics_library::EPSILON) //-90
     {
         a = -bd; b = -ad; c = cd;
     }
-    else if ((fabs(max_jtag - SRSKinematic::PI ) < SRSKinematic::ZERO) || (fabs(max_jtag + SRSKinematic::PI ) < SRSKinematic::ZERO) ) //180|| -180
+    else if ((fabs(max_jtag - kinematics_library::PI ) < kinematics_library::EPSILON) || (fabs(max_jtag + kinematics_library::PI ) < kinematics_library::EPSILON) ) //180|| -180
     {
         a =  bn; b =  an; c = -cn;
     }
@@ -726,7 +728,7 @@ int SRSKinematicSolver::feasible_armangle_monotonicfunction(const double &an, co
 
     feasible_psi.push_back(calculated_psi);
 
-    LOG_DEBUG("[SRSKinematicSolver]: Calculated PSI %f", calculated_psi.psi.at(0).second*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: Calculated PSI %f", calculated_psi.psi.at(0).second*kinematics_library::RTD);
 
     return succeeded;
 
@@ -749,9 +751,9 @@ int SRSKinematicSolver::feasible_armangle_cosinetype_cyclicfunction(const double
 
     t_sqrt = sqrt((at * at) + (bt * bt));
 
-    if(fabs(at) <= SRSKinematic::ZERO)
+    if(fabs(at) <= kinematics_library::EPSILON)
     {
-        psi_min = SRSKinematic::PI ;
+        psi_min = kinematics_library::PI ;
         psi_max = 0.0;
         std::cout<<"   a is zero "<<std::endl;
     }
@@ -764,27 +766,27 @@ int SRSKinematicSolver::feasible_armangle_cosinetype_cyclicfunction(const double
     global_min = acos((at * sin(psi_min)) + (bt * cos(psi_min)) + ct);
     global_max = acos((at * sin(psi_max)) + (bt * cos(psi_max)) + ct);
 
-    LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*kinematics_library::RTD, global_max*kinematics_library::RTD);
 
     if(global_min > global_max)
     {
         std::swap(global_min, global_max);
         swap_flag = true;
 
-        LOG_DEBUG("[SRSKinematicSolver]: \n Swapping global_min = %f global_max = %f \n", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
+        LOG_DEBUG("[SRSKinematicSolver]: \n Swapping global_min = %f global_max = %f \n", global_min*kinematics_library::RTD, global_max*kinematics_library::RTD);
     }
 
-//     std::cout<< t_sqrt<<"  "<<at<<"  "<<bt<<"  "<<ct<<"  "<<SRSKinematic::ZERO<<std::endl;
+//     std::cout<< t_sqrt<<"  "<<at<<"  "<<bt<<"  "<<ct<<"  "<<kinematics_library::EPSILON<<std::endl;
 //     std::cout<<( (at * at) + (bt * bt) - ((ct-1.0) * (ct-1.0)) ) <<std::endl;
 //     std::cout<<( (at * at) + (bt * bt) - ((ct+1.0) * (ct+1.0)) )<<std::endl;
-//     std::cout<<"global_min = "<<global_min*SRSKinematic::RTD<<"  global_max = "<<global_max*SRSKinematic::RTD<<std::endl;
-//     std::cout<<"psi_min = "<<psi_min*SRSKinematic::RTD<<"  psi_max = "<<psi_max*SRSKinematic::RTD<<std::endl;
+//     std::cout<<"global_min = "<<global_min*kinematics_library::RTD<<"  global_max = "<<global_max*kinematics_library::RTD<<std::endl;
+//     std::cout<<"psi_min = "<<psi_min*kinematics_library::RTD<<"  psi_max = "<<psi_max*kinematics_library::RTD<<std::endl;
 
     calculated_psi.joint_name = jointname;
     calculated_psi.joint_number = jointnumber;
 
-    //if ((fabs( (at * at) + (bt * bt) - ((ct-1) * (ct-1)) )) < SRSKinematic::ZERO)
-    if ( (((at * at) + (bt * bt) - ((ct-1) * (ct-1)) ) <SRSKinematic::PAC ) && (((at * at) + (bt * bt) - ((ct-1) * (ct-1)) ) >SRSKinematic::NAC))
+    //if ((fabs( (at * at) + (bt * bt) - ((ct-1) * (ct-1)) )) < kinematics_library::EPSILON)
+    if ( (((at * at) + (bt * bt) - ((ct-1) * (ct-1)) ) <kinematics_library::PAC ) && (((at * at) + (bt * bt) - ((ct-1) * (ct-1)) ) >kinematics_library::NAC))
     {
         psi.first  = 2 * atan(at / (bt - (ct - 1)));
         psi.second = psi.first;
@@ -798,7 +800,7 @@ int SRSKinematicSolver::feasible_armangle_cosinetype_cyclicfunction(const double
             infeasible_psi.push_back(calculated_psi);
 
     }
-    else if (fabs(( (at * at) + (bt * bt) - ((ct+1) * (ct+1)) )) < SRSKinematic::ZERO)
+    else if (fabs(( (at * at) + (bt * bt) - ((ct+1) * (ct+1)) )) < kinematics_library::EPSILON)
     {
         psi.first  = 2 * atan(at / (bt - (ct + 1)));
         psi.second = psi.first;
@@ -824,9 +826,9 @@ int SRSKinematicSolver::feasible_armangle_cosinetype_cyclicfunction(const double
             succeeded = -(jointnumber);
 
             LOG_DEBUG("[SRSKinematicSolver]: Failed in boundary condition in cosine function");
-            LOG_DEBUG("[SRSKinematicSolver]: psi_min = %f psi_max = %f",psi_min*SRSKinematic::RTD, psi_max*SRSKinematic::RTD );
-            LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
-            LOG_DEBUG("[SRSKinematicSolver]: psi.first = %f psi.second = %f", psi.first*SRSKinematic::RTD, psi.second*SRSKinematic::RTD);
+            LOG_DEBUG("[SRSKinematicSolver]: psi_min = %f psi_max = %f",psi_min*kinematics_library::RTD, psi_max*kinematics_library::RTD );
+            LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*kinematics_library::RTD, global_max*kinematics_library::RTD);
+            LOG_DEBUG("[SRSKinematicSolver]: psi.first = %f psi.second = %f", psi.first*kinematics_library::RTD, psi.second*kinematics_library::RTD);
 
             return succeeded;
         }
@@ -927,7 +929,7 @@ int SRSKinematicSolver::feasible_armangle_cosinetype_cyclicfunction(const double
 //             std::cout<< "cond-5"<<std::endl;
 
             calculated_psi.psi.resize(1);
-            calculated_psi.psi.at(0) = std::make_pair(-SRSKinematic::PI , SRSKinematic::PI );
+            calculated_psi.psi.at(0) = std::make_pair(-kinematics_library::PI , kinematics_library::PI );
 
             feasible_psi.push_back(calculated_psi);
         }
@@ -936,7 +938,7 @@ int SRSKinematicSolver::feasible_armangle_cosinetype_cyclicfunction(const double
 //     std::cout<<"at = "<< at <<"   "<<"bt = "<<bt<<"  "<<"ct = "<<ct<<std::endl;
 //     std::cout<<"cond 1 = "<<( (at * at) + (bt * bt) - ((ct-1) * (ct-1)) )<<"  "<<"cond 2 = "<<( (at * at) + (bt * bt) - ((ct+1) * (ct+1)) )<<std::endl;
 //     std::cout<<"t_sqrt = "<< t_sqrt <<"   "<<"squared = "<<((at * at) + (bt * bt))<<std::endl;
-//     std::cout<<"psi_min = "<<psi_min*SRSKinematic::RTD<<"  psi_max = "<<psi_max*SRSKinematic::RTD<<std::endl;
+//     std::cout<<"psi_min = "<<psi_min*kinematics_library::RTD<<"  psi_max = "<<psi_max*kinematics_library::RTD<<std::endl;
 
     return succeeded;
 }
@@ -959,7 +961,7 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_cyclicfunction(const doubl
     psi_min = 2.0*(atan( (at-t_sqrt) / (bt-ct)) );
     psi_max = 2.0*(atan( (at+t_sqrt) / (bt-ct)) );
 
-    LOG_DEBUG("[SRSKinematicSolver]: psi_min = %f psi_max = %f",psi_min*SRSKinematic::RTD, psi_max*SRSKinematic::RTD );
+    LOG_DEBUG("[SRSKinematicSolver]: psi_min = %f psi_max = %f",psi_min*kinematics_library::RTD, psi_max*kinematics_library::RTD );
 
     global_min = atan2( ( (an * sin(psi_min))+(bn * cos(psi_min))+cn ), ( (ad * sin(psi_min))+(bd * cos(psi_min))+cd ) );
     global_max = atan2( ( (an * sin(psi_max))+(bn * cos(psi_max))+cn ), ( (ad * sin(psi_max))+(bd * cos(psi_max))+cd ) );
@@ -969,11 +971,11 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_cyclicfunction(const doubl
             swap(global_min, global_max);
 
             if(DEBUG)
-                    std::cout<< "*************   swaping **********"<<"global_min "<<global_min*SRSKinematic::RTD<<" "<<"global_max "<<global_max*SRSKinematic::RTD<<std::endl;
+                    std::cout<< "*************   swaping **********"<<"global_min "<<global_min*kinematics_library::RTD<<" "<<"global_max "<<global_max*kinematics_library::RTD<<std::endl;
 
     }*/
 
-    LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*kinematics_library::RTD, global_max*kinematics_library::RTD);
 
     calculated_psi.joint_name = jointname;
     calculated_psi.joint_number = jointnumber;
@@ -1040,13 +1042,13 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_cyclicfunction(const doubl
              ((min_jtag <= global_max) && (global_max <= max_jtag )) )                          //cond-5
     {
         calculated_psi.psi.resize(1);
-        calculated_psi.psi.at(0) = std::make_pair(-SRSKinematic::PI , SRSKinematic::PI );
+        calculated_psi.psi.at(0) = std::make_pair(-kinematics_library::PI , kinematics_library::PI );
 
         feasible_psi.push_back(calculated_psi);
     }
 
-    LOG_DEBUG("[SRSKinematicSolver]: psi_min = %f psi_max = %f",psi_min*SRSKinematic::RTD, psi_max*SRSKinematic::RTD );
-    LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*SRSKinematic::RTD, global_max*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: psi_min = %f psi_max = %f",psi_min*kinematics_library::RTD, psi_max*kinematics_library::RTD );
+    LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*kinematics_library::RTD, global_max*kinematics_library::RTD);
 
     return succeeded;
 }
@@ -1061,13 +1063,13 @@ int SRSKinematicSolver::calculate_region_armAngle_tangentcylic(const double &an,
 
     // solve equation 23
     // since tan(90) is infinity, the equ 23 is modified
-    if (fabs(joint_limit - SRSKinematic::PI /2.0) < SRSKinematic::ZERO) //+90
+    if (fabs(joint_limit - kinematics_library::PI /2.0) < kinematics_library::EPSILON) //+90
     {
         a = bd;
         b = ad;
         c = -cd;
     }
-    else if (fabs(joint_limit + SRSKinematic::PI /2.0) < SRSKinematic::ZERO) //-90
+    else if (fabs(joint_limit + kinematics_library::PI /2.0) < kinematics_library::EPSILON) //-90
     {
         a = -bd;
         b = -ad;
@@ -1095,7 +1097,7 @@ int SRSKinematicSolver::calculate_region_armAngle_tangentcylic(const double &an,
 
     psi_pair = std::make_pair(psi.first, psi.second);
 
-    LOG_DEBUG("[SRSKinematicSolver]: psi.first = %f psi.second = %f",psi.first*SRSKinematic::RTD, psi.second*SRSKinematic::RTD );
+    LOG_DEBUG("[SRSKinematicSolver]: psi.first = %f psi.second = %f",psi.first*kinematics_library::RTD, psi.second*kinematics_library::RTD );
 
     return succeeded;
 }
@@ -1113,11 +1115,11 @@ int SRSKinematicSolver::solve_transcendental_equation(const double a, const doub
             if(DEBUG)
             {
                     std::cout<< "transc_equ--  "<<"squared_value ="<<squared_value<<"   a ="<<a<<"  b="<<b<<"  c="<<c<<std::endl;
-                    succeeded = SRSKinematic::ERR_TRANS_EQU;
+                    succeeded = kinematics_library::ERR_TRANS_EQU;
             }
     }*/
 
-    if ( fabs(b) < SRSKinematic::ZERO) //~0
+    if ( fabs(b) < kinematics_library::EPSILON) //~0
     {
         LOG_DEBUG("[SRSKinematicSolver]: transcendental_solutions b is zero ");
         
@@ -1128,16 +1130,16 @@ int SRSKinematicSolver::solve_transcendental_equation(const double a, const doub
         transcendental_solutions.first = -acos(temp);
         transcendental_solutions.second = acos(temp);
 
-//         std::cout<< "transc_equ b zero "<<sqrt(fabs(1-(temp*temp)))<<"  "<<temp<<"  "<<atan2(temp,sqrt(1-(temp*temp)))*SRSKinematic::RTD<<std::endl;
+//         std::cout<< "transc_equ b zero "<<sqrt(fabs(1-(temp*temp)))<<"  "<<temp<<"  "<<atan2(temp,sqrt(1-(temp*temp)))*kinematics_library::RTD<<std::endl;
     }
-    else if ( fabs(c) < SRSKinematic::ZERO) //~0
+    else if ( fabs(c) < kinematics_library::EPSILON) //~0
     {
         transcendental_solutions.first = atan2(a,-b);
         transcendental_solutions.second = atan2(-a,b);
 
         LOG_DEBUG("[SRSKinematicSolver]: transcendental_solutions ' c<0 ' condition ");
 
-        succeeded =  SRSKinematic::ERR_TRANS_EQU_COND;
+        succeeded = SRSKinematic::ERR_TRANS_EQU_COND;
     }
     else
     {
@@ -1148,9 +1150,9 @@ int SRSKinematicSolver::solve_transcendental_equation(const double a, const doub
         transcendental_solutions.second = psi_1 + psi_2;
     }
     
-    LOG_DEBUG("[SRSKinematicSolver]: transc_equ: psi_1 = %f psi_2 = %f sqrt = %f a = %f b = %f c = %f",psi_1*SRSKinematic::RTD, psi_2*SRSKinematic::RTD, 
+    LOG_DEBUG("[SRSKinematicSolver]: transc_equ: psi_1 = %f psi_2 = %f sqrt = %f a = %f b = %f c = %f",psi_1*kinematics_library::RTD, psi_2*kinematics_library::RTD, 
                                                                                                                   sqrt(((a * a) + (b * b) - (c * c)) ), a, b, c);
-    LOG_DEBUG("[SRSKinematicSolver]: transc_equ solu %f %f", transcendental_solutions.first*SRSKinematic::RTD, transcendental_solutions.second*SRSKinematic::RTD);
+    LOG_DEBUG("[SRSKinematicSolver]: transc_equ solu %f %f", transcendental_solutions.first*kinematics_library::RTD, transcendental_solutions.second*kinematics_library::RTD);
     
     return succeeded;
 }
@@ -1177,8 +1179,8 @@ int SRSKinematicSolver::solve_transcendental_equation_newmethod(const double a, 
     }
     else if (temp_cos <= -1)
     {
-        transcendental_solutions.first  = SRSKinematic::PI + alpha;
-        transcendental_solutions.second = SRSKinematic::PI + alpha;
+        transcendental_solutions.first  = kinematics_library::PI + alpha;
+        transcendental_solutions.second = kinematics_library::PI + alpha;
     }
     else
     {
@@ -1187,8 +1189,8 @@ int SRSKinematicSolver::solve_transcendental_equation_newmethod(const double a, 
     }
     
     LOG_DEBUG("[SRSKinematicSolver]: new transc_equ: R = %f sin_alpha = %f cos_alpha = %f alpha = %f a = %f b = %f c = %f",R, sin_alpha, cos_alpha, 
-                                                                                                                          alpha*SRSKinematic::RTD, a, b, c);
-    LOG_DEBUG("[SRSKinematicSolver]: new transc_equ solu %f %f", transcendental_solutions.first*SRSKinematic::RTD, transcendental_solutions.second*SRSKinematic::RTD);
+                                                                                                                          alpha*kinematics_library::RTD, a, b, c);
+    LOG_DEBUG("[SRSKinematicSolver]: new transc_equ solu %f %f", transcendental_solutions.first*kinematics_library::RTD, transcendental_solutions.second*kinematics_library::RTD);
     
     return succeeded;
 }
@@ -1201,26 +1203,26 @@ int SRSKinematicSolver::psi_picker(std::pair<double, double> act_psi, const std:
 
     if (limit == "MIN")
     {
-        if( ((act_psi.first > -SRSKinematic::PI ) && (act_psi.first < SRSKinematic::ZERO) ) && ((act_psi.second < -SRSKinematic::PI ) || (act_psi.second > SRSKinematic::ZERO)) )
+        if( ((act_psi.first > -kinematics_library::PI ) && (act_psi.first < kinematics_library::EPSILON) ) && ((act_psi.second < -kinematics_library::PI ) || (act_psi.second > kinematics_library::EPSILON)) )
         {
             result = act_psi.first;
             return succeeded;
         }
-        else if ( ((act_psi.first < -SRSKinematic::PI ) || (act_psi.first > SRSKinematic::ZERO))&& ((act_psi.second < SRSKinematic::ZERO) &&(act_psi.second > -SRSKinematic::PI )) )
+        else if ( ((act_psi.first < -kinematics_library::PI ) || (act_psi.first > kinematics_library::EPSILON))&& ((act_psi.second < kinematics_library::EPSILON) &&(act_psi.second > -kinematics_library::PI )) )
         {
             result = act_psi.second;
             return succeeded;
         }
-        else if ((act_psi.first > SRSKinematic::ZERO) && (act_psi.second > SRSKinematic::ZERO))
+        else if ((act_psi.first > kinematics_library::EPSILON) && (act_psi.second > kinematics_library::EPSILON))
         {
-            temp_psi_first = act_psi.first - (2*SRSKinematic::PI );
-            temp_psi_second = act_psi.second - (2*SRSKinematic::PI );
-            if( ((temp_psi_first > -SRSKinematic::PI ) && (temp_psi_first < SRSKinematic::ZERO) ) && ((temp_psi_second < -SRSKinematic::PI ) || (temp_psi_second > SRSKinematic::ZERO)) )
+            temp_psi_first = act_psi.first - (2*kinematics_library::PI );
+            temp_psi_second = act_psi.second - (2*kinematics_library::PI );
+            if( ((temp_psi_first > -kinematics_library::PI ) && (temp_psi_first < kinematics_library::EPSILON) ) && ((temp_psi_second < -kinematics_library::PI ) || (temp_psi_second > kinematics_library::EPSILON)) )
             {
                 result = temp_psi_first;
                 return succeeded;
             }
-            else if ( ((temp_psi_first < -SRSKinematic::PI ) || (temp_psi_first > SRSKinematic::ZERO))&& ((temp_psi_second < SRSKinematic::ZERO) &&(temp_psi_second > -SRSKinematic::PI )) )
+            else if ( ((temp_psi_first < -kinematics_library::PI ) || (temp_psi_first > kinematics_library::EPSILON))&& ((temp_psi_second < kinematics_library::EPSILON) &&(temp_psi_second > -kinematics_library::PI )) )
             {
                 result = temp_psi_second;
                 return succeeded;
@@ -1237,26 +1239,26 @@ int SRSKinematicSolver::psi_picker(std::pair<double, double> act_psi, const std:
     }
     else if(limit == "MAX")
     {
-        if( ((act_psi.first < SRSKinematic::PI ) && (act_psi.first > SRSKinematic::ZERO) ) && ((act_psi.second > SRSKinematic::PI ) || (act_psi.second < SRSKinematic::ZERO)) )
+        if( ((act_psi.first < kinematics_library::PI ) && (act_psi.first > kinematics_library::EPSILON) ) && ((act_psi.second > kinematics_library::PI ) || (act_psi.second < kinematics_library::EPSILON)) )
         {
             result = act_psi.first;
             return succeeded;
         }
-        else if ( ((act_psi.first > SRSKinematic::PI ) || (act_psi.first < SRSKinematic::ZERO)) && ((act_psi.second > SRSKinematic::ZERO) && (act_psi.second < SRSKinematic::PI )) )
+        else if ( ((act_psi.first > kinematics_library::PI ) || (act_psi.first < kinematics_library::EPSILON)) && ((act_psi.second > kinematics_library::EPSILON) && (act_psi.second < kinematics_library::PI )) )
         {
             result = act_psi.second;
             return succeeded;
         }
-        else if ((act_psi.first < SRSKinematic::ZERO) && (act_psi.second < SRSKinematic::ZERO))
+        else if ((act_psi.first < kinematics_library::EPSILON) && (act_psi.second < kinematics_library::EPSILON))
         {
-            temp_psi_first = act_psi.first + (2*SRSKinematic::PI );
-            temp_psi_second = act_psi.second + (2*SRSKinematic::PI );
-            if( ((temp_psi_first < SRSKinematic::PI ) && (temp_psi_first > SRSKinematic::ZERO) ) && ((temp_psi_second > SRSKinematic::PI ) || (temp_psi_second < SRSKinematic::ZERO)) )
+            temp_psi_first = act_psi.first + (2*kinematics_library::PI );
+            temp_psi_second = act_psi.second + (2*kinematics_library::PI );
+            if( ((temp_psi_first < kinematics_library::PI ) && (temp_psi_first > kinematics_library::EPSILON) ) && ((temp_psi_second > kinematics_library::PI ) || (temp_psi_second < kinematics_library::EPSILON)) )
             {
                 result = temp_psi_first;
                 return succeeded;
             }
-            else if ( ((temp_psi_first > SRSKinematic::PI ) || (temp_psi_first < SRSKinematic::ZERO)) && ((temp_psi_second > SRSKinematic::ZERO) && (temp_psi_second < SRSKinematic::PI )) )
+            else if ( ((temp_psi_first > kinematics_library::PI ) || (temp_psi_first < kinematics_library::EPSILON)) && ((temp_psi_second > kinematics_library::EPSILON) && (temp_psi_second < kinematics_library::PI )) )
             {
                 result = temp_psi_second;
                 return succeeded;
@@ -1279,27 +1281,27 @@ int SRSKinematicSolver::psi_picker(std::pair<double, double> act_psi, const std:
 
 int SRSKinematicSolver::check_psi_range_bw_negPI_posPI(std::pair<double, double> &act_psi)
 {
-    //if( ((act_psi.first > -PI) && (act_psi.first < SRSKinematic::ZERO) ) &&
-    //    ((act_psi.second < PI) && (act_psi.second > SRSKinematic::ZERO)) )
-    if( ((act_psi.first > -SRSKinematic::PI ) && (act_psi.first < SRSKinematic::PI ) ) &&
-        ((act_psi.second > -SRSKinematic::PI ) && (act_psi.second < SRSKinematic::PI )) )
+    //if( ((act_psi.first > -PI) && (act_psi.first < kinematics_library::EPSILON) ) &&
+    //    ((act_psi.second < PI) && (act_psi.second > kinematics_library::EPSILON)) )
+    if( ((act_psi.first > -kinematics_library::PI ) && (act_psi.first < kinematics_library::PI ) ) &&
+        ((act_psi.second > -kinematics_library::PI ) && (act_psi.second < kinematics_library::PI )) )
     {
         return 0;
     }
-    else if ( ((act_psi.first < -SRSKinematic::PI ) && (act_psi.first < SRSKinematic::ZERO) ) && 
-              ((act_psi.second < SRSKinematic::PI ) && (act_psi.second > SRSKinematic::ZERO)) )
+    else if ( ((act_psi.first < -kinematics_library::PI ) && (act_psi.first < kinematics_library::EPSILON) ) && 
+              ((act_psi.second < kinematics_library::PI ) && (act_psi.second > kinematics_library::EPSILON)) )
     {
-        act_psi.first = act_psi.first + (2*SRSKinematic::PI );
+        act_psi.first = act_psi.first + (2*kinematics_library::PI );
 
         if(act_psi.first > act_psi.second)
             std::swap(act_psi.first, act_psi.second);
 
         return 0;
     }
-    else if ( ((act_psi.first > -SRSKinematic::PI ) && (act_psi.first < SRSKinematic::ZERO) ) &&
-            ((act_psi.second > SRSKinematic::PI ) && (act_psi.second > SRSKinematic::ZERO)) )
+    else if ( ((act_psi.first > -kinematics_library::PI ) && (act_psi.first < kinematics_library::EPSILON) ) &&
+            ((act_psi.second > kinematics_library::PI ) && (act_psi.second > kinematics_library::EPSILON)) )
     {
-        act_psi.second = act_psi.second - (2*SRSKinematic::PI );
+        act_psi.second = act_psi.second - (2*kinematics_library::PI );
 
         if(act_psi.first > act_psi.second)
             std::swap(act_psi.first, act_psi.second);
@@ -1369,7 +1371,7 @@ void SRSKinematicSolver::save_joint_function(const double &an, const double &bn,
         exit(1);
     }
 
-    for(double i = -SRSKinematic::PI ; i<= SRSKinematic::PI ; i=i+0.0174532925)
+    for(double i = -kinematics_library::PI ; i<= kinematics_library::PI ; i=i+0.0174532925)
     {
         if(type.compare("TANGENT") == 0)
             theta = atan2( ( (an * sin(i))+(bn * cos(i))+cn ), ( (ad * sin(i))+(bd * cos(i))+cd ) );
@@ -1378,9 +1380,9 @@ void SRSKinematicSolver::save_joint_function(const double &an, const double &bn,
         else 
             theta = 0;
 
-        fprintf(fp,"%f %f \n", (i*SRSKinematic::RTD), (theta*SRSKinematic::RTD));
-        fprintf(fp_1,"%f %f \n", (i*SRSKinematic::RTD), (min_jtag*SRSKinematic::RTD));
-        fprintf(fp_1,"%f %f \n", (i*SRSKinematic::RTD), (max_jtag*SRSKinematic::RTD));
+        fprintf(fp,"%f %f \n", (i*kinematics_library::RTD), (theta*kinematics_library::RTD));
+        fprintf(fp_1,"%f %f \n", (i*kinematics_library::RTD), (min_jtag*kinematics_library::RTD));
+        fprintf(fp_1,"%f %f \n", (i*kinematics_library::RTD), (max_jtag*kinematics_library::RTD));
     }
 
     fclose(fp);
@@ -1435,10 +1437,10 @@ void SRSKinematicSolver::save_psi_file_helper(const char* outputdata_file, doubl
         exit(1);
     }
 
-    fprintf(fp,"%f %f \n", min*SRSKinematic::RTD, min_jt*SRSKinematic::RTD);
-    fprintf(fp,"%f %f \n", min*SRSKinematic::RTD, max_jt*SRSKinematic::RTD);
-    fprintf(fp,"%f %f \n", max*SRSKinematic::RTD, max_jt*SRSKinematic::RTD);
-    fprintf(fp,"%f %f \n", max*SRSKinematic::RTD, min_jt*SRSKinematic::RTD);
+    fprintf(fp,"%f %f \n", min*kinematics_library::RTD, min_jt*kinematics_library::RTD);
+    fprintf(fp,"%f %f \n", min*kinematics_library::RTD, max_jt*kinematics_library::RTD);
+    fprintf(fp,"%f %f \n", max*kinematics_library::RTD, max_jt*kinematics_library::RTD);
+    fprintf(fp,"%f %f \n", max*kinematics_library::RTD, min_jt*kinematics_library::RTD);
     fclose(fp);
 }
 

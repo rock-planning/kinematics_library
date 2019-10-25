@@ -11,31 +11,12 @@
 #include <algorithm>
 #include <Eigen/Dense>
 
-// #define PI 3.1415926535897932384626433832795
-// #define DTR 0.0174532925    //Degree to Radians
-// #define RTD 57.29577951     //Radians to Degree
-// #define NAR -0.00000001
-// #define PAR  0.00000001
-// #define NAC -0.000005
-// #define PAC 0.000005
-// #define HALFDEGREE 0.008726646
-
+#include "kinematics_library/abstract/KinematicsHelper.hpp"
 
 struct SRSKinematic
 {
-    static constexpr double PI          = 3.1415926535897932384626433832795;
-    static constexpr double DTR         = 0.0174532925;    //Degree to Radians
-    static constexpr double RTD         = 57.29577951;     //Radians to Degree
-    static constexpr double NAR         = -0.00000001;
-    static constexpr double PAR         =  0.00000001;
-    static constexpr double NAC         = -0.000005;
-    static constexpr double PAC         = 0.000005;
-    static constexpr double HALFDEGREE  = 0.008726646;  
-    static constexpr double ZERO        = std::numeric_limits<double>::epsilon();
-    
     enum Errorcode
     {
-        
         SUCCESS                 = 0 ,      /* Kinematic success */
         ERR_BOUND_J1            = -1,      /* Boundary condition failed in Joint 1 */
         ERR_BOUND_J2            = -2,      /* Boundary condition failed in Joint 2 */
@@ -66,17 +47,7 @@ struct ArmAngle
         std::string joint_name;
 };
 
-void Eul2RotMat(const double eul_zyx[3], std::vector<double> &rot_mat);
-void quaternionToRotMat(const Eigen::Quaternion<double> &quat, std::vector<double> &rot_mat);
-void Tra2Eul_pos(double tra[16], double *rot, double *pos);
-void Mult_mat_mat(const std::vector<double> & mat1, const std::vector<double> &mat2, std::vector<double> &res);
-void Mult_mat_vec(const std::vector<double> & mat, const std::vector<double> &vec, std::vector<double> &res);
-void rot_matrix(const double &theta, const double &alpha, std::vector<double> &res);
-void Mult_vec_tslvec(const std::vector<double> &vec, std::vector<double> &res);
-void trans_mat(const std::vector<double> &mat, std::vector<double> &res);
-void identityMatrix(std::vector<double> &dest);
-void multMatrix(const std::vector<double> &src1, const std::vector<double> &src2, std::vector<double> &dest);
-void multMatrix(double src1[16], double src2[16], double *dest);
+
 int complement_of_infeasible_psi( const std::vector< ArmAngle > &infeasible_psi, std::vector< ArmAngle > &complimented_infeasbile_psi);
 int union_joints_with_only_one_feasible_armangle(const std::vector< ArmAngle > &feasbile_armangle, std::vector< ArmAngle > &result);
 int union_of_all_feasible_armangle(const std::vector< ArmAngle > &unsorted_feasible_psi, std::vector< std::pair<double,double>  > &final_feasible_armangle);

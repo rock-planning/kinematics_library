@@ -23,9 +23,8 @@ SET (SRCS
     ${CMAKE_CURRENT_LIST_DIR}/abstract/IkFastSolver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/abstract/KdlSolver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/abstract/KinematicsHelper.cpp
-   # ${CMAKE_CURRENT_LIST_DIR}/solver/shimizu_method/SRSKinematicSolver.cpp
-   # ${CMAKE_CURRENT_LIST_DIR}/solver/shimizu_method/SRSKinematicHelper.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/solver/asfour_method/math_misc.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/solver/shimizu_method/SRSKinematicSolver.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/solver/shimizu_method/SRSKinematicHelper.cpp    
     ${CMAKE_CURRENT_LIST_DIR}/solver/asfour_method/IK7DoFSolver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/KinematicsFactory.cpp )
 
@@ -36,9 +35,6 @@ pkg_check_modules(TRAC_IK trac_ik)
 if(${TRAC_IK_FOUND})
     set(TRAC_IK_LIB_FOUND ${TRAC_IK_FOUND})
     message ("TRAC_IK found !")
-    message("TRAC_IK dir ${TRAC_IK_INCLUDE_DIRS}")
-    message(${TRAC_IK_LIBRARY_DIRS})
-    message(${TRAC_IK_LIBRARIES})
     include_directories(${KINEMATIC_INCLUDE_PATH} ${TRAC_IK_INCLUDE_DIRS})
     link_directories(${TRAC_IK_LIBRARY_DIRS})
     LIST(APPEND EXTERNAL_LIB ${TRAC_IK_LIBRARIES}) 

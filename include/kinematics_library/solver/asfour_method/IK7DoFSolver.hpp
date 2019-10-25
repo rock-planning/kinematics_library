@@ -1,46 +1,52 @@
+/*************************************************************************/
+/*  "Analytical Inverse Kinematic Computation for 7-DOF  Manipulator "   */
+/*   (Works only for a specific joints combination )                     */
+/*   See the paper in the folder for joints configuration                */
+/*                                                                       */
+/*  This method is based on a paper proposed by                          */
+/*  - T. Asfour and r. Dillmann "Human-like Motion of a Humanoid Robot   */
+/*    Arm Based on a Closed-Form Solution of the Inverse Kinematics      */
+/*    Problem"                                                           */
+/*                                                                       */
+/*                                                                       */
+/*  Alexander Dettmann, Rohit Menon                                      */
+/*  DFKI - BREMEN 2019                                                   */
+/*************************************************************************/
+
 #pragma once
 
 #include <vector>
 #include <boost/function.hpp>
 #include <string>
 
-#include "kinematics_library/abstract/AbstractKinematics.hpp"
+#include <eigen3/Eigen/Core>
 
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <kdl/chainiksolverpos_nr_jl.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
 #include <kdl/frames.hpp>
-#include "kinematics_library/solver/asfour_method/math_misc.hpp"
 
-#include "math.h"
-#include "math_misc.hpp"
-#include <eigen3/Eigen/Core>
+#include "kinematics_library/abstract/AbstractKinematics.hpp"
+#include "kinematics_library/abstract/KinematicsHelper.hpp"
 
-#define PI                  3.1415926535897932384626433832795
-#define DTR                 0.0174532925    //Degree to Radians
-#define RTD                 57.29577951     //Radians to Degree
-#define ZERO_PRECISION  0.00000001
-#define NR_DOF_ARM      7
-#define LOCOMOTION      0
-#define MANIPULATION    1
 namespace kinematics_library
 {
+struct SolutionWithScore
+{
+    base::samples::Joints joints_value;
+    double score;
     
-    struct SolutionWithScore
-    {
-        base::samples::Joints joints_value;
-        double score;
-        
-        SolutionWithScore(const base::samples::Joints joints_value_, const double score_):joints_value(joints_value_), score(score_){}
-    };
+    SolutionWithScore(const base::samples::Joints joints_value_, const double score_):joints_value(joints_value_), score(score_){}
+};
+
+struct CompareSolutions
+{
+    bool operator()(SolutionWithScore const &a, SolutionWithScore const &b) {
+        return a.score < b.score;
+    }
     
-    struct CompareSolutions
-    {
-        bool operator()(SolutionWithScore const &a, SolutionWithScore const &b) {
-            return a.score < b.score;
-        }
-        
-    };    
+};  
+
 
 enum ZE_MODE
 {
@@ -49,6 +55,14 @@ enum ZE_MODE
     AUTO_YMAX,
     MANUAL
 };
+
+enum BEHAVIOUR
+{
+    LOCOMOTION = 0,
+    MANIPULATION = 1
+};
+
+
 struct IK7DoFConfig
 {
     IK7DoFConfig(): ze_mode(AUTO_ZSTABLE), offset_base_shoulder(0.0), offset_shoulder_elbow(0.0), offset_elbow_wrist(0.0), 
@@ -63,7 +77,8 @@ struct IK7DoFConfig
     std::vector<std::string> joint_names;
     
 };
-struct Arm{
+struct Arm
+{
     // Denavit-Hartenberg Parameters
     double dh_d[8];                 // translation along the z-axis in m
     double dh_a[8];                 // translation along the rotated x-axis in m
@@ -71,9 +86,12 @@ struct Arm{
     double dh_sa[8];                // sine of the rotation around the rotated x-axis
     double dh_do[8];                // offset on top of the rotation angle delta around the z-axis
     
+
+
+    
     // angle limits
-    double j_min[NR_DOF_ARM];       // in rad
-    double j_max[NR_DOF_ARM];       // in rad
+    double j_min[7];       // in rad
+    double j_max[7];       // in rad
     
     // parameters to influence the behavior
     ZE_MODE ze_mode;         
@@ -82,15 +100,15 @@ struct Arm{
     double ze_min;                  // calculated minimum z-coordinate for the elbow
     double ze_max;                  // calculated minimum z-coordinate for the elbow
     unsigned short mode;            // 0 -> locomotion mode, which means that just 5 DOF are used, 1 -> manipulation mode with all 7 DOF
-    double ja_last[NR_DOF_ARM];     // the actual joint angles, which are needed to choose a solution which is closest
+    double ja_last[7];     // the actual joint angles, which are needed to choose a solution which is closest
     
     // inputs, outputs
     double ja_fk_in[7];             // joint angles for the forward kinematics in rad
     double T_Base_2_TCP_fk_out[16]; // resulting transformation matrix from the forward kinematics
     double pos_ik_in[3];            // [X Y Z] in m
     double rot_ik_in[3];            // [RZ, RY, RX] as zyx-Euler angles in rad
-    double ja_ik_out[NR_DOF_ARM];   // the resulting joint angles in rad from the inverse kinematics
-    double ja_all[8][NR_DOF_ARM];   // all ik solutions
+    double ja_ik_out[7];   // the resulting joint angles in rad from the inverse kinematics
+    double ja_all[8][7];   // all ik solutions
     
     double Rbase2tcp[9];
     

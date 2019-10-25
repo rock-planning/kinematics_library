@@ -9,7 +9,8 @@ namespace kinematics_library
                                  const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain): jts_limits_(jts_limits)
     {
         YAML::Node input_config;
-        handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config);
+        if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
+            return;
         const YAML::Node& config_node = input_config["ik7dof_config"];
         ik7dof_config_ = handle_kinematic_config::getIK7DoFConfig(config_node);
         
@@ -43,7 +44,7 @@ namespace kinematics_library
     {
         getKinematicJoints(kdl_chain_, joint_angles, jt_names_, current_jt_status_);
         
-        assert(current_jt_status_.size() == NR_DOF_ARM);
+        assert(current_jt_status_.size() == 7);
         for(unsigned short i = 0; i < current_jt_status_.size(); ++i)
         {
             arm_->ja_fk_in[i] = joint_angles.getElementByName(ik7dof_config_.joint_names[i]).position;
@@ -82,7 +83,7 @@ namespace kinematics_library
         
         //std::cout<<"b4 assert"<<std::endl;
         
-        //assert(joints_actual.size() == NR_DOF_ARM);
+        //assert(joints_actual.size() == 7);
         //std::cout<<"assert"<<std::endl;
         
         for(unsigned short i = 0; i < ik7dof_config_.joint_names.size(); ++i)
@@ -166,8 +167,8 @@ namespace kinematics_library
 
         }
         // define the angle limits
-        double j_max[NR_DOF_ARM] = { PI, PI, PI, PI, PI, PI, PI };
-        double j_min[NR_DOF_ARM] = {-PI,-PI,-PI,-PI,-PI,-PI,-PI };
+        double j_max[7] = { PI, PI, PI, PI, PI, PI, PI };
+        double j_min[7] = {-PI,-PI,-PI,-PI,-PI,-PI,-PI };
         
         for(i = 0; i < 7; i++){
             arm_->j_max[i] = j_max[i];
@@ -214,13 +215,13 @@ namespace kinematics_library
             
             
             if(i == 0){
-                copy_mat_4x4(T_Fr_2_Fr, arm_->T_Base_2_TCP_fk_out);
+                copyMat4x4(T_Fr_2_Fr, arm_->T_Base_2_TCP_fk_out);
             }
             else
             {
                 double T_Base_2_TCP_tmp[16];
-                copy_mat_4x4(arm_->T_Base_2_TCP_fk_out, T_Base_2_TCP_tmp);
-                mult_mat_mat_4x4(T_Base_2_TCP_tmp, T_Fr_2_Fr, arm_->T_Base_2_TCP_fk_out);
+                copyMat4x4(arm_->T_Base_2_TCP_fk_out, T_Base_2_TCP_tmp);
+                multMatMat(T_Base_2_TCP_tmp, T_Fr_2_Fr, arm_->T_Base_2_TCP_fk_out);
             }
             /*if(i == 3 || i == 7)
             {
@@ -258,8 +259,8 @@ namespace kinematics_library
             n[1] = arm_->Rbase2tcp[7];
             n[2] = arm_->Rbase2tcp[8];
             
-            scale_vec(n, -lh, vec);
-            add_vec(arm_->pos_ik_in, vec, w);
+            scaleVec(n, -lh, vec);
+            addVec(arm_->pos_ik_in, vec, w);
             
             // subtract the shoulder offset to facilitate the equations
             w_t[0] = w[0]; w_t[1] = w[1]; w_t[2] = w[2] - ls;
@@ -270,15 +271,15 @@ namespace kinematics_library
         }
         
         // quit if the position is not reachable
-        double d = norm_vec(w_t);
-        if(lu + lf - d < -ZERO_PRECISION){
+        double d = normVec(w_t);
+        if(lu + lf - d < -kinematics_library::EPSILON){
             printf("[Arm Inverse Kinematics] The desired position is out of reach!\n");
             return 0;
         }
         
         // if the elbow is straight, some equations simplify and some problems have to be solved differently
         unsigned short elbowIsStraight;
-        if(fabs(lu + lf - d) < ZERO_PRECISION){
+        if(fabs(lu + lf - d) < kinematics_library::EPSILON){
             elbowIsStraight = 1;
             LOG_DEBUG_S<<"Straight"<<std::endl;
         }else{
@@ -291,7 +292,7 @@ namespace kinematics_library
         if(elbowIsStraight){
             // if we have a straight elbow, the elbow arm_->pos_ine is simple to determine
             double ratio = lu / (lu + lf);
-            scale_vec(w_t, ratio, e1);
+            scaleVec(w_t, ratio, e1);
             e1[2] += ls;
             
             // both elbow solutions are equal
@@ -384,14 +385,14 @@ namespace kinematics_library
             e1[2] = ze + ls;
             e2[2] = e1[2];
             
-            if(fabs(w_t[0]) < ZERO_PRECISION){
+            if(fabs(w_t[0]) < kinematics_library::EPSILON){
                 // when the x-component is zero, the normal equations simplify or cannot be used
                 e1[1] =  minus_p_half;                     // because the sqrt term is zero
                 e2[1] =  minus_p_half;                     // because the sqrt term is zero
                 
                 // use the Euclidean distance instead to avoid division by 0
                 double xe_sq = lu*lu - e1[1]*e1[1] - ze*ze;
-                if(xe_sq > ZERO_PRECISION){
+                if(xe_sq > kinematics_library::EPSILON){
                     e1[0] = sqrt(lu*lu - e1[1]*e1[1] - ze*ze); // use the Euclidean distance instead
                     e2[0] =-sqrt(lu*lu - e2[1]*e2[1] - ze*ze); // to avoid division by 0
                 }else{
@@ -424,17 +425,17 @@ namespace kinematics_library
             double e_minus[3], rf[3], ru[3];
             double rs[3] = {0.0, 0.0, ls};
             
-            scale_vec(e, -1, e_minus);
-            add_vec(w, e_minus, rf);
-            add_vec(rs, e_minus, ru);
+            scaleVec(e, -1, e_minus);
+            addVec(w, e_minus, rf);
+            addVec(rs, e_minus, ru);
             
             double x4_v[3], y4_v[3], z4_v[3];
             double z4_v_cross_ru[3];
-            double divisor = norm_vec(rf);
-            scale_vec(rf, 1/divisor, z4_v);
-            cross_vec(z4_v, ru, z4_v_cross_ru);
-            scale_vec(z4_v_cross_ru, 1/norm_vec(z4_v_cross_ru), y4_v);
-            cross_vec(y4_v, z4_v, x4_v);
+            double divisor = normVec(rf);
+            scaleVec(rf, 1/divisor, z4_v);
+            crossVec(z4_v, ru, z4_v_cross_ru);
+            scaleVec(z4_v_cross_ru, 1/normVec(z4_v_cross_ru), y4_v);
+            crossVec(y4_v, z4_v, x4_v);
             
             double T_elbow[16];
             T_elbow[0] = x4_v[0];   T_elbow[4] = y4_v[0];   T_elbow[8]  = z4_v[0];   T_elbow[12] = e[0];
@@ -452,7 +453,7 @@ namespace kinematics_library
             //    }
             
             // calculate the joint angles
-            double theta[NR_DOF_ARM];
+            double theta[7];
             unsigned short j;
             for(j = 0; j < 2; j++){
                 if(j == 0){
@@ -499,21 +500,21 @@ namespace kinematics_library
                         
                         // multiply iteratively the transformation matrix from frame to frame with the transformation matrix to the base
                         if(q == 0){
-                            copy_mat_4x4(T_Fr_2_Fr, T_Base_2_TCP);
+                            copyMat4x4(T_Fr_2_Fr, T_Base_2_TCP);
                         }else{
                             double T_Base_2_TCP_tmp[16];
-                            copy_mat_4x4(T_Base_2_TCP, T_Base_2_TCP_tmp);
-                            mult_mat_mat_4x4(T_Base_2_TCP_tmp, T_Fr_2_Fr, T_Base_2_TCP);
+                            copyMat4x4(T_Base_2_TCP, T_Base_2_TCP_tmp);
+                            multMatMat(T_Base_2_TCP_tmp, T_Fr_2_Fr, T_Base_2_TCP);
                         }
                         
-                        copy_mat_4x4(T_Base_2_TCP, T_04);
+                        copyMat4x4(T_Base_2_TCP, T_04);
                     }
                     
                 }else{
                     // if the arm is bended, the elbow angle has to be calculated
                     theta[3] = atan2(-(c1*s2*T_elbow[0] + s1*s2*T_elbow[1] + c2*T_elbow[2]), c1*s2*T_elbow[8] + s1*s2*T_elbow[9] + c2*T_elbow[10]);
                     //std::cout<<std::endl<<"theta3: "<<theta[3]<<"  ";
-                    copy_mat_4x4(T_elbow, T_04);
+                    copyMat4x4(T_elbow, T_04);
                 }
                 
                 // calculate the transformation from elbow to tcp based on the first four
@@ -533,21 +534,21 @@ namespace kinematics_library
                 T_78[3] = 0.0; T_78[7] = 0.0;      T_78[11] = 0.0;     T_78[15] = 1.0;
                 
                 
-                invert_mat(T_78, T_78_inv);
+                invertMat(T_78, T_78_inv);
                 //std::cout<<"\n---------------------------T_78inv------------------------"<<std::endl;
                 //print_as_matrix(T_78_inv, 4,4);
-                build_transformation_mat(arm_->Rbase2tcp, arm_->pos_ik_in, T_08);
+                buildTransformationMat(arm_->Rbase2tcp, arm_->pos_ik_in, T_08);
                 //std::cout<<"---------------------------T_08------------------------"<<std::endl;
                 //print_as_matrix(T_08, 4,4);
-                mult_mat_mat_4x4(T_08, T_78_inv, T_07);
+                multMatMat(T_08, T_78_inv, T_07);
                 //std::cout<<"---------------------------T_07------------------------"<<std::endl;
                 //print_as_matrix(T_07, 4,4);
                 
-                invert_mat(T_04, T_04_inv);
+                invertMat(T_04, T_04_inv);
                 
                 //std::cout<<"---------------------------T_04inv------------------------"<<std::endl;
                 //print_as_matrix(T_04_inv, 4,4);
-                mult_mat_mat_4x4(T_04_inv, T_07, T_47);
+                multMatMat(T_04_inv, T_07, T_47);
                 
                 //std::cout<<"---------------------------T_47------------------------"<<std::endl;
                 //print_as_matrix(T_47, 4,4);
@@ -607,12 +608,12 @@ namespace kinematics_library
                         
                     unsigned short solution_nr = i*4 + j*2 + k;
                     unsigned short dof;
-                    for(dof=0; dof<NR_DOF_ARM; dof++){
+                    for(dof=0; dof<7; dof++){
                         // transfer the joint angles to the robot
                         double ja = theta[dof] - arm_->dh_do[dof];
                         
                         // and place them in an interval of -pi ... pi
-                        arm_->ja_all[solution_nr][dof] = double_modulo(ja + PI, 2*PI) - PI;
+                        arm_->ja_all[solution_nr][dof] = doubleModulo(ja + PI, 2*PI) - PI;
                         
                     }
                 } // end inverse wrist
@@ -626,7 +627,7 @@ namespace kinematics_library
         for(sol_nr = 0; sol_nr < 8; sol_nr++){
             double effort = 0.0;
             unsigned short dof_nr;
-            for(dof_nr = 0; dof_nr < NR_DOF_ARM; dof_nr++){
+            for(dof_nr = 0; dof_nr < 7; dof_nr++){
                 effort = effort + fabs(arm_->ja_all[sol_nr][dof_nr] - arm_->ja_last[dof_nr]);
             }
             if(effort < min_effort){
@@ -636,7 +637,7 @@ namespace kinematics_library
         }
         
         unsigned short dof_nr;
-        for(dof_nr = 0; dof_nr < NR_DOF_ARM; dof_nr++){
+        for(dof_nr = 0; dof_nr < 7; dof_nr++){
             arm_->ja_ik_out[dof_nr] = arm_->ja_all[best_solution][dof_nr];
         }
         
@@ -674,7 +675,7 @@ namespace kinematics_library
         pos_vec[1] = rbs_pose.position(1);
         pos_vec[2] = rbs_pose.position(2);
         base::MatrixXd rot_eigen = rbs_pose.orientation.toRotationMatrix();
-        EigenMat3x3_2_Array(rot_eigen, rot_mat);      
+        eigenMat3x3ToArray(rot_eigen, rot_mat);      
     }
     
     base::samples::Joints Ik7DoFSolver::listJointsInDesiredOrder(double* joint_values, const std::vector< std::__cxx11::string >& desired_joint_names_order, const std::vector< std::__cxx11::string >& actual_joint_names_order)

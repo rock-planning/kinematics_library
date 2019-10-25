@@ -28,12 +28,12 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
             kinematic_solver = std::shared_ptr<IkFastSolver> ( new IkFastSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, kinematics_status ) );
             break;
         }
-       /* case SRS:
+        case SRS:
         {
             LOG_INFO_S<<"[KinematicsFactory]: SRS solver is selected";
             kinematic_solver = std::shared_ptr<SRSKinematicSolver> ( new SRSKinematicSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, kdl_chain_ ) );
             break;
-        }*/
+        }
         case IK7DOF:
         {
            LOG_INFO_S<<"[KinematicsFactory]: IK7DOF solver is selected";

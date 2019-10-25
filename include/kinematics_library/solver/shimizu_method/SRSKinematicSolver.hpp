@@ -1,6 +1,7 @@
 /***************************************************************************/
 /*  An analytical kinematic solver for a 7-DOF Anthropomorphic Manipulator */
 /*  (SRS type - Spherical - Revolute - Spherical Joints)                   */
+/*  See the paper in the folder for joints configuration                   */
 /*                                                                         */
 /*  This solver is based on the paper:                                     */
 /*  "Analytical Inverse Kinematic Computation for 7-DOF Redundant          */

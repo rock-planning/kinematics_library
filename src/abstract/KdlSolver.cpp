@@ -10,7 +10,7 @@ KdlSolver::KdlSolver(const KinematicsConfig &kinematics_config, const std::vecto
     // assign the config
     YAML::Node input_config;
     // check whether the config could be loaded or not.
-    if(handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
+    if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
         return;
     const YAML::Node& kdl_config_node = input_config["kdl_config"];
     kdl_config_ = handle_kinematic_config::getKdlConfig(kdl_config_node);

@@ -126,7 +126,7 @@ kinematics_library::TracIkConfig getTracIkConfig(const YAML::Node &yaml_data)
 }
 #endif
 
-/*kinematics_library::SRSKinematicConfig getSRSConfig(const YAML::Node &yaml_data)
+kinematics_library::SRSKinematicConfig getSRSConfig(const YAML::Node &yaml_data)
 {
     kinematics_library::SRSKinematicConfig config;
     
@@ -139,7 +139,7 @@ kinematics_library::TracIkConfig getTracIkConfig(const YAML::Node &yaml_data)
     
     return config;
 
-}*/
+}
 
 kinematics_library::IK7DoFConfig getIK7DoFConfig(const YAML::Node& yaml_data)
 {
