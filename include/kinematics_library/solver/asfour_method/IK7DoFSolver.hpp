@@ -19,7 +19,7 @@
 #include <boost/function.hpp>
 #include <string>
 
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <kdl/chainiksolverpos_nr_jl.hpp>
