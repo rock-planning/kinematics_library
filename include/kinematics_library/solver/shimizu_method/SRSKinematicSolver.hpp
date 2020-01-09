@@ -84,6 +84,8 @@ class SRSKinematicSolver : public AbstractKinematics
         */
         bool solveFK(const base::samples::Joints &joint_angles, base::samples::RigidBodyState &fk_pose, KinematicsStatus &solver_status);
         
+        void getChainSegementPose(const base::samples::Joints &joint_angles,  std::vector<KDL::Frame> &segement_pose){}
+        
         base::samples::RigidBodyState direct(const base::samples::Joints &joint_angles);
 
     private:

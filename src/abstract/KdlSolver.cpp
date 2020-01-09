@@ -106,6 +106,30 @@ bool KdlSolver::solveFK(const base::samples::Joints &joint_angles, base::samples
     return false;
 }
 
+void KdlSolver::getChainSegementPose(const base::samples::Joints &joint_angles,  std::vector<KDL::Frame> &segement_pose)
+{
+    getKinematicJoints(kdl_chain_, joint_angles, jt_names_, current_jt_status_);
+
+    convertVectorToKDLArray(current_jt_status_, kdl_jtArray_);
+    
+    segement_pose.resize(kdl_chain_.getNrOfSegments());
+    
+    fk_solverPos_->JntToCart(kdl_jtArray_, segement_pose);
+    
+//     for(std::size_t i = 0; i < segement_pose.size();i++)
+//     {
+//         std::cout<<segement_pose.at(i).M(0,0)<<"  "<<segement_pose.at(i).M(0,1)<<"  "<<segement_pose.at(i).M(0,2)<<"  "<<segement_pose.at(i).p.x()<<std::endl;
+//         std::cout<<segement_pose.at(i).M(1,0)<<"  "<<segement_pose.at(i).M(1,1)<<"  "<<segement_pose.at(i).M(1,2)<<"  "<<segement_pose.at(i).p.y()<<std::endl;
+//         std::cout<<segement_pose.at(i).M(2,0)<<"  "<<segement_pose.at(i).M(2,1)<<"  "<<segement_pose.at(i).M(2,2)<<"  "<<segement_pose.at(i).p.z()<<std::endl<<std::endl;
+//         double qx,qy,qz,qw;
+//     segement_pose.at(i).M.GetQuaternion(qx,qy,qz,qw);
+//     std::cout<<"quat = "<<qx<<"  "<<qy<<"  "<<qz<<"  "<<qw<<std::endl;
+//     std::cout<<std::endl;
+// 
+//     }
+
+}
+
 void KdlSolver::getJointLimits(KDL::JntArray &min_jtLimits, KDL::JntArray &max_jtLimits)
 {
     min_jtLimits.resize(number_of_joints_);

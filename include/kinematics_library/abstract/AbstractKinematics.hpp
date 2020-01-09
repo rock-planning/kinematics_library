@@ -53,8 +53,10 @@ class AbstractKinematics
         * @param solver_status Solution status or error code
         * @return true if a forward solution was found or else return false
         */
-        virtual bool solveFK( const base::samples::Joints &joint_status, base::samples::RigidBodyState &fk_pose,                        
+        virtual bool solveFK( const base::samples::Joints &joint_status, base::samples::RigidBodyState &fk_pose,
                               KinematicsStatus &solver_status) = 0;
+                              
+        virtual void getChainSegementPose(const base::samples::Joints &joint_angles,  std::vector<KDL::Frame> &segement_pose) = 0;
 
         bool solveIKRelatively( const base::samples::RigidBodyState &current_pose, const base::samples::Joints &joint_angles, 
                                 const base::samples::RigidBodyState &relative_pose,

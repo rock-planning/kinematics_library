@@ -202,7 +202,7 @@ bool IkFastSolver::solveFK(const base::samples::Joints &joint_angles, base::samp
     kinematic_pose_.orientation = quaternion_rot;
 
     solver_status.statuscode = KinematicsStatus::FK_FOUND;
-
+ 
     convertPoseBetweenDifferentFrames(kdl_tree_, kinematic_pose_, fk_pose);
 
     return true;

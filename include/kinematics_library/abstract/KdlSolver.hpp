@@ -70,6 +70,8 @@ class KdlSolver : public AbstractKinematics
         bool solveFK(const base::samples::Joints &joint_angles,
                      base::samples::RigidBodyState &fk_pose,
                      KinematicsStatus &solver_status);
+        
+        void getChainSegementPose(const base::samples::Joints &joint_angles,  std::vector<KDL::Frame> &segement_pose);
 
     private:
         void getJointLimits(KDL::JntArray &min_jtLimits, KDL::JntArray &max_jtLimits);
