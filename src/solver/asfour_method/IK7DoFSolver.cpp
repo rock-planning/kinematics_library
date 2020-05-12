@@ -10,7 +10,7 @@ namespace kinematics_library
     {
         YAML::Node input_config;
         if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
-            return;
+            throw std::runtime_error("Unable to load kinematic config file from " + kinematics_config.solver_config_abs_path);
         const YAML::Node& config_node = input_config["ik7dof_config"];
         ik7dof_config_ = handle_kinematic_config::getIK7DoFConfig(config_node);
         
