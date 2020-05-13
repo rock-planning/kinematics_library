@@ -14,7 +14,6 @@ namespace kinematics_library
         const YAML::Node& config_node = input_config["ik7dof_config"];
         ik7dof_config_ = handle_kinematic_config::getIK7DoFConfig(config_node);
         
-        
         kdl_tree_       = kdl_tree;
         kdl_chain_      = kdl_chain;
         
@@ -26,7 +25,6 @@ namespace kinematics_library
         
         arm_ = new kinematics_library::Arm; 
         initializeArm();
-        
         
     }
     
@@ -47,8 +45,8 @@ namespace kinematics_library
         assert(current_jt_status_.size() == 7);
         for(unsigned short i = 0; i < current_jt_status_.size(); ++i)
         {
-            arm_->ja_fk_in[i] = joint_angles.getElementByName(ik7dof_config_.joint_names[i]).position;
-            arm_->ja_last[i]  = joint_angles.getElementByName(ik7dof_config_.joint_names[i]).position;
+            arm_->ja_fk_in[i] = ik7dof_config_.joints_mapping[i] * joint_angles.getElementByName(ik7dof_config_.joint_names[i]).position;
+            arm_->ja_last[i]  = ik7dof_config_.joints_mapping[i] * joint_angles.getElementByName(ik7dof_config_.joint_names[i]).position;
         }
         
         int success = fkArm();
@@ -67,7 +65,8 @@ namespace kinematics_library
         }
     }
     
-    bool Ik7DoFSolver::solveIK ( const base::samples::RigidBodyState target_pose, const base::samples::Joints& joint_status, std::vector< base::commands::Joints >& solution, KinematicsStatus& solver_status )
+    bool Ik7DoFSolver::solveIK ( const base::samples::RigidBodyState target_pose, const base::samples::Joints& joint_status,
+                                 std::vector< base::commands::Joints >& solution, KinematicsStatus& solver_status )
     {
         convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);
         getKinematicJoints(kdl_chain_, joint_status, jt_names_, current_jt_status_);
@@ -88,7 +87,7 @@ namespace kinematics_library
         
         for(unsigned short i = 0; i < ik7dof_config_.joint_names.size(); ++i)
         {
-            arm_->ja_last[i]  = joint_status.getElementByName(ik7dof_config_.joint_names[i]).position;
+            arm_->ja_last[i]  = ik7dof_config_.joints_mapping[i] * joint_status.getElementByName(ik7dof_config_.joint_names[i]).position;
         }
         
         setDesiredPose(kinematic_pose_, arm_->pos_ik_in, arm_->Rbase2tcp);
@@ -96,9 +95,12 @@ namespace kinematics_library
         rotationMatrix2zyxEuler(arm_->Rbase2tcp, arm_->rot_ik_in);
         
         int success = ikArm();
+
         if(success ==1)
         {
+
             base::samples::Joints joints_least_effort = listJointsInDesiredOrder(arm_->ja_ik_out, jt_names_, ik7dof_config_.joint_names);
+
             if(validateJointLimits(joints_least_effort,  jts_limits_ ) && !joints_least_effort.names.empty())
             {
                 solution.resize(1);
@@ -109,6 +111,7 @@ namespace kinematics_library
             }
             else
             {
+
                 std::vector<base::samples::Joints> valid_solution_list;
                 for(unsigned short i = 0; i < 8; ++i)
                 {
@@ -118,9 +121,9 @@ namespace kinematics_library
                         valid_solution_list.push_back(joint_samples);
                     }
                 }
+
                 if(valid_solution_list.size()>0)
                 {
-                    //std::cout<<"valid_solution_list"<<std::endl;
                     solution = pickOptimalSolution(valid_solution_list, joint_status);
                     solver_status.statuscode = KinematicsStatus::IK_FOUND;
                     return true;
@@ -142,6 +145,7 @@ namespace kinematics_library
     
     int Ik7DoFSolver::initializeArm()
     {
+
         double bs = ik7dof_config_.offset_base_shoulder;
         double se = ik7dof_config_.offset_shoulder_elbow;
         double ew = ik7dof_config_.offset_elbow_wrist;
@@ -151,8 +155,7 @@ namespace kinematics_library
         double dh_a[8]  = {  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   wt,  0.0 };
         double dh_ca[8] = {  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1.0,  0.0 };
         double dh_sa[8] = { -1.0,  1.0, -1.0,  1.0, -1.0, -1.0,  0.0, -1.0 };
-        double dh_do[8] = {-PI/2,  PI/2,  0.0,  0.0, PI/2,-PI/2,  0.0,-PI/2 };
-        
+
         unsigned short i;
                 
         for(i = 0; i < 8; i++)
@@ -161,19 +164,18 @@ namespace kinematics_library
             arm_->dh_a[i] = dh_a[i];
             arm_->dh_ca[i] = dh_ca[i];
             arm_->dh_sa[i] = dh_sa[i];
-            //arm_->dh_do[i] = dh_do[i];
             arm_->dh_do[i] = ik7dof_config_.theta_offsets[i];
             //std::cout<<arm_->dh_do[i]<<std::endl;
 
         }
-        // define the angle limits
-        double j_max[7] = { PI, PI, PI, PI, PI, PI, PI };
-        double j_min[7] = {-PI,-PI,-PI,-PI,-PI,-PI,-PI };
-        
-        for(i = 0; i < 7; i++){
-            arm_->j_max[i] = j_max[i];
-            arm_->j_min[i] = j_min[i];
+
+        assert(jts_limits_.size()==7);
+        for(std::size_t i = 0; i < 7; i++)
+        {
+            arm_->j_min[i] = jts_limits_.at(i).first;
+            arm_->j_max[i] = jts_limits_.at(i).second;
         }
+
         arm_->mode = MANIPULATION;
         arm_->ze_mode = ik7dof_config_.ze_mode;
         
@@ -184,17 +186,15 @@ namespace kinematics_library
     {
         unsigned short i;
         double dh_t;
-        for(i = 0; i < 8; i++){
-            
+        for(i = 0; i < 8; i++)
+        //for(i = 0; i < 7; i++)
+        {            
             //Adaption to the joint delta angle offsets
-            if(i == 7){
+            if(i == 7)
                 dh_t = arm_->dh_do[i];
-            }
-            else{
-                
+            else
                 dh_t = arm_->ja_fk_in[i] + arm_->dh_do[i];
-            }
-            
+
             // calc sin and cos just once
             double st = sin(dh_t);
             double ct = cos(dh_t);
@@ -202,6 +202,7 @@ namespace kinematics_library
             double ca = arm_->dh_ca[i];
             
             // build the transformation matrix from frame to frame
+            // classical not modified DH parameters.
             double T_Fr_2_Fr[16];
             T_Fr_2_Fr[0] =  ct;    T_Fr_2_Fr[4] = -st*ca;   T_Fr_2_Fr[8]  =  st*sa;   T_Fr_2_Fr[12] = ct*arm_->dh_a[i];
             T_Fr_2_Fr[1] =  st;    T_Fr_2_Fr[5] =  ct*ca;   T_Fr_2_Fr[9]  = -ct*sa;   T_Fr_2_Fr[13] = st*arm_->dh_a[i];
@@ -212,7 +213,7 @@ namespace kinematics_library
             {
                 arm_->T(i, j) = T_Fr_2_Fr[j]; 
             }*/
-            
+
             
             if(i == 0){
                 copyMat4x4(T_Fr_2_Fr, arm_->T_Base_2_TCP_fk_out);
@@ -223,14 +224,6 @@ namespace kinematics_library
                 copyMat4x4(arm_->T_Base_2_TCP_fk_out, T_Base_2_TCP_tmp);
                 multMatMat(T_Base_2_TCP_tmp, T_Fr_2_Fr, arm_->T_Base_2_TCP_fk_out);
             }
-            /*if(i == 3 || i == 7)
-            {
-                std::string link = (i==3)? "elbow":"tcp";
-                LOG_DEBUG_S<<"Transform from  base to "<<link<<std::endl;
-                //print_as_rbs(arm_->T_Base_2_TCP_fk_out);
-                
-                //print_as_matrix(arm_->T_Base_2_TCP_fk_out);
-            }*/
         }
         return 1;
     }
@@ -252,26 +245,31 @@ namespace kinematics_library
         
         //ik_7dof::copy_array(arm_->Rbase2tcp, Rbase2tcp, 9);
         //print_as_matrix(Rbase2tcp, 3,3);
-        
-        if(arm_->mode == MANIPULATION){
+        //std::cout<<arm_->pos_ik_in[0]<<"  "<< arm_->pos_ik_in[1]<<"   "<<arm_->pos_ik_in[2]<<std::endl;
+        if(arm_->mode == MANIPULATION)
+        {
             // get the arm->pos_inition of the wrist intersection point
             n[0] = arm_->Rbase2tcp[6];
             n[1] = arm_->Rbase2tcp[7];
             n[2] = arm_->Rbase2tcp[8];
+			
             
             scaleVec(n, -lh, vec);
             addVec(arm_->pos_ik_in, vec, w);
             
             // subtract the shoulder offset to facilitate the equations
             w_t[0] = w[0]; w_t[1] = w[1]; w_t[2] = w[2] - ls;
-            
-        }else{   // arm->mode= locomotion
+
+        }
+		else
+		{   // arm->mode= locomotion
             w[0] = arm_->pos_ik_in[0]; w[1] = arm_->pos_ik_in[1]; w[2] = arm_->pos_ik_in[2];
             w_t[0] = arm_->pos_ik_in[0]; w_t[1] = arm_->pos_ik_in[1]; w_t[2] = arm_->pos_ik_in[2] - ls;
         }
         
         // quit if the position is not reachable
         double d = normVec(w_t);
+
         if(lu + lf - d < -kinematics_library::EPSILON){
             printf("[Arm Inverse Kinematics] The desired position is out of reach!\n");
             return 0;
@@ -443,14 +441,14 @@ namespace kinematics_library
             T_elbow[2] = x4_v[2];   T_elbow[6] = y4_v[2];   T_elbow[10] = z4_v[2];   T_elbow[14] = e[2];
             T_elbow[3] = 0.0;       T_elbow[7] = 0.0;       T_elbow[11] = 0.0;       T_elbow[15] = 1.0;
             
-            //    cout << "[arm_kinematics] elbow pos determined" << endl;
-            //    unsigned short col, row;
-            //    for(row = 0; row < 4; row++){
-            //      for(col = 0; col < 4; col++){
-            //        cout << T_elbow[row + 4*col] << " ";
-            //      }
-            //      cout << endl;
-            //    }
+
+           /* unsigned short col, row;
+            for(row = 0; row < 4; row++){
+              for(col = 0; col < 4; col++){
+                std::cout << T_elbow[row + 4*col] << " ";
+              }
+              std::cout << std::endl;
+            }*/
             
             // calculate the joint angles
             double theta[7];
@@ -475,7 +473,7 @@ namespace kinematics_library
                 }else{
                     theta[2] = atan2(-s1*T_elbow[8] + c1*T_elbow[9], c1*c2*T_elbow[8] + s1*c2*T_elbow[9] - s2*T_elbow[10]);
                 }
-                
+
                 double T_04[16];
                 // theta 4 is zero for sure if the arm is straight
                 if(elbowIsStraight){
@@ -517,6 +515,12 @@ namespace kinematics_library
                     copyMat4x4(T_elbow, T_04);
                 }
                 
+
+                //std::cout<<"---------------------------T_04------------------------"<<std::endl;
+                //print_as_matrix(T_47, 4,4);
+				//std::cout<<T_04[12]<<"  "<<T_04[13]<<"   "<<T_04[14]<<std::endl;
+                //std::cout<<"---------------------------T_04------------------------"<<std::endl;
+
                 // calculate the transformation from elbow to tcp based on the first four
                 // angles
                 double ct8 = cos(arm_->dh_do[7]); double ca8 = arm_->dh_ca[7];
@@ -552,6 +556,7 @@ namespace kinematics_library
                 
                 //std::cout<<"---------------------------T_47------------------------"<<std::endl;
                 //print_as_matrix(T_47, 4,4);
+				//std::cout<<T_78[12]<<"  "<<T_78[13]<<"   "<<T_78[14]<<std::endl;
                 //std::cout<<"---------------------------T_47------------------------"<<std::endl;
                 unsigned short k;
                 for(k = 0; k < 2; k++){
@@ -609,8 +614,9 @@ namespace kinematics_library
                     unsigned short solution_nr = i*4 + j*2 + k;
                     unsigned short dof;
                     for(dof=0; dof<7; dof++){
+ 
                         // transfer the joint angles to the robot
-                        double ja = theta[dof] - arm_->dh_do[dof];
+                        double ja = ik7dof_config_.joints_mapping[dof] * (theta[dof] - arm_->dh_do[dof]);
                         
                         // and place them in an interval of -pi ... pi
                         arm_->ja_all[solution_nr][dof] = doubleModulo(ja + PI, 2*PI) - PI;
@@ -640,7 +646,7 @@ namespace kinematics_library
         for(dof_nr = 0; dof_nr < 7; dof_nr++){
             arm_->ja_ik_out[dof_nr] = arm_->ja_all[best_solution][dof_nr];
         }
-        
+     
         return 1;
     }
 
@@ -678,13 +684,15 @@ namespace kinematics_library
         eigenMat3x3ToArray(rot_eigen, rot_mat);      
     }
     
-    base::samples::Joints Ik7DoFSolver::listJointsInDesiredOrder(double* joint_values, const std::vector< std::__cxx11::string >& desired_joint_names_order, const std::vector< std::__cxx11::string >& actual_joint_names_order)
+    base::samples::Joints Ik7DoFSolver::listJointsInDesiredOrder(double* joint_values, const std::vector< std::__cxx11::string >& desired_joint_names_order, 
+                                                                 const std::vector< std::__cxx11::string >& actual_joint_names_order)
     {   
+
         assert(desired_joint_names_order.size() == actual_joint_names_order);
-       /* for(unsigned short i = 0; i < actual_joint_names_order.size(); ++i)
-        {
-            std::cout<<actual_joint_names_order[i]<<"*********"<<desired_joint_names_order[i]<<": "<<joint_values[i]<<std::endl;
-        }*/
+       //for(unsigned short i = 0; i < actual_joint_names_order.size(); ++i)
+        //{
+        //    std::cout<<actual_joint_names_order[i]<<"*********"<<desired_joint_names_order[i]<<": "<<joint_values[i]<<std::endl;
+        //}
         std::vector<double> joint_vec;        
         base::samples::Joints joint_samples;
         joint_samples.resize(desired_joint_names_order.size());
@@ -715,10 +723,10 @@ namespace kinematics_library
         //base::samples::Joints joint_samples;
         //joint_samples.Positions(joint_vec, desired_joint_names_order);
         
-       /* for(unsigned short i = 0; i < joint_samples.names.size(); ++i)
-        {
-            std::cout<<joint_samples.names[i]<<joint_samples.elements[i].position<<std::endl;
-        }*/
+       //for(unsigned short i = 0; i < joint_samples.names.size(); ++i)
+        //{
+        //    std::cout<<joint_samples.names[i]<<joint_samples.elements[i].position<<std::endl;
+        //}
         
         return joint_samples;
         
@@ -731,12 +739,17 @@ namespace kinematics_library
         for(unsigned short i = 0; i < joint_values.elements.size(); ++i)
         {
             if(joint_values.elements[i].position < jts_limits[i].first || joint_values.elements[i].position > jts_limits[i].second)
+			{
+				//std::cout<<"Jt limit failed at "<<joint_values.names[i]<<"  ="<<joint_values.elements[i].position<<"  "<<
+				//jts_limits[i].first <<"  upper: "<<jts_limits[i].second<<std::endl;
                 return false;
+			}
         }
         return true;
     }
 
-    std::vector<base::samples::Joints> Ik7DoFSolver::pickOptimalSolution(const std::vector< base::samples::Joints >& solution_list, const base::samples::Joints& joints_actual)
+    std::vector<base::samples::Joints> Ik7DoFSolver::pickOptimalSolution(const std::vector< base::samples::Joints >& solution_list, 
+                                                                         const base::samples::Joints& joints_actual)
     {
         std::vector<SolutionWithScore> sol_list_scored;
         for(unsigned short i = 0; i < solution_list.size(); ++i)
@@ -745,7 +758,7 @@ namespace kinematics_library
             base::samples::Joints sol =  solution_list[i];
             for(unsigned short j = 0; j< sol.elements.size(); ++j)
             {
-                sum = sum + fabs(sol.elements[i].position - joints_actual.getElementByName(sol.names[i]).position);
+                sum = sum + fabs(sol.elements[i].position - (ik7dof_config_.joints_mapping[i] * joints_actual.getElementByName(sol.names[i]).position));
             }
             SolutionWithScore sol_scored(sol, sum);
             sol_list_scored.push_back(sol_scored);

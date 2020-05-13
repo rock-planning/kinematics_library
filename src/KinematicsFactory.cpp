@@ -86,7 +86,7 @@ bool KinematicsFactory::initialise ( const KinematicsConfig &kinematics_config, 
     if ( !kdl_tree_.getChain ( kinematics_config.base_name, kinematics_config.tip_name, kdl_chain_ ) )
     {
         kinematics_status.statuscode = KinematicsStatus::KDL_CHAIN_FAILED;
-        LOG_FATAL ( "[KinematicsFactory]: Could not initialise KDL chain !" );
+        LOG_FATAL ( "[KinematicsFactory]: Could not initialise KDL chain from base: %s to the tip:%s!.",  kinematics_config.base_name.c_str(), kinematics_config.tip_name.c_str());
         return false;
     }
     else

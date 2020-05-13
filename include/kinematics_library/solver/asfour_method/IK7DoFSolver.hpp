@@ -74,6 +74,7 @@ struct IK7DoFConfig
     double offset_elbow_wrist;     // distance between elbow to wrist
     double offset_wrist_tool;      // distance between wrist to tool
     std::vector<double> theta_offsets; 
+    std::vector<int> joints_mapping;
     std::vector<std::string> joint_names;
     
 };
@@ -162,7 +163,6 @@ private:
     KDL::JntArray kdl_jt_array_, kdl_ik_jt_array_;
     std::string base_link_, tip_link_;
     std::string  urdf_file_path_;
-    
     std::vector<std::pair<double, double>> jts_limits_;
     
     Arm* arm_;
