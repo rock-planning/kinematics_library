@@ -12,7 +12,7 @@ TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL
     YAML::Node input_config;
     // check whether the config could be loaded or not.
     if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
-        return;
+        throw std::runtime_error("Unable to load kinematic config file from " + kinematics_config.solver_config_abs_path);
     const YAML::Node& trac_ik_config_node = input_config["trac_ik_config"];
     trac_ik_config_ = handle_kinematic_config::getTracIkConfig(trac_ik_config_node);
     
