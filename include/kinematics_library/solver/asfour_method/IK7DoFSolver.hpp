@@ -56,12 +56,6 @@ enum ZE_MODE
     MANUAL
 };
 
-enum BEHAVIOUR
-{
-    LOCOMOTION = 0,
-    MANIPULATION = 1
-};
-
 
 struct IK7DoFConfig
 {
@@ -73,7 +67,8 @@ struct IK7DoFConfig
     double offset_shoulder_elbow;  // distance between shoulder to elbow
     double offset_elbow_wrist;     // distance between elbow to wrist
     double offset_wrist_tool;      // distance between wrist to tool
-    std::vector<double> theta_offsets; 
+    std::vector<double> theta_offsets;
+    std::vector<double> link_twists;
     std::vector<int> joints_mapping;
     std::vector<std::string> joint_names;
     
@@ -100,8 +95,7 @@ struct Arm
     double ze_out;                  // chosen z-coordinate of the elbow for manual mode
     double ze_min;                  // calculated minimum z-coordinate for the elbow
     double ze_max;                  // calculated minimum z-coordinate for the elbow
-    unsigned short mode;            // 0 -> locomotion mode, which means that just 5 DOF are used, 1 -> manipulation mode with all 7 DOF
-    double ja_last[7];     // the actual joint angles, which are needed to choose a solution which is closest
+    double ja_last[7];              // the actual joint angles, which are needed to choose a solution which is closest
     
     // inputs, outputs
     double ja_fk_in[7];             // joint angles for the forward kinematics in rad

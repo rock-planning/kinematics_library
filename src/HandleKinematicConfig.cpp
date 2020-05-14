@@ -151,6 +151,7 @@ kinematics_library::IK7DoFConfig getIK7DoFConfig(const YAML::Node& yaml_data)
     config.offset_elbow_wrist       = handle_kinematic_config::getValue<double>(yaml_data, "offset_elbow_wrist");
     config.offset_wrist_tool        = handle_kinematic_config::getValue<double>(yaml_data, "offset_wrist_tool");
     config.theta_offsets            = handle_kinematic_config::getValue<std::vector<double>>(yaml_data, "theta_offsets");
+    config.link_twists              = handle_kinematic_config::getValue<std::vector<double>>(yaml_data, "link_twists");
     config.joints_mapping           = handle_kinematic_config::getValue<std::vector<int>>(yaml_data, "joints_mapping");
     config.joint_names              = yaml_data["joint_names"].as<std::vector<std::string>>();  
     

@@ -153,8 +153,6 @@ namespace kinematics_library
         
         double dh_d[8]  = {   bs,  0.0,   se,  0.0,   ew,  0.0,  0.0,  0.0 };
         double dh_a[8]  = {  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   wt,  0.0 };
-        double dh_ca[8] = {  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1.0,  0.0 };
-        double dh_sa[8] = { -1.0,  1.0, -1.0,  1.0, -1.0, -1.0,  0.0,  1.0 };
 
         unsigned short i;
                 
@@ -162,11 +160,9 @@ namespace kinematics_library
         {
             arm_->dh_d[i] = dh_d[i];
             arm_->dh_a[i] = dh_a[i];
-            arm_->dh_ca[i] = dh_ca[i];
-            arm_->dh_sa[i] = dh_sa[i];
+            arm_->dh_ca[i] = cos(ik7dof_config_.link_twists[i]); //calculating cosine of link twist
+            arm_->dh_sa[i] = sin(ik7dof_config_.link_twists[i]); //calculating sine of link twist
             arm_->dh_do[i] = ik7dof_config_.theta_offsets[i];
-            //std::cout<<arm_->dh_do[i]<<std::endl;
-
         }
 
         assert(jts_limits_.size()==7);
@@ -176,7 +172,6 @@ namespace kinematics_library
             arm_->j_max[i] = jts_limits_.at(i).second;
         }
 
-        arm_->mode = MANIPULATION;
         arm_->ze_mode = ik7dof_config_.ze_mode;
         
         return 1;
@@ -238,34 +233,18 @@ namespace kinematics_library
         double lh = arm_->dh_a[6];
         
         // input arm->rot_ination in 3x3 matrix
-        double Rbase2tcp[9];
         double n[3], vec[3], w[3];
-        //Eul2RotMat(arm->rot_ik_in, Rbase2tcp);
-        //print_ja(Rbase2tcp, 9);
-        
-        //ik_7dof::copy_array(arm_->Rbase2tcp, Rbase2tcp, 9);
-        //print_as_matrix(Rbase2tcp, 3,3);
-        //std::cout<<arm_->pos_ik_in[0]<<"  "<< arm_->pos_ik_in[1]<<"   "<<arm_->pos_ik_in[2]<<std::endl;
-        if(arm_->mode == MANIPULATION)
-        {
-            // get the arm->pos_inition of the wrist intersection point
-            n[0] = arm_->Rbase2tcp[6];
-            n[1] = arm_->Rbase2tcp[7];
-            n[2] = arm_->Rbase2tcp[8];
-			
-            
-            scaleVec(n, -lh, vec);
-            addVec(arm_->pos_ik_in, vec, w);
-            
-            // subtract the shoulder offset to facilitate the equations
-            w_t[0] = w[0]; w_t[1] = w[1]; w_t[2] = w[2] - ls;
 
-        }
-		else
-		{   // arm->mode= locomotion
-            w[0] = arm_->pos_ik_in[0]; w[1] = arm_->pos_ik_in[1]; w[2] = arm_->pos_ik_in[2];
-            w_t[0] = arm_->pos_ik_in[0]; w_t[1] = arm_->pos_ik_in[1]; w_t[2] = arm_->pos_ik_in[2] - ls;
-        }
+        // get the arm->pos_inition of the wrist intersection point
+        n[0] = arm_->Rbase2tcp[6];
+        n[1] = arm_->Rbase2tcp[7];
+        n[2] = arm_->Rbase2tcp[8];
+
+        scaleVec(n, -lh, vec);
+        addVec(arm_->pos_ik_in, vec, w);
+
+        // subtract the shoulder offset to facilitate the equations
+        w_t[0] = w[0]; w_t[1] = w[1]; w_t[2] = w[2] - ls;
         
         // quit if the position is not reachable
         double d = normVec(w_t);
