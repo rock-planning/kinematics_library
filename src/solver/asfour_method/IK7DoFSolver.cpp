@@ -154,7 +154,7 @@ namespace kinematics_library
         double dh_d[8]  = {   bs,  0.0,   se,  0.0,   ew,  0.0,  0.0,  0.0 };
         double dh_a[8]  = {  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   wt,  0.0 };
         double dh_ca[8] = {  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  1.0,  0.0 };
-        double dh_sa[8] = { -1.0,  1.0, -1.0,  1.0, -1.0, -1.0,  0.0, -1.0 };
+        double dh_sa[8] = { -1.0,  1.0, -1.0,  1.0, -1.0, -1.0,  0.0,  1.0 };
 
         unsigned short i;
                 
