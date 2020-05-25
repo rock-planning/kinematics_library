@@ -67,50 +67,61 @@ namespace YAML
 namespace handle_kinematic_config
 {
 
-kinematics_library::IkFastConfig getIkFastConfig(const std::string &dir_path, const YAML::Node &yaml_data)
+bool getIkFastConfig(const std::string &dir_path, const YAML::Node &yaml_data, kinematics_library::IkFastConfig &config)
 {
-    kinematics_library::IkFastConfig config;
-
-    std::string filename    = handle_kinematic_config::getValue<std::string>(yaml_data, "ikfast_lib"); 
+    std::string filename;
+    if (!handle_kinematic_config::getValue<std::string>(yaml_data, "ikfast_lib", filename))
+        return false;
 
     std::stringstream config_file;
     config_file << dir_path << "/" << filename;
     config.ikfast_lib = config_file.str();
     
-    const YAML::Node &joints_weight_node    = yaml_data["joints_weight"];
-    config.joints_weight.resize(joints_weight_node.size());
-    for(std::size_t i = 0; i < joints_weight_node.size(); i++)
-        config.joints_weight.at(i) = joints_weight_node[i].as<double>();
+    if (const YAML::Node &joints_weight_node    = yaml_data["joints_weight"])
+    {
+        config.joints_weight.resize(joints_weight_node.size());
+        for(std::size_t i = 0; i < joints_weight_node.size(); i++)
+            config.joints_weight.at(i) = joints_weight_node[i].as<double>();
+    }
+    else
+    {
+        LOG_WARN("[getIkFastConfig]: Key %s doesn't exist", "joints_weight");
+        return false;
+    }
     
-    config.use_current_value_as_free_joint_param = handle_kinematic_config::getValue<bool>(yaml_data, "use_current_value_as_free_joint_param"); 
-    
-    const YAML::Node &free_joint_param_node    = yaml_data["free_joint_param"];
-    config.free_joint_param.resize(free_joint_param_node.size());
-    for(std::size_t i = 0; i < free_joint_param_node.size(); i++)
-        config.free_joint_param.at(i) = free_joint_param_node[i].as<double>();
+    if (!handle_kinematic_config::getValue<bool>(yaml_data, "use_current_value_as_free_joint_param", config.use_current_value_as_free_joint_param))
+        return false;
 
-    return config;
+    if (const YAML::Node &free_joint_param_node    = yaml_data["free_joint_param"])
+    {
+        config.free_joint_param.resize(free_joint_param_node.size());
+        for(std::size_t i = 0; i < free_joint_param_node.size(); i++)
+            config.free_joint_param.at(i) = free_joint_param_node[i].as<double>();
+    }
+    else
+    {
+        LOG_WARN("[getIkFastConfig]: Key %s doesn't exist", "free_joint_param");
+        return false;
+    }
+    return true;
 }
-kinematics_library::KdlConfig getKdlConfig(const YAML::Node &yaml_data)
+
+bool getKdlConfig(const YAML::Node &yaml_data, kinematics_library::KdlConfig &config)
 {
-    kinematics_library::KdlConfig config;
+    if ((!handle_kinematic_config::getValue<unsigned int>(yaml_data, "max_iteration", config.max_iteration)) || 
+        (!handle_kinematic_config::getValue<double>(yaml_data, "eps", config.eps)))
+        return false;
 
-    config.max_iteration    = handle_kinematic_config::getValue<unsigned int>(yaml_data, "max_iteration");    
-    config.eps              = handle_kinematic_config::getValue<double>(yaml_data, "eps");   
-
-    return config;
+    return true;
 }
 
 #if(TRAC_IK_LIB_FOUND)
-kinematics_library::TracIkConfig getTracIkConfig(const YAML::Node &yaml_data)
-{
-    kinematics_library::TracIkConfig config;
-    
-    config.solver_type      = handle_kinematic_config::getValue<kinematics_library::TracIKSolverType>(yaml_data, "solver_type");
-    
-    config.timeout_sec      = handle_kinematic_config::getValue<double>(yaml_data, "timeout_sec");
-    
-    config.eps              = handle_kinematic_config::getValue<double>(yaml_data, "eps");   
+bool getTracIkConfig(const YAML::Node &yaml_data, kinematics_library::TracIkConfig &config)
+{        
+    if ((!handle_kinematic_config::getValue<kinematics_library::TracIKSolverType>(yaml_data, "solver_type", config.solver_type)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "timeout_sec", config.timeout_sec)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "eps", config.eps)))
+        return false;
     
     const YAML::Node &tolerances_node    = yaml_data["tolerances"];
     config.tolerances.resize(tolerances_node.size());
@@ -122,42 +133,37 @@ kinematics_library::TracIkConfig getTracIkConfig(const YAML::Node &yaml_data)
     for(std::size_t i = 0; i < joints_err_weight_node.size(); i++)
         config.joints_err_weight.at(i) = joints_err_weight_node[i].as<double>();
 
-    return config;
+    return true;
 }
 #endif
 
-kinematics_library::SRSKinematicConfig getSRSConfig(const YAML::Node &yaml_data)
+bool getSRSConfig(const YAML::Node &yaml_data, kinematics_library::SRSKinematicConfig &config)
 {
-    kinematics_library::SRSKinematicConfig config;
+    if((!handle_kinematic_config::getValue<double>(yaml_data, "offset_base_shoulder", config.offset_base_shoulder)) ||
+       (!handle_kinematic_config::getValue<double>(yaml_data, "offset_shoulder_elbow", config.offset_shoulder_elbow)) ||
+       (!handle_kinematic_config::getValue<double>(yaml_data, "offset_elbow_wrist", config.offset_elbow_wrist)) ||
+       (!handle_kinematic_config::getValue<double>(yaml_data, "offset_wrist_tool", config.offset_wrist_tool)) ||
+       (!handle_kinematic_config::getValue<bool>(yaml_data, "save_psi", config.save_psi)) ||
+       (!handle_kinematic_config::getValue<std::string>(yaml_data, "save_psi_path", config.save_psi_path)))
+       return false;
     
-    config.offset_base_shoulder     = handle_kinematic_config::getValue<double>(yaml_data, "offset_base_shoulder");
-    config.offset_shoulder_elbow    = handle_kinematic_config::getValue<double>(yaml_data, "offset_shoulder_elbow");
-    config.offset_elbow_wrist       = handle_kinematic_config::getValue<double>(yaml_data, "offset_elbow_wrist");
-    config.offset_wrist_tool        = handle_kinematic_config::getValue<double>(yaml_data, "offset_wrist_tool");
-    config.save_psi                 = handle_kinematic_config::getValue<bool>(yaml_data, "save_psi");
-    config.save_psi_path            = handle_kinematic_config::getValue<std::string>(yaml_data, "save_psi_path");
-    
-    return config;
-
+    return true;
 }
 
-kinematics_library::IK7DoFConfig getIK7DoFConfig(const YAML::Node& yaml_data)
-{
-    kinematics_library::IK7DoFConfig config;
-    
-    config.ze_mode                  = handle_kinematic_config::getValue<kinematics_library::ZE_MODE>(yaml_data, "ze_mode");
-    config.offset_base_shoulder     = handle_kinematic_config::getValue<double>(yaml_data, "offset_base_shoulder");
-    config.offset_shoulder_elbow    = handle_kinematic_config::getValue<double>(yaml_data, "offset_shoulder_elbow");
-    config.offset_elbow_wrist       = handle_kinematic_config::getValue<double>(yaml_data, "offset_elbow_wrist");
-    config.offset_wrist_tool        = handle_kinematic_config::getValue<double>(yaml_data, "offset_wrist_tool");
-    config.theta_offsets            = handle_kinematic_config::getValue<std::vector<double>>(yaml_data, "theta_offsets");
-    config.link_twists              = handle_kinematic_config::getValue<std::vector<double>>(yaml_data, "link_twists");
-    config.joints_mapping           = handle_kinematic_config::getValue<std::vector<int>>(yaml_data, "joints_mapping");
+bool getIK7DoFConfig(const YAML::Node& yaml_data, kinematics_library::IK7DoFConfig &config)
+{        
+    if ((!handle_kinematic_config::getValue<kinematics_library::ZE_MODE>(yaml_data, "ze_mode", config.ze_mode)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "offset_base_shoulder", config.offset_base_shoulder)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "offset_shoulder_elbow", config.offset_shoulder_elbow)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "offset_elbow_wrist", config.offset_elbow_wrist)) || 
+        (!handle_kinematic_config::getValue<double>(yaml_data, "offset_wrist_tool", config.offset_wrist_tool)) ||
+        (!handle_kinematic_config::getValue<std::vector<double>>(yaml_data, "theta_offsets", config.theta_offsets)) ||
+        (!handle_kinematic_config::getValue<std::vector<double>>(yaml_data, "link_twists", config.link_twists)) ||
+        (!handle_kinematic_config::getValue<std::vector<int>>(yaml_data, "joints_mapping", config.joints_mapping)))
+        return false;
+
     config.joint_names              = yaml_data["joint_names"].as<std::vector<std::string>>();  
     
-    return config;
-
+    return true;
 }
-
-
 }

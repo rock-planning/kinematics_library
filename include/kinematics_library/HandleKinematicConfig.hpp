@@ -39,55 +39,52 @@ inline bool loadConfigFile(const std::string &filepath, const std::string &filen
     }
     catch (YAML::ParserException& e)
     {
-        std::cout << e.what() << "\n";
+        LOG_ERROR("[loadConfigFile]: Error at loading the YAML File. The error is : %s", e.what() );
+        return false;        
     }
     
     return true;
 }
 
 template<typename T>
-T getValue (const YAML::Node &yaml_data, std::string name)
+bool getValue (const YAML::Node &yaml_data, std::string name, T &value)
 {
-        T value = T();
+    if (const YAML::Node data = yaml_data[name])
+    {
+        value = data.as<T>();
+        return true;
+    }
+    else    
+        LOG_INFO("[getValue]: Key %s doesn't exist", name);
 
-        if (const YAML::Node data = yaml_data[name])
-        {
-            value = data.as<T>();
-        }
-        else
-            std::cout << "Key "<< name <<" doesn't exist\n";
-
-        return value; 
+    return false; 
 }
 
 template<typename T>
-T getValue (const YAML::Node &yaml_data, std::string name, const T& df)
+bool getValue (const YAML::Node &yaml_data, std::string name, const T& df, T &value)
 {
-        T value = T();
+    if (const YAML::Node data = yaml_data[name])
+    {
+        value = data.as<T>();
+    }
+    else
+        value = df;
 
-        if (const YAML::Node data = yaml_data[name])
-        {
-            value = data.as<T>();
-        }
-        else
-            value = df;
-
-        return value;
+    return true;
 
 }
 
-kinematics_library::IkFastConfig getIkFastConfig(const std::string &dir_path, const YAML::Node &yaml_data);
+bool getIkFastConfig(const std::string &dir_path, const YAML::Node &yaml_data, kinematics_library::IkFastConfig &config);
 
-kinematics_library::KdlConfig getKdlConfig(const YAML::Node &yaml_data);
+bool getKdlConfig(const YAML::Node &yaml_data, kinematics_library::KdlConfig &config);
 
 #if(TRAC_IK_LIB_FOUND)
-    kinematics_library::TracIkConfig getTracIkConfig(const YAML::Node &yaml_data);    
+    bool getTracIkConfig(const YAML::Node &yaml_data, kinematics_library::TracIkConfig &config);
 #endif
 
-kinematics_library::SRSKinematicConfig getSRSConfig(const YAML::Node &yaml_data);    
+bool getSRSConfig(const YAML::Node &yaml_data, kinematics_library::SRSKinematicConfig &config);
 
-kinematics_library::IK7DoFConfig getIK7DoFConfig(const YAML::Node &yaml_data);
-
+bool getIK7DoFConfig(const YAML::Node &yaml_data, kinematics_library::IK7DoFConfig &config);
 
 }
 #endif

@@ -3,39 +3,60 @@
 namespace kinematics_library
 {
 
-IkFastSolver::IkFastSolver( const KinematicsConfig &kinematics_config, const std::vector<std::pair<double, double> > jts_limits,
-                            const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, KinematicsStatus &kinematics_status):
+IkFastSolver::IkFastSolver( const std::vector<std::pair<double, double> > jts_limits,
+                            const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain):
                             jts_limits_(jts_limits)
-{ 
+{
+    kdl_tree_  = kdl_tree;
+    kdl_chain_ = kdl_chain;
+    ikfast_handle_ = nullptr;
+}
+
+IkFastSolver::~IkFastSolver()
+{    
+    if(ikfast_handle_)
+    {        
+        dlclose(ikfast_handle_);
+        ikfast_handle_ = nullptr;
+    }
+}
+
+bool IkFastSolver::loadKinematicConfig( const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status)
+{
    
     // assign the config
     YAML::Node input_config;
     // check whether the config could be loaded or not.
     if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
-        throw std::runtime_error("Unable to load kinematic config file from " + kinematics_config.solver_config_abs_path);
+    {
+        LOG_WARN("[IkFastSolver]: Unable to load kinematic config file from %s",  kinematics_config.solver_config_abs_path.c_str());
+        kinematics_status.statuscode = KinematicsStatus::NO_CONFIG_FILE;
+        return false;
+    }
 
     const YAML::Node& ikfast_config_node = input_config["ikfast_config"];
-    ikfast_config_ = handle_kinematic_config::getIkFastConfig(kinematics_config.solver_config_abs_path, ikfast_config_node);
-
-    kdl_tree_   = kdl_tree;
-    kdl_chain_  = kdl_chain;
+    if(!handle_kinematic_config::getIkFastConfig(kinematics_config.solver_config_abs_path, ikfast_config_node, ikfast_config_))
+    {
+        LOG_WARN("[IkFastSolver]: Unable to read kinematic config file from %s",  kinematics_config.solver_config_abs_path.c_str());
+        kinematics_status.statuscode = KinematicsStatus::CONFIG_READ_ERROR;        
+        return false;
+    }
 
     assignVariables(kinematics_config, kdl_chain_);
 
     if ( !getIKFASTFunctionPtr ( ikfast_config_.ikfast_lib, kinematics_status))
     {
-        LOG_DEBUG("[IkFastSolver]: Failed to retrieve IKfast function pointer.");
+        LOG_WARN("[IkFastSolver]: Failed to retrieve IKfast function pointer.");
+        kinematics_status.statuscode = KinematicsStatus::NO_KINEMATIC_SOLVER_FOUND;
+        return false;                    
     }
     else
-        LOG_DEBUG("[IkFastSolver]: IKfast function pointer is retrieved sucesfully.");
+        LOG_DEBUG("[IkFastSolver]: IKfast function pointer is retrieved sucessfully.");
+
+    kinematics_status.statuscode = KinematicsStatus::SUCCESS;
+    return true;
 
 }
-
-IkFastSolver::~IkFastSolver()
-{
-    dlclose(ikfast_handle_);
-}
-
 
 bool IkFastSolver::getIKFASTFunctionPtr(const std::string ikfast_lib, KinematicsStatus &kinematics_status)
 {

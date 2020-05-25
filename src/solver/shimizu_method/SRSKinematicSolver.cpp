@@ -3,10 +3,12 @@
 namespace kinematics_library
 {
 
-SRSKinematicSolver::SRSKinematicSolver ( const KinematicsConfig &kinematics_config,  const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,                                          
-                                         const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain ): jts_limits_(jts_limits)
+SRSKinematicSolver::SRSKinematicSolver ( const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,                                          
+                                         const KDL::Chain &kdl_chain ): 
+                                         jts_limits_(jts_limits)
 {
-    
+    kdl_tree_  = kdl_tree;
+    kdl_chain_ = kdl_chain;
 //     jts_limits_[0].first = -90*kinematics_library::DTR; jts_limits_[0].second = 90*kinematics_library::DTR;
 //     jts_limits_[1].first = -45*kinematics_library::DTR; jts_limits_[1].second = 45*kinematics_library::DTR;
 //     jts_limits_[2].first = -120*kinematics_library::DTR; jts_limits_[2].second = 120*kinematics_library::DTR;
@@ -14,21 +16,30 @@ SRSKinematicSolver::SRSKinematicSolver ( const KinematicsConfig &kinematics_conf
 //     jts_limits_[4].first = -90*kinematics_library::DTR; jts_limits_[4].second = 90*kinematics_library::DTR;
 //     jts_limits_[5].first = -90*kinematics_library::DTR; jts_limits_[5].second = 90*kinematics_library::DTR;
 //     jts_limits_[6].first = -120*kinematics_library::DTR; jts_limits_[6].second = 120*kinematics_library::DTR;
-    
-    
+}
+
+SRSKinematicSolver::~SRSKinematicSolver()
+{}
+
+bool SRSKinematicSolver::loadKinematicConfig( const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status)
+{    
     // assign the config
     YAML::Node input_config;
     // check whether the config could be loaded or not.
     if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
-        return;
-    const YAML::Node& srs_config_node = input_config["srs_config"];
-    srs_config_ = handle_kinematic_config::getSRSConfig(srs_config_node);
+    {
+        LOG_WARN("[SRSKinematicSolver]: Unable to load kinematic config file from %s", kinematics_config.solver_config_abs_path.c_str());
+        kinematics_status.statuscode = KinematicsStatus::NO_CONFIG_FILE;
+        return false;
+    }
     
-
-    kdl_tree_       = kdl_tree;
-    kdl_chain_      = kdl_chain;
-
-    fk_kdlsolver_pos_ = new KDL::ChainFkSolverPos_recursive ( kdl_kinematic_chain );
+    const YAML::Node& srs_config_node = input_config["srs_config"];
+    if(!handle_kinematic_config::getSRSConfig(srs_config_node, srs_config_))
+    {
+        LOG_WARN("[SRSKinematicSolver]: Unable to read kinematic config file from %s", kinematics_config.solver_config_abs_path.c_str());
+        kinematics_status.statuscode = KinematicsStatus::CONFIG_READ_ERROR;
+        return false;
+    }
 
     assignVariables ( kinematics_config, kdl_chain_ );
     kdl_jt_array_.resize ( kdl_chain_.getNrOfJoints() );
@@ -58,15 +69,6 @@ SRSKinematicSolver::SRSKinematicSolver ( const KinematicsConfig &kinematics_conf
     l_wt.at(1) = 0;
     l_wt.at(2) = srs_config_.offset_wrist_tool;
 
-}
-
-SRSKinematicSolver::~SRSKinematicSolver()
-{
-    if ( fk_kdlsolver_pos_ ) 
-    {
-        fk_kdlsolver_pos_ = NULL;
-        delete fk_kdlsolver_pos_;
-    }
 }
 
 bool SRSKinematicSolver::solveIK (const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status,

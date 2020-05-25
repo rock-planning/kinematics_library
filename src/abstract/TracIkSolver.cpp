@@ -3,22 +3,42 @@
 namespace kinematics_library
 {
 
-TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL::Tree &kdl_tree, 
-                             const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain )
+TracIkSolver::TracIkSolver (const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain ): 
+                            kdl_kinematic_chain_(kdl_kinematic_chain)
 {
-    
+    kdl_tree_  = kdl_tree;
+    kdl_chain_ = kdl_chain;
+}
 
+TracIkSolver::~TracIkSolver()
+{
+    trac_ik_solver_.reset();
+    if ( fk_kdlsolver_pos_ ) 
+    {
+        fk_kdlsolver_pos_ = NULL;
+        delete fk_kdlsolver_pos_;
+    }
+}
+
+bool TracIkSolver::loadKinematicConfig( const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status)
+{
     // assign the config
     YAML::Node input_config;
     // check whether the config could be loaded or not.
     if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
-        throw std::runtime_error("Unable to load kinematic config file from " + kinematics_config.solver_config_abs_path);
+    {
+        LOG_WARN("[TracIkSolver]: Unable to load kinematic config file from %s", kinematics_config.solver_config_abs_path.c_str());
+        kinematics_status.statuscode = KinematicsStatus::NO_CONFIG_FILE;
+        return false;
+    }
+     
     const YAML::Node& trac_ik_config_node = input_config["trac_ik_config"];
-    trac_ik_config_ = handle_kinematic_config::getTracIkConfig(trac_ik_config_node);
-    
-    
-    kdl_tree_       = kdl_tree;
-    kdl_chain_      = kdl_chain;
+    if(!handle_kinematic_config::getTracIkConfig(trac_ik_config_node, trac_ik_config_))
+    {
+        LOG_WARN("[TracIkSolver]: Unable to read kinematic config file from %s", kinematics_config.solver_config_abs_path.c_str());
+        kinematics_status.statuscode = KinematicsStatus::CONFIG_READ_ERROR;
+        return false;
+    }
 	
 	TRAC_IK::SolveType solverType = TRAC_IK::Speed;
 	switch(trac_ik_config_.solver_type)
@@ -37,6 +57,8 @@ TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL
 			break;
 		default:
 			LOG_WARN("Undefined TRAC_IK Solver Type configured");
+            kinematics_status.statuscode = KinematicsStatus::CONFIG_READ_ERROR;
+            return false;
 	}
 	assert(trac_ik_config_.joints_err_weight.size() == kdl_chain_.getNrOfJoints());		
 	KDL::JntArray qerr_wt(trac_ik_config_.joints_err_weight.size());
@@ -56,18 +78,9 @@ TracIkSolver::TracIkSolver ( const KinematicsConfig &kinematics_config,const KDL
     
     bounds.vel = KDL::Vector(trac_ik_config_.tolerances[0], trac_ik_config_.tolerances[1], trac_ik_config_.tolerances[2]);
     bounds.rot = KDL::Vector(trac_ik_config_.tolerances[3], trac_ik_config_.tolerances[4], trac_ik_config_.tolerances[5]);
-    
-    
-}
 
-TracIkSolver::~TracIkSolver()
-{
-    trac_ik_solver_.reset();
-    if ( fk_kdlsolver_pos_ ) 
-    {
-        fk_kdlsolver_pos_ = NULL;
-        delete fk_kdlsolver_pos_;
-    }
+    kinematics_status.statuscode = KinematicsStatus::SUCCESS;
+    return true;
 }
 
 bool TracIkSolver::solveIK (const base::samples::RigidBodyState target_pose, 

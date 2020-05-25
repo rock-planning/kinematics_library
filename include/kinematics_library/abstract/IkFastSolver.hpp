@@ -61,12 +61,15 @@ public:
     /**
     * @brief  constructor
     */
-    IkFastSolver(const KinematicsConfig &kinematics_config, const std::vector<std::pair<double, double> > jts_limits,
-                 const KDL::Tree &kdl_tree, const KDL::Chain &_kdl_chain, KinematicsStatus &kinematics_status);
+    IkFastSolver(const std::vector<std::pair<double, double> > jts_limits, const KDL::Tree &kdl_tree, 
+                 const KDL::Chain &_kdl_chain);
     /**
     * @brief  destructor
     */
     virtual ~IkFastSolver();
+
+    bool loadKinematicConfig( const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status);
+
     /**
     * @brief Calculate the joint angles for a manipulator to reach a desired Pose.
     * @param base_link Target Position is given respect to this link

@@ -33,6 +33,8 @@ class AbstractKinematics
         */
         virtual ~AbstractKinematics();	
 
+        virtual bool loadKinematicConfig( const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status) = 0;
+
         /**
         * @brief Calculate the joint angles for a robot to reach a desired Pose.    
         * @param target_position Desired position for the target link

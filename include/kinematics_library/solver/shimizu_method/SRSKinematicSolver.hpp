@@ -54,13 +54,15 @@ class SRSKinematicSolver : public AbstractKinematics
         /**
         * @brief  constructor
         */
-        SRSKinematicSolver(const KinematicsConfig &kinematics_config,  const std::vector<std::pair<double, double> > &jts_limits, 
-                           const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain);
+        SRSKinematicSolver( const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree, 
+                            const KDL::Chain &kdl_chain);
 
         /**
         * @brief  destructor
         */
         ~SRSKinematicSolver();
+
+        bool loadKinematicConfig( const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status);
 
         /**
         * @brief Calculate the joint angles for a manipulator to reach a desired Pose.
@@ -88,8 +90,7 @@ class SRSKinematicSolver : public AbstractKinematics
         
         base::samples::RigidBodyState direct(const base::samples::Joints &joint_angles);
 
-    private:
-        KDL::ChainFkSolverPos_recursive *fk_kdlsolver_pos_;
+    private:        
         KDL::Frame kdl_frame_;
         KDL::JntArray kdl_jt_array_, kdl_ik_jt_array_;
         std::string base_link_, tip_link_;

@@ -13,10 +13,10 @@ KinematicsFactory::~KinematicsFactory()
 
 AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status )
 {
-    AbstractKinematicPtr kinematic_solver = NULL;
-
+    AbstractKinematicPtr kinematic_solver = nullptr; 
+   
     if ( !initialise ( kinematics_config, kinematics_status ) )
-        return NULL;
+        return nullptr;
     
     kinematics_status.statuscode = KinematicsStatus::SUCCESS;
 
@@ -24,36 +24,36 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
     {
         case IKFAST:
         {
-            LOG_INFO_S<<"[KinematicsFactory]: IKFAST solver is selected";
-            kinematic_solver = std::shared_ptr<IkFastSolver> ( new IkFastSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, kinematics_status ) );
+            LOG_INFO_S<<"[KinematicsFactory]: IKFAST solver is selected";            
+            kinematic_solver = std::make_shared<IkFastSolver> ( joints_limits_, kdl_tree_, rev_jt_kdlchain_ );            
             break;
         }
         case SRS:
         {
-            LOG_INFO_S<<"[KinematicsFactory]: SRS solver is selected";
-            kinematic_solver = std::shared_ptr<SRSKinematicSolver> ( new SRSKinematicSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, kdl_chain_ ) );
+            LOG_INFO_S<<"[KinematicsFactory]: SRS solver is selected";            
+            kinematic_solver = std::make_shared<SRSKinematicSolver> ( joints_limits_, kdl_tree_, rev_jt_kdlchain_ );
             break;
         }
         case IK7DOF:
         {
-           LOG_INFO_S<<"[KinematicsFactory]: IK7DOF solver is selected";
-           kinematic_solver = std::shared_ptr<Ik7DoFSolver> ( new Ik7DoFSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, kdl_chain_ ) );
+           LOG_INFO_S<<"[KinematicsFactory]: IK7DOF solver is selected";           
+           kinematic_solver = std::make_shared<Ik7DoFSolver> ( joints_limits_, kdl_tree_, rev_jt_kdlchain_ );
            break;
         }
         case KDL:
         {
-            LOG_INFO_S<<"[KinematicsFactory]: KDL solver is selected";
-            kinematic_solver = std::shared_ptr<KdlSolver> ( new KdlSolver ( kinematics_config, joints_limits_, kdl_tree_, rev_jt_kdlchain_, kdl_chain_ ) );
+            LOG_INFO_S<<"[KinematicsFactory]: KDL solver is selected";            
+            kinematic_solver = std::make_shared<KdlSolver>  ( joints_limits_, kdl_tree_, rev_jt_kdlchain_, kdl_chain_ );
             break;
         }
         case TRACIK:
         {
             LOG_INFO_S<<"[KinematicsFactory]: TRACIK solver is selected";
-            #if(TRAC_IK_LIB_FOUND)
-                kinematic_solver = std::shared_ptr<TracIkSolver> ( new TracIkSolver ( kinematics_config, kdl_tree_, rev_jt_kdlchain_, kdl_chain_ ) );
+            #if(TRAC_IK_LIB_FOUND)                
+                kinematic_solver = std::make_shared<TracIkSolver> ( kdl_tree_, rev_jt_kdlchain_, kdl_chain_ );
             #else
                 LOG_FATAL_S << "[KinematicsFactory]: TRACIK is not installed. Please select an another solver !";
-                return NULL;
+                return nullptr;
             #endif
             break;
         }
@@ -61,14 +61,17 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
         {
             kinematics_status.statuscode = KinematicsStatus::NO_KINEMATIC_SOLVER_FOUND;
             LOG_ERROR ( "[KinematicsFactory]: This  kinematicSolver is not available" );
-            throw new std::runtime_error ( "This kinematicSolver is not available" );
-            return NULL;
+            //throw new std::runtime_error ( "This kinematicSolver is not available" );
+            return nullptr;
         }
     }
+    
 
-    // make sure there is not error in loading kinematics yaml file or loading ikfast library.
-    if (kinematics_status.statuscode != KinematicsStatus::SUCCESS)
-        kinematic_solver = NULL;
+    // make sure there is no error in loading kinematics yaml file or loading ikfast library.
+    if(!kinematic_solver->loadKinematicConfig( kinematics_config, kinematics_status))  
+    {  
+        return nullptr;        
+    }   
 
     return kinematic_solver;
 }

@@ -3,35 +3,12 @@
 namespace kinematics_library
 {
 
-KdlSolver::KdlSolver(const KinematicsConfig &kinematics_config, const std::vector< std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
-                     const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain): jts_limits_(jts_limits)
+KdlSolver::KdlSolver(const std::vector< std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
+                     const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain): 
+                     jts_limits_(jts_limits), kdl_kinematic_chain_(kdl_kinematic_chain)
 {
-    
-    // assign the config
-    YAML::Node input_config;
-    // check whether the config could be loaded or not.
-    if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
-        throw std::runtime_error("Unable to load kinematic config file from " + kinematics_config.solver_config_abs_path);
-    const YAML::Node& kdl_config_node = input_config["kdl_config"];
-    kdl_config_ = handle_kinematic_config::getKdlConfig(kdl_config_node);
-    
-    
-    kdl_tree_         = kdl_tree;
-    kdl_chain_        = kdl_chain;
-
-    fk_solverPos_     = new KDL::ChainFkSolverPos_recursive(kdl_kinematic_chain);
-    ik_solverVelPinv_ = new KDL::ChainIkSolverVel_pinv(kdl_kinematic_chain);
-
-    assignVariables(kinematics_config, kdl_chain_);
-
-    getJointLimits(min_jtLimits_, max_jtLimits_);       
-
-    ik_solverPosJL_  = new KDL::ChainIkSolverPos_NR_JL(kdl_kinematic_chain, min_jtLimits_, max_jtLimits_, *fk_solverPos_, *ik_solverVelPinv_, 
-                                                       kdl_config_.max_iteration, kdl_config_.eps);
-
-    kdl_jtArray_.data.resize(number_of_joints_);
-    kdl_ik_jtArray_.data.resize(number_of_joints_);	
-
+    kdl_tree_  = kdl_tree;
+    kdl_chain_ = kdl_chain;
 }
 
 KdlSolver::~KdlSolver()
@@ -53,6 +30,43 @@ KdlSolver::~KdlSolver()
         ik_solverVelPinv_ = NULL;
         delete ik_solverVelPinv_;
     }
+}
+
+bool KdlSolver::loadKinematicConfig( const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status)
+{    
+    // assign the config
+    YAML::Node input_config;
+    // check whether the config could be loaded or not.
+    if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
+    {
+        LOG_WARN("[KdlSolver]: Unable to load kinematic config file from %s", kinematics_config.solver_config_abs_path.c_str());
+        kinematics_status.statuscode = KinematicsStatus::NO_CONFIG_FILE;
+        return false;
+    }
+
+    const YAML::Node& kdl_config_node = input_config["kdl_config"];
+    if(!handle_kinematic_config::getKdlConfig(kdl_config_node, kdl_config_))
+    {
+        LOG_WARN("[KdlSolver]: Unable to read kinematic config file from %s",  kinematics_config.solver_config_abs_path.c_str());
+        kinematics_status.statuscode = KinematicsStatus::CONFIG_READ_ERROR;
+        return false;
+    }
+
+    fk_solverPos_     = new KDL::ChainFkSolverPos_recursive(kdl_kinematic_chain_);
+    ik_solverVelPinv_ = new KDL::ChainIkSolverVel_pinv(kdl_kinematic_chain_);
+
+    assignVariables(kinematics_config, kdl_chain_);
+
+    getJointLimits(min_jtLimits_, max_jtLimits_);       
+
+    ik_solverPosJL_  = new KDL::ChainIkSolverPos_NR_JL(kdl_kinematic_chain_, min_jtLimits_, max_jtLimits_, *fk_solverPos_, *ik_solverVelPinv_, 
+                                                       kdl_config_.max_iteration, kdl_config_.eps);
+
+    kdl_jtArray_.data.resize(number_of_joints_);
+    kdl_ik_jtArray_.data.resize(number_of_joints_);
+
+    kinematics_status.statuscode = KinematicsStatus::SUCCESS;
+    return true;
 }
 
 bool KdlSolver::solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status, std::vector<base::commands::Joints> &solution,

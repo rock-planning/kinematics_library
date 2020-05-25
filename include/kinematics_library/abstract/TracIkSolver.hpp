@@ -50,12 +50,14 @@ class TracIkSolver : public AbstractKinematics
         /**
         * @brief  constructor
         */
-        TracIkSolver(const KinematicsConfig &kinematics_config, const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain);
+        TracIkSolver(const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain);
 
         /**
         * @brief  destructor
         */
         ~TracIkSolver();
+
+        bool loadKinematicConfig( const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status);
 
         /**
         * @brief Calculate the joint angles for a manipulator to reach a desired Pose.
@@ -83,7 +85,7 @@ class TracIkSolver : public AbstractKinematics
 
     private:
         KDL::ChainFkSolverPos_recursive *fk_kdlsolver_pos_;
-
+        KDL::Chain kdl_kinematic_chain_;
         KDL::Frame kdl_frame_;
         KDL::JntArray kdl_jt_array_, kdl_ik_jt_array_;
         std::shared_ptr<TRAC_IK::TRAC_IK> trac_ik_solver_;

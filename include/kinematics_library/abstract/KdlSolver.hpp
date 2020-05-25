@@ -39,13 +39,15 @@ class KdlSolver : public AbstractKinematics
         /**
         * @brief  constructor
         */
-        KdlSolver( const KinematicsConfig &kinematics_config, const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
+        KdlSolver( const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
                    const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain);
 
         /**
         * @brief  destructor
         */
         virtual ~KdlSolver();
+
+        bool loadKinematicConfig( const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status);
 
         /**
         * @brief Calculate the joint angles for a manipulator to reach a desired Pose.        
@@ -77,7 +79,7 @@ class KdlSolver : public AbstractKinematics
         void getJointLimits(KDL::JntArray &min_jtLimits, KDL::JntArray &max_jtLimits);
 
         std::vector< std::pair<double, double> > jts_limits_;
-
+        KDL::Chain kdl_kinematic_chain_;
         KDL::ChainFkSolverPos_recursive *fk_solverPos_;
         KDL::ChainIkSolverPos_NR_JL *ik_solverPosJL_;
         KDL::ChainIkSolverVel_pinv *ik_solverVelPinv_;        
