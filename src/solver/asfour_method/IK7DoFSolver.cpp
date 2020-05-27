@@ -25,14 +25,16 @@ bool Ik7DoFSolver::loadKinematicConfig( const KinematicsConfig &kinematics_confi
     YAML::Node input_config;
     if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
     {
-        LOG_WARN("[TracIkSolver]: Unable to load kinematic config file from %s", kinematics_config.solver_config_abs_path.c_str());
+        LOG_ERROR("[TracIkSolver]: Unable to load kinematic config file %s from %s", kinematics_config.solver_config_filename.c_str(), 
+                    kinematics_config.solver_config_abs_path.c_str());
         kinematics_status.statuscode = KinematicsStatus::NO_CONFIG_FILE;
         return false;
     }    
     const YAML::Node& config_node = input_config["ik7dof_config"];
     if(!handle_kinematic_config::getIK7DoFConfig(config_node, ik7dof_config_))        
     {
-        LOG_WARN("[TracIkSolver]: Unable to read kinematic config file from %s", kinematics_config.solver_config_abs_path.c_str());
+        LOG_ERROR("[TracIkSolver]: Unable to read kinematic config file %s from %s", kinematics_config.solver_config_filename.c_str(), 
+                    kinematics_config.solver_config_abs_path.c_str());
         kinematics_status.statuscode = KinematicsStatus::CONFIG_READ_ERROR;
         return false;
     }

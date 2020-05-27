@@ -27,7 +27,8 @@ bool TracIkSolver::loadKinematicConfig( const KinematicsConfig &kinematics_confi
     // check whether the config could be loaded or not.
     if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
     {
-        LOG_WARN("[TracIkSolver]: Unable to load kinematic config file from %s", kinematics_config.solver_config_abs_path.c_str());
+        LOG_ERROR("[TracIkSolver]: Unable to load kinematic config file %s from %s", kinematics_config.solver_config_filename.c_str(), 
+                    kinematics_config.solver_config_abs_path.c_str());
         kinematics_status.statuscode = KinematicsStatus::NO_CONFIG_FILE;
         return false;
     }
@@ -35,7 +36,8 @@ bool TracIkSolver::loadKinematicConfig( const KinematicsConfig &kinematics_confi
     const YAML::Node& trac_ik_config_node = input_config["trac_ik_config"];
     if(!handle_kinematic_config::getTracIkConfig(trac_ik_config_node, trac_ik_config_))
     {
-        LOG_WARN("[TracIkSolver]: Unable to read kinematic config file from %s", kinematics_config.solver_config_abs_path.c_str());
+        LOG_ERROR("[TracIkSolver]: Unable to read kinematic config file %s from %s", kinematics_config.solver_config_filename.c_str(), 
+                    kinematics_config.solver_config_abs_path.c_str());
         kinematics_status.statuscode = KinematicsStatus::CONFIG_READ_ERROR;
         return false;
     }

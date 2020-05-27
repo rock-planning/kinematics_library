@@ -29,7 +29,8 @@ bool IkFastSolver::loadKinematicConfig( const KinematicsConfig &kinematics_confi
     // check whether the config could be loaded or not.
     if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
     {
-        LOG_WARN("[IkFastSolver]: Unable to load kinematic config file from %s",  kinematics_config.solver_config_abs_path.c_str());
+        LOG_ERROR("[IkFastSolver]: Unable to load kinematic config file %s from %s", kinematics_config.solver_config_filename.c_str(), 
+                    kinematics_config.solver_config_abs_path.c_str());
         kinematics_status.statuscode = KinematicsStatus::NO_CONFIG_FILE;
         return false;
     }
@@ -37,7 +38,8 @@ bool IkFastSolver::loadKinematicConfig( const KinematicsConfig &kinematics_confi
     const YAML::Node& ikfast_config_node = input_config["ikfast_config"];
     if(!handle_kinematic_config::getIkFastConfig(kinematics_config.solver_config_abs_path, ikfast_config_node, ikfast_config_))
     {
-        LOG_WARN("[IkFastSolver]: Unable to read kinematic config file from %s",  kinematics_config.solver_config_abs_path.c_str());
+        LOG_ERROR("[IkFastSolver]: Unable to read kinematic config file %s from %s", kinematics_config.solver_config_filename.c_str(), 
+                    kinematics_config.solver_config_abs_path.c_str());
         kinematics_status.statuscode = KinematicsStatus::CONFIG_READ_ERROR;        
         return false;
     }
@@ -46,7 +48,7 @@ bool IkFastSolver::loadKinematicConfig( const KinematicsConfig &kinematics_confi
 
     if ( !getIKFASTFunctionPtr ( ikfast_config_.ikfast_lib, kinematics_status))
     {
-        LOG_WARN("[IkFastSolver]: Failed to retrieve IKfast function pointer.");
+        LOG_ERROR("[IkFastSolver]: Failed to retrieve IKfast function pointer.");
         kinematics_status.statuscode = KinematicsStatus::NO_KINEMATIC_SOLVER_FOUND;
         return false;                    
     }
@@ -139,7 +141,14 @@ bool IkFastSolver::getIKFASTFunctionPtr(const std::string ikfast_lib, Kinematics
 bool IkFastSolver::solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status, std::vector<base::commands::Joints> &solution,
                            KinematicsStatus &solver_status)
 {
+
     convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);
+
+    std::cout<<"[KinematicsHelper]: IK function called for source frame "<<kinematic_pose_.sourceFrame.c_str()<<" and target frame "<<
+                    kinematic_pose_.targetFrame.c_str()<<" for the pose"<<std::endl;
+    std::cout<<"[KinematicsHelper]: IK function called for source frame "<<target_pose.sourceFrame.c_str()<<" and target frame "<<
+                    target_pose.targetFrame.c_str()<<" for the pose"<<std::endl;
+    std::cout<<"[KinematicsHelper]: Position: X: "<<kinematic_pose_.position(0)<<"  Y: "<<kinematic_pose_.position(1)<<" Z: "<<kinematic_pose_.position(2)<<std::endl; 
 
     getKinematicJoints(kdl_chain_, joint_status, jt_names_, current_jt_status_);
 

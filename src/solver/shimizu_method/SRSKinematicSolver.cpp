@@ -28,7 +28,8 @@ bool SRSKinematicSolver::loadKinematicConfig( const KinematicsConfig &kinematics
     // check whether the config could be loaded or not.
     if(!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
     {
-        LOG_WARN("[SRSKinematicSolver]: Unable to load kinematic config file from %s", kinematics_config.solver_config_abs_path.c_str());
+        LOG_ERROR("[SRSKinematicSolver]: Unable to load kinematic config file %s from %s", kinematics_config.solver_config_filename.c_str(),
+                     kinematics_config.solver_config_abs_path.c_str());
         kinematics_status.statuscode = KinematicsStatus::NO_CONFIG_FILE;
         return false;
     }
@@ -36,7 +37,8 @@ bool SRSKinematicSolver::loadKinematicConfig( const KinematicsConfig &kinematics
     const YAML::Node& srs_config_node = input_config["srs_config"];
     if(!handle_kinematic_config::getSRSConfig(srs_config_node, srs_config_))
     {
-        LOG_WARN("[SRSKinematicSolver]: Unable to read kinematic config file from %s", kinematics_config.solver_config_abs_path.c_str());
+        LOG_ERROR("[SRSKinematicSolver]: Unable to read kinematic config file %s from %s", kinematics_config.solver_config_filename.c_str(),
+                     kinematics_config.solver_config_abs_path.c_str());
         kinematics_status.statuscode = KinematicsStatus::CONFIG_READ_ERROR;
         return false;
     }
