@@ -72,7 +72,7 @@ bool TracIkSolver::loadKinematicConfig( const KinematicsConfig &kinematics_confi
     
     trac_ik_solver_ = std::make_shared<TRAC_IK::TRAC_IK> ( kinematics_config.base_name, kinematics_config.tip_name, qerr_wt, kinematics_config.urdf_file,
                                                            trac_ik_config_.timeout_sec, trac_ik_config_.eps, solverType);
-    fk_kdlsolver_pos_ = new KDL::ChainFkSolverPos_recursive ( kdl_kinematic_chain );
+    fk_kdlsolver_pos_ = new KDL::ChainFkSolverPos_recursive ( kdl_kinematic_chain_ );
 
     assignVariables ( kinematics_config, kdl_chain_ );
     kdl_jt_array_.resize ( kdl_chain_.getNrOfJoints() );
