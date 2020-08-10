@@ -66,15 +66,15 @@ base::samples::RigidBodyState AbstractKinematics::getRelativePose( const base::s
     Eigen::Matrix4d fk_matrix;
     getHomogeneousMatrix(current_pose.position, current_pose.orientation, fk_matrix);
 
-    base::Vector3d eulerrot;
-    quaternionToEuler(current_pose.orientation, eulerrot);
+    //base::Vector3d eulerrot;
+    //quaternionToEuler(current_pose.orientation, eulerrot);
     //std::cout<<" FK euler = "<<eulerrot.x()<<"  "<<eulerrot.y()<<"  "<<eulerrot.z()<<std::endl;
     // get the relative pose in a homogeneous matrix form
     Eigen::Matrix4d relative_pose_matrix;
     getHomogeneousMatrix(relative_pose.position, relative_pose.orientation, relative_pose_matrix);
 
-    eulerrot = base::Position::Zero();
-    quaternionToEuler(relative_pose.orientation, eulerrot);
+    //eulerrot = base::Position::Zero();
+    //quaternionToEuler(relative_pose.orientation, eulerrot);
     //std::cout<<" relative euler = "<<eulerrot.x()<<"  "<<eulerrot.y()<<"  "<<eulerrot.z()<<std::endl;
     //std::cout<<" relative Quaternion = "<<relative_pose.orientation.x()<<"  "<<relative_pose.orientation.y()<<"  "<<relative_pose.orientation.z()<<"  "<<
     //relative_pose.orientation.w()<<std::endl;
@@ -85,8 +85,8 @@ base::samples::RigidBodyState AbstractKinematics::getRelativePose( const base::s
     target_pose.targetFrame = relative_pose.targetFrame;
     getPositionRotation(target_matrix, target_pose.position, target_pose.orientation);
 
-    eulerrot = base::Position::Zero();
-    quaternionToEuler(relative_pose.orientation, eulerrot);
+    //eulerrot = base::Position::Zero();
+    //quaternionToEuler(relative_pose.orientation, eulerrot);
     //std::cout<<" target euler = "<<eulerrot.x()<<"  "<<eulerrot.y()<<"  "<<eulerrot.z()<<std::endl;
     
     return target_pose;

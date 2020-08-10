@@ -144,12 +144,6 @@ bool IkFastSolver::solveIK(const base::samples::RigidBodyState target_pose, cons
 
     convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);
 
-    std::cout<<"[KinematicsHelper]: IK function called for source frame "<<kinematic_pose_.sourceFrame.c_str()<<" and target frame "<<
-                    kinematic_pose_.targetFrame.c_str()<<" for the pose"<<std::endl;
-    std::cout<<"[KinematicsHelper]: IK function called for source frame "<<target_pose.sourceFrame.c_str()<<" and target frame "<<
-                    target_pose.targetFrame.c_str()<<" for the pose"<<std::endl;
-    std::cout<<"[KinematicsHelper]: Position: X: "<<kinematic_pose_.position(0)<<"  Y: "<<kinematic_pose_.position(1)<<" Z: "<<kinematic_pose_.position(2)<<std::endl; 
-
     getKinematicJoints(kdl_chain_, joint_status, jt_names_, current_jt_status_);
 
     IkReal eerot[9],eetrans[3];

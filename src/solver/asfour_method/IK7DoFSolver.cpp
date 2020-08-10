@@ -79,32 +79,20 @@ bool Ik7DoFSolver::solveFK ( const base::samples::Joints& joint_angles, base::sa
 bool Ik7DoFSolver::solveIK ( const base::samples::RigidBodyState target_pose, const base::samples::Joints& joint_status,
                                 std::vector< base::commands::Joints >& solution, KinematicsStatus& solver_status )
 {
-    convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);
-    getKinematicJoints(kdl_chain_, joint_status, jt_names_, current_jt_status_);
-    
+    convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);    
+    getKinematicJoints(kdl_chain_, joint_status, jt_names_, current_jt_status_);    
+
     //for(auto name: jt_names_)
     //    std::cout<<name<<std::endl;
-    
-    std::vector<double> joints_actual;
-    //std::cout<<"b4 getKinematicJoints"<<std::endl;
-    //std::cout<<ik7dof_config_.joint_names.size()<<std::endl;
-    
-    //getKinematicJoints(kdl_chain_, joint_status, ik7dof_config_.joint_names, joints_actual);
-    
-    //std::cout<<"b4 assert"<<std::endl;
-    
-    //assert(joints_actual.size() == 7);
-    //std::cout<<"assert"<<std::endl;
-    
+   
     for(unsigned short i = 0; i < ik7dof_config_.joint_names.size(); ++i)
     {
         arm_->ja_last[i]  = ik7dof_config_.joints_mapping[i] * joint_status.getElementByName(ik7dof_config_.joint_names[i]).position;
     }
     
-    setDesiredPose(kinematic_pose_, arm_->pos_ik_in, arm_->Rbase2tcp);
-    
+    setDesiredPose(kinematic_pose_, arm_->pos_ik_in, arm_->Rbase2tcp);    
     rotationMatrix2zyxEuler(arm_->Rbase2tcp, arm_->rot_ik_in);
-    
+
     int success = ikArm();
 
     if(success ==1)
@@ -122,7 +110,6 @@ bool Ik7DoFSolver::solveIK ( const base::samples::RigidBodyState target_pose, co
         }
         else
         {
-
             std::vector<base::samples::Joints> valid_solution_list;
             for(unsigned short i = 0; i < 8; ++i)
             {
@@ -156,7 +143,6 @@ bool Ik7DoFSolver::solveIK ( const base::samples::RigidBodyState target_pose, co
 
 int Ik7DoFSolver::initializeArm()
 {
-
     double bs = ik7dof_config_.offset_base_shoulder;
     double se = ik7dof_config_.offset_shoulder_elbow;
     double ew = ik7dof_config_.offset_elbow_wrist;
