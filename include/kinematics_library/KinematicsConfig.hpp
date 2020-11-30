@@ -35,10 +35,12 @@ struct LinearConfig
  */
 struct KinematicsConfig
 {
-    KinematicsConfig() : base_name(""), tip_name(""), kinematic_solver(KDL), solver_config_filename(""),
-                         urdf_file(""), linear_relative_movement(false) {}
+    KinematicsConfig() : config_name(""), base_name(""), tip_name(""), kinematic_solver(KDL), 
+                         solver_config_filename(""), urdf_file(""), linear_relative_movement(false) {}
 
 
+    // name for the kinematic config
+    std::string config_name;
     // base name - from here inverse and forward kinematic will be calculated
     std::string base_name;
     //tip name -

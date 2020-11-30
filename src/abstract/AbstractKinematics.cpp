@@ -11,6 +11,7 @@ AbstractKinematics::~AbstractKinematics()
 
 void AbstractKinematics::assignVariables(const KinematicsConfig &kinematics_config, const KDL::Chain &kdl_chain)
 {
+    kinematics_config_          = kinematics_config;
     kinematic_pose_.sourceFrame = kinematics_config.base_name;
     kinematic_pose_.targetFrame = kinematics_config.tip_name;    
     position_tolerance_in_m_    = kinematics_config.linear_movement_config.position_tolerance_in_m;
@@ -44,6 +45,52 @@ base::samples::RigidBodyState AbstractKinematics::transformPose(const std::strin
     return target_pose;
 }
 
+Eigen::Affine3d AbstractKinematics::transformPose(const std::string &source_frame, const std::string &target_frame)
+{
+    KDL::Frame kdl_pose;
+    transformFrame( kdl_tree_, source_frame, target_frame, kdl_pose);
+
+    Eigen::Affine3d res;
+    res.setIdentity();
+    // Position
+    for (std::size_t i = 0; i < 3; ++i)
+        res(i, 3) = kdl_pose.p[i];
+
+    // Orientation
+    for (std::size_t j = 0; j < 9; ++j)
+        res(j/3, j%3) = kdl_pose.M.data[j];
+
+    return res;
+}
+
+Eigen::Matrix4d AbstractKinematics::transformPoseMat(const std::string &source_frame, const std::string &target_frame)
+{
+    KDL::Frame kdl_pose;
+    transformFrame( kdl_tree_, source_frame, target_frame, kdl_pose);
+
+    Eigen::Matrix4d res;
+    res = Eigen::Matrix4d::Zero();
+    res.topLeftCorner<3,3>()  <<
+		kdl_pose.M(0, 0),  kdl_pose.M(0, 1), kdl_pose.M(0, 2),
+		kdl_pose.M(1, 0),  kdl_pose.M(1, 1), kdl_pose.M(1, 2),
+		kdl_pose.M(2, 0),  kdl_pose.M(2, 1), kdl_pose.M(2, 2);
+    res.topRightCorner<3,1>() <<kdl_pose.p[0], kdl_pose.p[1], kdl_pose.p[2];
+    res(3,3) = 1.0;
+
+
+    // res.setIdentity();
+    // // Position
+    // for (std::size_t i = 0; i < 3; ++i)
+    //     res(i, 3) = kdl_pose.p[i];
+
+    // // Orientation
+    // for (std::size_t j = 0; j < 9; ++j)
+    //     res(j/3, j%3) = kdl_pose.M.data[j];
+
+    return res;
+}
+
+
 bool AbstractKinematics::solveIKRelatively(const base::samples::RigidBodyState &current_pose, const base::samples::Joints &joint_angles, 
                                            const base::samples::RigidBodyState &relative_pose,
                                            std::vector<base::commands::Joints> &solution, KinematicsStatus &solver_status)
@@ -57,38 +104,42 @@ bool AbstractKinematics::solveIKRelatively(const base::samples::RigidBodyState &
     return solveIK( target_pose, joint_angles, solution, solver_status);
 }
 
+base::Pose AbstractKinematics::transformPose(const base::Vector3d &frame_1_position, const base::Quaterniond &frame_1_orientation,
+                                             const base::Vector3d &frame_2_position, const base::Quaterniond &frame_2_orientation)
+{
+    // The transformation is calculated by multiply the homogeneous matrix of the two frames
+    // target = frame_1 x frame_2
+  
+    // get a homogeneous matrix form for the frame 1
+    Eigen::Matrix4d frame_1_matrix;
+    getHomogeneousMatrix(frame_1_position, frame_1_orientation, frame_1_matrix);
+    // get a homogeneous matrix form for the frame 2
+    Eigen::Matrix4d frame_2_matrix;
+    getHomogeneousMatrix(frame_2_position, frame_2_orientation, frame_2_matrix);
+    // tranformation: target = frame_1 x frame_2
+    Eigen::Matrix4d target_matrix = frame_1_matrix * frame_2_matrix;
+
+    base::Pose target_pose;    
+    getPositionRotation(target_matrix, target_pose.position, target_pose.orientation);
+
+    return target_pose;
+}
+
 base::samples::RigidBodyState AbstractKinematics::getRelativePose( const base::samples::RigidBodyState &current_pose, 
                                                                    const base::samples::RigidBodyState &relative_pose)
 {
     LOG_DEBUG("[AbstractKinematics]: getRelativePose function called ");
 
-    // get the forward kinematics in a homogeneous matrix form
-    Eigen::Matrix4d fk_matrix;
-    getHomogeneousMatrix(current_pose.position, current_pose.orientation, fk_matrix);
-
-    //base::Vector3d eulerrot;
-    //quaternionToEuler(current_pose.orientation, eulerrot);
-    //std::cout<<" FK euler = "<<eulerrot.x()<<"  "<<eulerrot.y()<<"  "<<eulerrot.z()<<std::endl;
-    // get the relative pose in a homogeneous matrix form
-    Eigen::Matrix4d relative_pose_matrix;
-    getHomogeneousMatrix(relative_pose.position, relative_pose.orientation, relative_pose_matrix);
-
-    //eulerrot = base::Position::Zero();
-    //quaternionToEuler(relative_pose.orientation, eulerrot);
-    //std::cout<<" relative euler = "<<eulerrot.x()<<"  "<<eulerrot.y()<<"  "<<eulerrot.z()<<std::endl;
-    //std::cout<<" relative Quaternion = "<<relative_pose.orientation.x()<<"  "<<relative_pose.orientation.y()<<"  "<<relative_pose.orientation.z()<<"  "<<
-    //relative_pose.orientation.w()<<std::endl;
-    Eigen::Matrix4d target_matrix = fk_matrix * relative_pose_matrix;
-    
+    // get the transformed pose from current pose to the relative pose
+    base::Pose transformed_pose = transformPose(current_pose.position, current_pose.orientation, 
+                                                relative_pose.position, relative_pose.orientation);
+                                           
     base::samples::RigidBodyState target_pose;
     target_pose.sourceFrame = current_pose.sourceFrame;
     target_pose.targetFrame = relative_pose.targetFrame;
-    getPositionRotation(target_matrix, target_pose.position, target_pose.orientation);
-
-    //eulerrot = base::Position::Zero();
-    //quaternionToEuler(relative_pose.orientation, eulerrot);
-    //std::cout<<" target euler = "<<eulerrot.x()<<"  "<<eulerrot.y()<<"  "<<eulerrot.z()<<std::endl;
-    
+    target_pose.position    = transformed_pose.position;
+    target_pose.orientation = transformed_pose.orientation;
+ 
     return target_pose;
 }
 

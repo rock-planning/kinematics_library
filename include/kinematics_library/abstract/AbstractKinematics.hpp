@@ -65,18 +65,26 @@ class AbstractKinematics
                                 std::vector<base::commands::Joints> &solution, KinematicsStatus &solver_status);
 
         bool solveIKLinearly( const base::samples::RigidBodyState &current_pose, const base::samples::RigidBodyState &relative_pose, 
-                              const base::samples::Joints &joint_angles, std::vector<base::commands::Joints> &solution, double &remaining_distance,
-                              KinematicsStatus &solver_status);
+                              const base::samples::Joints &joint_angles, std::vector<base::commands::Joints> &solution, 
+                              double &remaining_distance, KinematicsStatus &solver_status);
 
         base::samples::RigidBodyState getRelativePose( const base::samples::RigidBodyState &current_pose, 
                                                        const base::samples::RigidBodyState &relative_pose);
 
         base::samples::RigidBodyState transformPose(const std::string &frame_name, const base::samples::RigidBodyState &current_pose);
+
+        base::Pose transformPose(   const base::Vector3d &frame_1_position, const base::Quaterniond &frame_1_orientation,
+                                    const base::Vector3d &frame_2_position, const base::Quaterniond &frame_2_orientation);
         
-        base::samples::RigidBodyState transformPose(const std::string &source_frame, const std::string &target_frame, const base::samples::RigidBodyState &source_pose);
+        base::samples::RigidBodyState transformPose(const std::string &source_frame, const std::string &target_frame, 
+                                                    const base::samples::RigidBodyState &source_pose);
 
         std::string getWorldRootName(){return kdl_tree_.getRootSegment()->first;}
+        
+        Eigen::Affine3d transformPose(const std::string &source_frame, const std::string &target_frame);
 
+        Eigen::Matrix4d transformPoseMat(const std::string &source_frame, const std::string &target_frame);
+        
     protected:
         base::samples::RigidBodyState kinematic_pose_;
         std::vector<double>current_jt_status_, ik_solution_;
@@ -91,7 +99,8 @@ class AbstractKinematics
         double position_tolerance_in_m_, interpolation_velocity_, sampling_time_;    
         Eigen::Vector3d linear_target_position_, linear_start_position_;
         bool linear_movement_;
-        double linear_eta_, linear_distance_, linear_estimated_total_time_, linear_estimated_time_; 
+        double linear_eta_, linear_distance_, linear_estimated_total_time_, linear_estimated_time_;
+        KinematicsConfig kinematics_config_;
 
         const Eigen::Vector3d interpolate( const Eigen::Vector3d& current_position, const Eigen::Vector3d& target_position, 
                                         double& remaining_distance );
