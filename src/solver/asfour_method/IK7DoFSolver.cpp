@@ -58,6 +58,7 @@ bool Ik7DoFSolver::solveFK ( const base::samples::Joints& joint_angles, base::sa
     {
         arm_->ja_fk_in[i] = ik7dof_config_.joints_mapping[i] * joint_angles.getElementByName(ik7dof_config_.joint_names[i]).position;
         arm_->ja_last[i]  = ik7dof_config_.joints_mapping[i] * joint_angles.getElementByName(ik7dof_config_.joint_names[i]).position;
+
     }
     
     int success = fkArm();
@@ -151,9 +152,9 @@ int Ik7DoFSolver::initializeArm()
     double dh_d[8]  = {   bs,  0.0,   se,  0.0,   ew,  0.0,  0.0,  0.0 };
     double dh_a[8]  = {  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   wt,  0.0 };
 
-    unsigned short i;
+    //unsigned short i;
             
-    for(i = 0; i < 8; i++)
+    for(size_t i = 0; i < 8; i++)
     {
         arm_->dh_d[i] = dh_d[i];
         arm_->dh_a[i] = dh_a[i];
@@ -176,17 +177,19 @@ int Ik7DoFSolver::initializeArm()
 
 int Ik7DoFSolver::fkArm()
 {
-    unsigned short i;
+    //unsigned short i;
     double dh_t;
-    for(i = 0; i < 8; i++)
+    for(size_t i = 0; i < 8; i++)
     //for(i = 0; i < 7; i++)
     {            
         //Adaption to the joint delta angle offsets
+        //double st = 0.0;
+        //double ct = 0.0;
         if(i == 7)
             dh_t = arm_->dh_do[i];
-        else
+        else        
             dh_t = arm_->ja_fk_in[i] + arm_->dh_do[i];
-
+        
         // calc sin and cos just once
         double st = sin(dh_t);
         double ct = cos(dh_t);
@@ -205,7 +208,6 @@ int Ik7DoFSolver::fkArm()
         {
             arm_->T(i, j) = T_Fr_2_Fr[j]; 
         }*/
-
         
         if(i == 0){
             copyMat4x4(T_Fr_2_Fr, arm_->T_Base_2_TCP_fk_out);
@@ -217,6 +219,7 @@ int Ik7DoFSolver::fkArm()
             multMatMat(T_Base_2_TCP_tmp, T_Fr_2_Fr, arm_->T_Base_2_TCP_fk_out);
         }
     }
+
     return 1;
 }
 
@@ -228,11 +231,13 @@ int Ik7DoFSolver::ikArm()
     double lu = arm_->dh_d[2];
     double lf = arm_->dh_d[4];
     double lh = arm_->dh_a[6];
+   
     
     // input arm->rot_ination in 3x3 matrix
     double n[3], vec[3], w[3];
 
     // get the arm->pos_inition of the wrist intersection point
+    // sankar: This is not a proper way to get the end-eff frame. one should get this info from URDF or config.
     n[0] = arm_->Rbase2tcp[6];
     n[1] = arm_->Rbase2tcp[7];
     n[2] = arm_->Rbase2tcp[8];
@@ -241,16 +246,20 @@ int Ik7DoFSolver::ikArm()
     addVec(arm_->pos_ik_in, vec, w);
 
     // subtract the shoulder offset to facilitate the equations
+    // TODO: This subtraction (w[2] - ls)  is  depends on the base frame
     w_t[0] = w[0]; w_t[1] = w[1]; w_t[2] = w[2] - ls;
+
+    //std::cout<<"WT = "<<w_t[0]<<"  "<< w_t[1]<<"  "<< w_t[2] <<std::endl;
     
     // quit if the position is not reachable
     double d = normVec(w_t);
 
     if(lu + lf - d < -kinematics_library::EPSILON){
         printf("[Arm Inverse Kinematics] The desired position is out of reach!\n");
+        std::cout<<"value = "<<ls +lu + lf<<"  "<<d<<std::endl;
         return 0;
     }
-    
+     
     // if the elbow is straight, some equations simplify and some problems have to be solved differently
     unsigned short elbowIsStraight;
     if(fabs(lu + lf - d) < kinematics_library::EPSILON){
@@ -259,7 +268,8 @@ int Ik7DoFSolver::ikArm()
     }else{
         elbowIsStraight = 0;
     }
-    
+   
+    //std::cout<<"value = "<<ls +lu + lf<<"  "<<d<<" <elbowIsStraigh = "<<elbowIsStraight<<std::endl;
     // get the ze_min and ze_max (by solving sqrt(xw^2+yw^2) <= r1+r2)
     double e1[3], e2[3];
     double ze_min, ze_max;
@@ -308,12 +318,12 @@ int Ik7DoFSolver::ikArm()
             }
             case AUTO_YMAX:
             {
-            // a simple working solution would be
-            // ze = (ze_max+ze_min)/2;
-            // but in automatic arm_->modewe want to calculate the z plane which maximizes the
-            // y-coordinate of the elbow
-            
-            // specify some help variables
+                // a simple working solution would be
+                // ze = (ze_max+ze_min)/2;
+                // but in automatic arm_->modewe want to calculate the z plane which maximizes the
+                // y-coordinate of the elbow
+                
+                // specify some help variables
                 double d_xz_sq = w_t[0]*w_t[0] + w_t[2]*w_t[2];
                 double K = lu*lu - lf*lf + d*d;
             
@@ -322,11 +332,13 @@ int Ik7DoFSolver::ikArm()
                 double term3 = 2.0 * d_xz_sq * d*d;
             
                 double ze_ymax1 = (term1 - term2) / term3;
-            //double ze_ymax2 = (term1 + term2) / term3;    // this solution always seems to be wrong
+                //double ze_ymax2 = (term1 + term2) / term3;    // this solution always seems to be wrong
             
                 ze = ze_ymax1;
-            // transform the z coordinates in the base coordinate system (for higher levels)
+                // transform the z coordinates in the base coordinate system (for higher levels)
                 arm_->ze_out = ze + ls;
+
+                //std::cout<<"Ze ym="<<ze<<std::endl;
                 break;
             
             }
@@ -344,13 +356,18 @@ int Ik7DoFSolver::ikArm()
                 arm_->ze_out = floor(arm_->ze_max * 1000.0) / 1000.0;
         }
         ze = arm_->ze_out;
+        //std::cout<<"Ze ="<<ze<<std::endl;
+
         // squared radii around shoulder and wrist at z-plane
         double r1_sq = lu*lu - ze*ze;                            // with M1 = (0; 0; ze)
         double r2_sq = lf*lf - (ze - w_t[2]) * (ze - w_t[2]);    // with M2 = (w[0]; w[1]; w[2]-ze)
+
+        double r1 = ls + sqrt((lu*lu) - (ze*ze));                            // with M1 = (0; 0; ze)
+        double r2 = ls + sqrt((lf*lf) - ((ze - w_t[2]) * (ze - w_t[2])));    // with M2 = (w[0]; w[1]; w[2]-ze)
         
         // solve for two arm_->pos_insible arm_->pos_initions for the elbow (two solution per z-plane)
         double d_xy_sq = w_t[0]*w_t[0] + w_t[1]*w_t[1];
-        double C = (r1_sq - r2_sq + d_xy_sq) / 2.0;
+        double C = (r1_sq - r2_sq + d_xy_sq) / 2.0;        
         double minus_p_half = C * w_t[1] / d_xy_sq;
         
         e1[1] =  minus_p_half + sqrt( minus_p_half*minus_p_half - (C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq);
@@ -382,8 +399,7 @@ int Ik7DoFSolver::ikArm()
             e2[0] =  (C - w_t[1] * e2[1]) / w_t[0];
         }
     }
-    
-    
+        
     // determine the vectors of the axis of the coordinate systems at joint4
     // from now on, two solutions arm_->pos_insible (elbow up or down)
     double e[3];
@@ -439,6 +455,7 @@ int Ik7DoFSolver::ikArm()
             double s1 = sin(theta[0]);
             
             theta[1] = atan2(c1*T_elbow[12] + s1*T_elbow[13], T_elbow[14]-ls);
+            //theta[1] = atan2(-T_elbow[14], c1*T_elbow[12] + s1*T_elbow[13]-ls);
             double c2 = cos(theta[1]);
             double s2 = sin(theta[1]);
             
@@ -448,6 +465,7 @@ int Ik7DoFSolver::ikArm()
                 theta[2] = arm_->ja_last[2];
             }else{
                 theta[2] = atan2(-s1*T_elbow[8] + c1*T_elbow[9], c1*c2*T_elbow[8] + s1*c2*T_elbow[9] - s2*T_elbow[10]);
+                //theta[2] = atan2(-s1*T_elbow[4] + c1*T_elbow[5], -s2*c1*T_elbow[4] - s2*s1*T_elbow[5] - c2*T_elbow[6]);
             }
 
             double T_04[16];
@@ -487,6 +505,7 @@ int Ik7DoFSolver::ikArm()
             }else{
                 // if the arm is bended, the elbow angle has to be calculated
                 theta[3] = atan2(-(c1*s2*T_elbow[0] + s1*s2*T_elbow[1] + c2*T_elbow[2]), c1*s2*T_elbow[8] + s1*s2*T_elbow[9] + c2*T_elbow[10]);
+                //theta[3] = atan2((c2*c1*T_elbow[0] + c2*s1*T_elbow[1] - s2*T_elbow[2]), c2*c1*T_elbow[8] + c2*s1*T_elbow[9] - s2*T_elbow[10]);
                 //std::cout<<std::endl<<"theta3: "<<theta[3]<<"  ";
                 copyMat4x4(T_elbow, T_04);
             }
@@ -511,8 +530,7 @@ int Ik7DoFSolver::ikArm()
             T_78[0] = ct8; T_78[4] =-st8*ca8;  T_78[8]  = st8*sa8; T_78[12] = 0.0;
             T_78[1] = st8; T_78[5] = ct8*ca8;  T_78[9]  =-ct8*sa8; T_78[13] = 0.0;
             T_78[2] = 0.0; T_78[6] = sa8;      T_78[10] = ca8;     T_78[14] = 0.0;
-            T_78[3] = 0.0; T_78[7] = 0.0;      T_78[11] = 0.0;     T_78[15] = 1.0;
-            
+            T_78[3] = 0.0; T_78[7] = 0.0;      T_78[11] = 0.0;     T_78[15] = 1.0;            
             
             invertMat(T_78, T_78_inv);
             //std::cout<<"\n---------------------------T_78inv------------------------"<<std::endl;
@@ -535,7 +553,8 @@ int Ik7DoFSolver::ikArm()
             //std::cout<<T_78[12]<<"  "<<T_78[13]<<"   "<<T_78[14]<<std::endl;
             //std::cout<<"---------------------------T_47------------------------"<<std::endl;
             unsigned short k;
-            for(k = 0; k < 2; k++){
+            for(k = 0; k < 2; k++)
+            {
                 
                     /*theta[5] = acos(-T_47[10]);
                     //theta[5] = atan2(-sqrt(T_47[8]*T_47[8]+ T_47[9]*T_47[9]), -T_47[10]);
@@ -575,32 +594,32 @@ int Ik7DoFSolver::ikArm()
                     
                     //theta[6] = atan2(-(T_47[1]*c5 - T_47[0]*s5), -(T_47[5]*c5 - T_47[4]*s5));*/
                     
-                    if(k == 0){
-                        theta[4] = atan2(-T_47[9], -T_47[8]);    // normal wrist
-                    }else{
-                        theta[4] = atan2(T_47[9], T_47[8]);      // inverse wrist
-                    }
-                    double c5 = cos(theta[4]);
-                    double s5 = sin(theta[4]);
-                    
-                    theta[5] = atan2(-(T_47[8]*c5 + T_47[9]*s5), -T_47[10]);
-                    
-                    theta[6] = atan2(-(T_47[1]*c5 - T_47[0]*s5), -(T_47[5]*c5 - T_47[4]*s5));    
+                if(k == 0)
+                {
+                    theta[4] = atan2(-T_47[9], -T_47[8]);    // normal wrist
+                }else{
+                    theta[4] = atan2(T_47[9], T_47[8]);      // inverse wrist
+                }
+                double c5 = cos(theta[4]);
+                double s5 = sin(theta[4]);
+                
+                theta[5] = atan2(-(T_47[8]*c5 + T_47[9]*s5), -T_47[10]);                    
+                theta[6] = atan2(-(T_47[1]*c5 - T_47[0]*s5), -(T_47[5]*c5 - T_47[4]*s5));    
                     
                 unsigned short solution_nr = i*4 + j*2 + k;
                 unsigned short dof;
-                for(dof=0; dof<7; dof++){
 
+                for(dof=0; dof<7; dof++)
+                {
                     // transfer the joint angles to the robot
                     double ja = ik7dof_config_.joints_mapping[dof] * (theta[dof] - arm_->dh_do[dof]);
-                    
                     // and place them in an interval of -pi ... pi
                     arm_->ja_all[solution_nr][dof] = doubleModulo(ja + PI, 2*PI) - PI;
-                    
                 }
             } // end inverse wrist
         }   // end inverse shoulder
     }     // end elbow up/down
+    
     // find the best solution
     unsigned short best_solution = 1;
     double min_effort = 10000;
@@ -619,13 +638,13 @@ int Ik7DoFSolver::ikArm()
     }
     
     unsigned short dof_nr;
-    for(dof_nr = 0; dof_nr < 7; dof_nr++){
+    for(dof_nr = 0; dof_nr < 7; dof_nr++)
+    {
         arm_->ja_ik_out[dof_nr] = arm_->ja_all[best_solution][dof_nr];
     }
     
     return 1;
 }
-
 
 base::samples::RigidBodyState Ik7DoFSolver::getRBSPose(double* homogeneous_mat)
 {
@@ -642,8 +661,8 @@ base::samples::RigidBodyState Ik7DoFSolver::getRBSPose(double* homogeneous_mat)
     base::Quaterniond quaternion_rot(rot_mat);
     fk_pose.orientation = quaternion_rot; 
     
-    LOG_INFO_S<<"x: "<<fk_pose.position(0)<<" y: "<<fk_pose.position(1)<<" z: "<<fk_pose.position(2)<<std::endl;
-    LOG_INFO_S<<"qx: "<<fk_pose.orientation.x()<<" qy: "<<fk_pose.orientation.y()<<" qz: "<<fk_pose.orientation.z()<<" qw: "<<fk_pose.orientation.w()<<std::endl;
+    //LOG_INFO_S<<"x: "<<fk_pose.position(0)<<" y: "<<fk_pose.position(1)<<" z: "<<fk_pose.position(2)<<std::endl;
+    //LOG_INFO_S<<"qx: "<<fk_pose.orientation.x()<<" qy: "<<fk_pose.orientation.y()<<" qz: "<<fk_pose.orientation.z()<<" qw: "<<fk_pose.orientation.w()<<std::endl;
     
     fk_pose.sourceFrame = kinematic_pose_.sourceFrame;
     fk_pose.targetFrame = kinematic_pose_.targetFrame;
@@ -665,10 +684,7 @@ base::samples::Joints Ik7DoFSolver::listJointsInDesiredOrder(double* joint_value
 {   
 
     assert(desired_joint_names_order.size() == actual_joint_names_order);
-    //for(unsigned short i = 0; i < actual_joint_names_order.size(); ++i)
-    //{
-    //    std::cout<<actual_joint_names_order[i]<<"*********"<<desired_joint_names_order[i]<<": "<<joint_values[i]<<std::endl;
-    //}
+
     std::vector<double> joint_vec;        
     base::samples::Joints joint_samples;
     joint_samples.resize(desired_joint_names_order.size());
@@ -696,16 +712,8 @@ base::samples::Joints Ik7DoFSolver::listJointsInDesiredOrder(double* joint_value
             }
         }
     }
-    //base::samples::Joints joint_samples;
-    //joint_samples.Positions(joint_vec, desired_joint_names_order);
-    
-    //for(unsigned short i = 0; i < joint_samples.names.size(); ++i)
-    //{
-    //    std::cout<<joint_samples.names[i]<<joint_samples.elements[i].position<<std::endl;
-    //}
-    
-    return joint_samples;
-    
+
+    return joint_samples;    
 }
 
 bool Ik7DoFSolver::validateJointLimits(const base::samples::Joints& joint_values, const std::vector< std::pair< double, double > >& jts_limits)
