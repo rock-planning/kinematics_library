@@ -1,3 +1,14 @@
+/***************************************************************************/
+/*  An Optimization based kinematic solver. The inverse kinematic problem  */
+/*  is formualted as a wieghted sum optimization problem. The objective    */
+/*  functions are normalised using a parametric normalization function,    */
+/*  which was proposed by Rakita et.al in                                  */
+/*  RelaxedIK: Real-time Synthesis of Accurate andFeasible Robot Arm Motion*/
+/*                                                                         */
+/*  Author: Sankaranarayanan Natarajan                                     */
+/*  DFKI - BREMEN 2021                                                     */
+/***************************************************************************/
+
 #ifndef _OPTSOLVER_HPP_
 #define _OPTSOLVER_HPP_
 
