@@ -14,7 +14,8 @@ enum KinematicSolver
     SRS,
     KDL,
     TRACIK,
-    IK7DOF
+    IK7DOF,
+    OPT
 };
 
 struct LinearConfig
@@ -72,6 +73,7 @@ struct KinematicsStatus
         NO_IK_SOLUTION,
         NO_FK_SOLUTION,
         IK_TIMEOUT,
+        APPROX_IK_SOLUTION,
         IK_JOINTLIMITS_VIOLATED,
         IKFAST_LIB_NOT_AVAILABLE,
         IKFAST_FUNCTION_NOT_FOUND,

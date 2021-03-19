@@ -62,6 +62,27 @@ endif()
 add_definitions(-DTRAC_IK_LIB_FOUND=${TRAC_IK_LIB_FOUND})
 message("trac_ik = ${TRAC_IK_LIB_FOUND}")
 
+# if nlopt is found, add it to the kinematic factory
+set(OPT_LIB_FOUND false)  #This variable need to be defined here, so that C++ complier knows about it.
+pkg_check_modules(NLOPT nlopt)
+
+if(${NLOPT_FOUND})
+    set(OPT_LIB_FOUND ${NLOPT_FOUND})
+    message ("NLopt found !")
+    include_directories(${KINEMATIC_LIB_INCLUDES} ${NLOPT_INCLUDE_DIRS})
+    link_directories(${NLOPT_LIBRARY_DIRS})
+    LIST(APPEND KINEMATIC_LIB_DEP_LIBS ${NLOPT_LIBRARIES}) 
+    LIST(APPEND SRCS ${CMAKE_CURRENT_LIST_DIR}/solver/optimization_method/ProblemFormulation.cpp)
+    LIST(APPEND SRCS ${CMAKE_CURRENT_LIST_DIR}/solver/optimization_method/OptSolver.cpp)
+    list(APPEND PKGCONFIG_REQUIRES nlopt)
+else(${NLOPT_FOUND})
+    message ("NLOPT not found !")
+endif()
+
+add_definitions(-DOPT_LIB_FOUND=${OPT_LIB_FOUND})
+message("nlopt = ${OPT_LIB_FOUND}")
+
+
 add_library(kinematics_library SHARED ${SRCS})
 target_link_libraries(kinematics_library ${KINEMATIC_LIB_DEP_LIBS} ${CMAKE_DL_LIBS})
 

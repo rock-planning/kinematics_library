@@ -1,4 +1,3 @@
-#include "kinematics_library/solver/asfour_method/IK7DoFSolver.hpp"
 #include "kinematics_library/HandleKinematicConfig.hpp"
 
 namespace kinematics_library 
@@ -362,8 +361,8 @@ int Ik7DoFSolver::ikArm()
         double r1_sq = lu*lu - ze*ze;                            // with M1 = (0; 0; ze)
         double r2_sq = lf*lf - (ze - w_t[2]) * (ze - w_t[2]);    // with M2 = (w[0]; w[1]; w[2]-ze)
 
-        double r1 = ls + sqrt((lu*lu) - (ze*ze));                            // with M1 = (0; 0; ze)
-        double r2 = ls + sqrt((lf*lf) - ((ze - w_t[2]) * (ze - w_t[2])));    // with M2 = (w[0]; w[1]; w[2]-ze)
+        //double r1 = ls + sqrt((lu*lu) - (ze*ze));                            // with M1 = (0; 0; ze)
+        //double r2 = ls + sqrt((lf*lf) - ((ze - w_t[2]) * (ze - w_t[2])));    // with M2 = (w[0]; w[1]; w[2]-ze)
         
         // solve for two arm_->pos_insible arm_->pos_initions for the elbow (two solution per z-plane)
         double d_xy_sq = w_t[0]*w_t[0] + w_t[1]*w_t[1];

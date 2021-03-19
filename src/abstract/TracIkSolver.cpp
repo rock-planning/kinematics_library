@@ -100,7 +100,12 @@ bool TracIkSolver::solveIK (const base::samples::RigidBodyState target_pose,
     int res = trac_ik_solver_->CartToJnt ( kdl_jt_array_, kdl_frame_, kdl_ik_jt_array_ , bounds);
     
     std::vector<KDL::JntArray> kdl_ik_jt_array_list;
-    bool valid_soln = trac_ik_solver_->getSolutions(kdl_ik_jt_array_list);
+    if (!trac_ik_solver_->getSolutions(kdl_ik_jt_array_list))
+    {
+        LOG_WARN("[solveIK]: Cannot able to get the solution");
+        solver_status.statuscode = KinematicsStatus::NO_IK_SOLUTION;
+        return false;
+    }
     
     solution.resize(kdl_ik_jt_array_list.size());
     for(unsigned i = 0; i < kdl_ik_jt_array_list.size(); ++i)

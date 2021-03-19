@@ -57,6 +57,17 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
             #endif
             break;
         }
+        case OPT:
+        {
+            LOG_INFO_S<<"[KinematicsFactory]: OPTIM solver is selected";
+            #if(OPT_LIB_FOUND)                
+                kinematic_solver = std::make_shared<OptSolver> ( joints_limits_, kdl_tree_, rev_jt_kdlchain_, kdl_chain_ );
+            #else
+                LOG_FATAL_S << "[KinematicsFactory]: Optimization library (NLOPT) is not installed. Please select an another solver !";
+                return nullptr;
+            #endif
+            break;
+        }
         default:
         {
             kinematics_status.statuscode = KinematicsStatus::NO_KINEMATIC_SOLVER_FOUND;

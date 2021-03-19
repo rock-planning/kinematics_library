@@ -137,6 +137,53 @@ bool getTracIkConfig(const YAML::Node &yaml_data, kinematics_library::TracIkConf
 }
 #endif
 
+
+#if(OPT_LIB_FOUND)
+
+bool getOptIkGrooveParamAndWeight(  const YAML::Node &yaml_data, const std::string &cost_name, const kinematics_library::CostType &cost_type, 
+                                    kinematics_library::ProblemParameters &config )
+{
+    if (const YAML::Node &cost_node = yaml_data[cost_name])
+    {
+        if (cost_node.size() == 4)
+        { 
+            kinematics_library::GrooveVariable groove_var;
+            groove_var.s = cost_node[0].as<double>(); groove_var.c = cost_node[1].as<double>(); groove_var.r = cost_node[2].as<double>();            
+            config.groove_param.insert ( std::pair<kinematics_library::CostType, kinematics_library::GrooveVariable>(cost_type, groove_var) );
+            double weight =  cost_node[3].as<double>();
+            config.costs_weight.insert ( std::pair<kinematics_library::CostType, double>(cost_type, weight) );  
+        }
+        else
+        {
+            LOG_WARN("[getOptIkGrooveParamAndWeight]: For key %s incorrect data is given", cost_name.c_str());
+            return false;
+        }
+    }
+    else
+    {
+        LOG_WARN("[getOptIkGrooveParamAndWeight]: Key %s doesn't exist", cost_name.c_str());
+        return false;
+    }
+
+    return true;
+}
+
+bool getOptIKConfig(const YAML::Node &yaml_data, kinematics_library::ProblemParameters &config)
+{           
+    if( (!getOptIkGrooveParamAndWeight(yaml_data, "position_cost", kinematics_library::POSITION_COST, config))    ||
+        (!getOptIkGrooveParamAndWeight(yaml_data, "orientation_cost", kinematics_library::ORIENTATION_COST, config)) ||
+        (!getOptIkGrooveParamAndWeight(yaml_data, "velocity_cost", kinematics_library::VELOCITY_COST, config)) ||
+        (!getOptIkGrooveParamAndWeight(yaml_data, "acceleration_cost", kinematics_library::ACCELERATION_COST, config)) ||
+        (!getOptIkGrooveParamAndWeight(yaml_data, "jerk_cost", kinematics_library::JERK_COST, config)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "max_time", config.max_time)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "max_iter", config.max_iter)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "abs_tol", config.abs_tol)) )
+            return false;
+    
+    return true;
+}
+#endif
+
 bool getSRSConfig(const YAML::Node &yaml_data, kinematics_library::SRSKinematicConfig &config)
 {
     if((!handle_kinematic_config::getValue<double>(yaml_data, "offset_base_shoulder", config.offset_base_shoulder)) ||

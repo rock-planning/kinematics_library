@@ -71,6 +71,8 @@ bool SRSKinematicSolver::loadKinematicConfig( const KinematicsConfig &kinematics
     l_wt.at(1) = 0;
     l_wt.at(2) = srs_config_.offset_wrist_tool;
 
+    return true;
+
 }
 
 bool SRSKinematicSolver::solveIK (const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status,

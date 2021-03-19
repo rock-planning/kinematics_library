@@ -7,13 +7,16 @@
 #include <ostream>
 #include <unordered_map>
 #include <yaml-cpp/yaml.h>
-#include "abstract/IkFastSolver.hpp"
-#include "abstract/KdlSolver.hpp"
+#include "kinematics_library/abstract/IkFastSolver.hpp"
+#include "kinematics_library/abstract/KdlSolver.hpp"
 #if TRAC_IK_LIB_FOUND    
-    #include "abstract/TracIkSolver.hpp"  
+    #include "kinematics_library/abstract/TracIkSolver.hpp"  
 #endif
-#include "solver/shimizu_method/SRSKinematicSolver.hpp"
-#include "solver/asfour_method/IK7DoFSolver.hpp"
+#if OPT_LIB_FOUND    
+    #include "kinematics_library/solver/optimization_method/OptSolver.hpp"  
+#endif
+#include "kinematics_library/solver/shimizu_method/SRSKinematicSolver.hpp"
+#include "kinematics_library/solver/asfour_method/IK7DoFSolver.hpp"
 
 
 namespace handle_kinematic_config
@@ -81,6 +84,12 @@ bool getKdlConfig(const YAML::Node &yaml_data, kinematics_library::KdlConfig &co
 #if(TRAC_IK_LIB_FOUND)
     bool getTracIkConfig(const YAML::Node &yaml_data, kinematics_library::TracIkConfig &config);
 #endif
+
+#if(OPT_LIB_FOUND)
+    bool getOptIkGrooveParam(const YAML::Node &yaml_data, const std::string &cost_name, kinematics_library::GrooveVariable &groove_var);
+    bool getOptIKConfig(const YAML::Node &yaml_data, kinematics_library::ProblemParameters &config);
+#endif
+
 
 bool getSRSConfig(const YAML::Node &yaml_data, kinematics_library::SRSKinematicConfig &config);
 
