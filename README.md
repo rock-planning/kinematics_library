@@ -7,6 +7,7 @@ configuration.
 
 ![kinematics](/uploads/bd97749e843e88cdee295d0e0feea132/kinematics.png)
 
+
 This framework offers the following kinematics solvers to solve both forward and inverse kinematics.
 - [KDL](https://www.orocos.org/wiki/Kinematic_and_Dynamic_Solvers.html) : Use Orocos Kinematics and Dynamics library to solve the kinematic problem.
 - [TRACIK](https://bitbucket.org/traclabs/trac_ik/src/master/): Tracik offers a better and faster solution compared to KDL. This solver combines KDL and optimization-based solver to solve the kinematics problem.
