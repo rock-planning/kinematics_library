@@ -50,19 +50,6 @@ enum CostType
     POSITION_COST, ORIENTATION_COST, VELOCITY_COST, ACCELERATION_COST, JERK_COST, MIN_VEL_EE_COST
 };
 
-// class ProblemParameters
-// {
-//     public:
-//     ProblemParameters(){};
-//     ~ProblemParameters(){};
-//     // robot_model::RobotModelPtr robot_model;
-//     // std::string planning_group_name;
-//     //KDL::Frame target_frame;
-//     std::map<CostType, GrooveVariable> groove_param;    
-// };
-
-// using ProblemParametersPtr = std::shared_ptr<ProblemParameters>;
-
 struct ProblemParameters
 {
     std::map<CostType, GrooveVariable> groove_param;
@@ -93,6 +80,8 @@ public:
 
     double grooveFunction(const GrooveVariable &groove_var, const double &cost);
     double grooveDerivativeFunction(const GrooveVariable &groove_var, const double &cost);
+
+    void calculateDerivatives(const std::vector<double>& x);
 
     double getOverallCost(const std::vector<double>& x, std::vector<double>& grad);
 
@@ -128,7 +117,7 @@ private:
     std::vector<std::pair<double, double> > jts_limits_;
     kinematics_library::AbstractKinematicPtr kin_solver_;
 
-    void calculateFK(std::vector<double> opt_jt_ang, KDL::JntArray &kdl_jt_array, KDL::Frame &kdl_frame);
+    void calculateFK(const std::vector<double> &opt_jt_ang, KDL::JntArray &kdl_jt_array, KDL::Frame &kdl_frame);
     void calculateJacobian(const std::vector<double>& x);
     double getQuaternionDiff(const KDL::Rotation& rot_1, const KDL::Rotation& rot_2);    
     Eigen::MatrixXd getDerivative(const DerivType &deriv_type, const std::vector<double>& x);

@@ -31,7 +31,11 @@ OptSolver::OptSolver ( const std::vector<std::pair<double, double> > &jts_limits
 
 OptSolver::~OptSolver()
 {
-
+    if ( fk_kdlsolver_pos_ ) 
+    {
+        delete fk_kdlsolver_pos_;
+        fk_kdlsolver_pos_ = nullptr;
+    }
 }
 
 bool OptSolver::loadKinematicConfig( const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status)
@@ -51,7 +55,7 @@ bool OptSolver::loadKinematicConfig( const KinematicsConfig &kinematics_config, 
     
     if(!handle_kinematic_config::getOptIKConfig(opt_ik_config_node, opt_param_))
     {
-        LOG_ERROR("[TracIkSolver]: Unable to read kinematic config file %s from %s", kinematics_config.solver_config_filename.c_str(), 
+        LOG_ERROR("[OptSolver]: Unable to read kinematic config file %s from %s", kinematics_config.solver_config_filename.c_str(), 
                     kinematics_config.solver_config_abs_path.c_str());
         kinematics_status.statuscode = KinematicsStatus::CONFIG_READ_ERROR;
         return false;

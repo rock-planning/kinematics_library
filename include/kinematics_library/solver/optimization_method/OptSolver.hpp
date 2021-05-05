@@ -34,7 +34,8 @@ class OptSolver : public AbstractKinematics
         /**
         * @brief  constructor
         */
-        OptSolver(  const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree, const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain);
+        OptSolver(  const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree, 
+                    const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain);
 
         /**
         * @brief  destructor

@@ -15,8 +15,8 @@ TracIkSolver::~TracIkSolver()
     trac_ik_solver_.reset();
     if ( fk_kdlsolver_pos_ ) 
     {
-        fk_kdlsolver_pos_ = NULL;
         delete fk_kdlsolver_pos_;
+        fk_kdlsolver_pos_ = NULL;        
     }
 }
 

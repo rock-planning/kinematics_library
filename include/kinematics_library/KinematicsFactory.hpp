@@ -37,18 +37,26 @@ class KinematicsFactory
 
         AbstractKinematicPtr getKinematicsSolver(const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status);
 
-    private:
-
         bool initialise(const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status);
+
+        KDL::Tree getKDLTree(){return kdl_tree_;}
+
+        KDL::Chain getKDLChain(){return kdl_chain_;}
+
+        KDL::Chain getKDLKinematicsChain(){return kinematics_kdl_chain_;}
+
+        std::vector< std::pair<double, double> > getJointLimits(){return joints_limits_;}
+
+    private:        
 
         bool initiailiseURDF(std::string urdf_file);
 
         /** \brief kdl tree containing joints and links of the robot */
         KDL::Tree kdl_tree_;
-        /** \brief kdl chain  containing joints and links of the robot */
+        /** \brief kdl chain containing joints and links of the robot. This chain might contains fixed joints */
         KDL::Chain kdl_chain_;
-        /** \brief kdl chain  containing joints and links of the robot */
-        KDL::Chain rev_jt_kdlchain_;
+        /** \brief kinematics kdl chain containing non-fixed joints and their links of the robot */
+        KDL::Chain kinematics_kdl_chain_;
 
         std::vector<std::string> jt_names_;
         urdf::ModelInterfaceSharedPtr urdf_model_;		

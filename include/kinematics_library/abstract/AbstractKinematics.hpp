@@ -80,6 +80,10 @@ class AbstractKinematics
                                                     const base::samples::RigidBodyState &source_pose);
 
         std::string getWorldRootName(){return kdl_tree_.getRootSegment()->first;}
+
+        std::string getKinematicChainBaseName(){return kinematics_config_.base_name;}
+
+        std::string getKinematicChainTipName(){return kinematics_config_.tip_name;}
         
         Eigen::Affine3d transformPose(const std::string &source_frame, const std::string &target_frame);
 

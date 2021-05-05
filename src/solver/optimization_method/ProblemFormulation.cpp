@@ -112,7 +112,7 @@ bool ProblemFormulation::initialise(const ProblemParameters &problem_param, cons
     jt_vel_(opt_var_size_, 1);
     jt_acc_(opt_var_size_, 1);
 
-    jump_ = 0.001;//std::numeric_limits<float>::epsilon();
+    jump_ = std::numeric_limits<float>::epsilon();
 
     jt_vel_lower_limits_.resize(opt_var_size_);
     jt_vel_upper_limits_.resize(opt_var_size_);   
@@ -121,9 +121,7 @@ bool ProblemFormulation::initialise(const ProblemParameters &problem_param, cons
     {
         jt_vel_lower_limits_.at(i) = jts_limits_.at(i).first;
         jt_vel_upper_limits_.at(i) = jts_limits_.at(i).second;
-        //std::cout<<       jt_vel_lower_limits_.at(i)<<"  "<<jt_vel_upper_limits_.at(i)<<std::endl;
     }
-    //std::cout<<std::endl;
 
     // forward kinematic using KDL
     kdl_jt_array_.resize ( opt_var_size_ );
@@ -132,7 +130,7 @@ bool ProblemFormulation::initialise(const ProblemParameters &problem_param, cons
     return true;
 }
 
-void ProblemFormulation::calculateFK(std::vector<double> opt_jt_ang, KDL::JntArray &kdl_jt_array, KDL::Frame &kdl_frame)
+void ProblemFormulation::calculateFK(const std::vector<double> &opt_jt_ang, KDL::JntArray &kdl_jt_array, KDL::Frame &kdl_frame)
 {
     convertVectorToKDLArray(opt_jt_ang, kdl_jt_array);
 
@@ -158,6 +156,12 @@ void ProblemFormulation::assignTarget(const base::samples::RigidBodyState &targe
     }
 }
 
+void ProblemFormulation::calculateDerivatives(const std::vector<double>& x)
+{    
+    jt_vel_ = getDerivative(VELOCITY, x);
+    jt_acc_ = getDerivative(ACCELERATION, x);
+}
+
 double ProblemFormulation::getOverallCost(const std::vector<double>& x, std::vector<double>& grad)
 {
     // for(size_t i = 0; i < data_size; i++)
@@ -172,8 +176,7 @@ double ProblemFormulation::getOverallCost(const std::vector<double>& x, std::vec
     calculateJacobian(x);
 
     // get the joint velocity and joint acceleration
-    jt_vel_ = getDerivative(VELOCITY, x);
-    jt_acc_ = getDerivative(ACCELERATION, x);
+    calculateDerivatives(x);    
 
     // position cost
     double position_cost        = getPosistionCost(kdl_frame_, grad);
@@ -190,14 +193,14 @@ double ProblemFormulation::getOverallCost(const std::vector<double>& x, std::vec
 
 void ProblemFormulation::getJointsLimitsConstraintCost( const unsigned &constraints_size, const unsigned &x_size,
                                                         const double* x, double *result, double* grad)
-{     
+{
     
-    for(size_t i =0; i <x_size; i++ )
+    for(size_t i =0; i < x_size; i++ )
     {
         // lower limit
-        result[i] = 0.01*(jt_vel_lower_limits_[i] - jt_vel_(i,0));
+        result[i] = (jt_vel_lower_limits_[i] - jt_vel_(i,0));
         //upper limit     
-        result[i+x_size] = 0.01*(jt_vel_(i,0) - jt_vel_upper_limits_[i]);
+        result[i+x_size] = (jt_vel_(i,0) - jt_vel_upper_limits_[i]);
            //std::cout<<result[i]<<"   "<<result[i+x_size]<<"  "<<jt_vel_(i,0)<<std::endl;
     }
 
@@ -210,7 +213,7 @@ void ProblemFormulation::getJointsLimitsConstraintCost( const unsigned &constrai
             for(size_t j =0; j < (x_size) ; j++ )
             {
                 if(i == j)                
-                    grad[(i*x_size) + j] = 0.001*(-jt_acc_(j,0));
+                    grad[(i*x_size) + j] = (-jt_acc_(j,0));
                 else
                     grad[(i*x_size) + j] = 0.0;            
             }
@@ -222,7 +225,7 @@ void ProblemFormulation::getJointsLimitsConstraintCost( const unsigned &constrai
             for(size_t j =0; j < (x_size) ; j++ )
             {
                 if((i-constraints_size/2) == j)
-                    grad[(i*x_size)+ j] = 0.001*(jt_acc_(j,0));
+                    grad[(i*x_size)+ j] = (jt_acc_(j,0));
                 else
                     grad[(i*x_size) + j] = 0.0;            
             }

@@ -15,20 +15,20 @@ KdlSolver::~KdlSolver()
 {
     if (fk_solverPos_)
     {
-        fk_solverPos_ = NULL;
         delete fk_solverPos_;
+        fk_solverPos_ = NULL;        
     }
 
     if (ik_solverPosJL_)
     {
-        ik_solverPosJL_ = NULL;
         delete ik_solverPosJL_;
+        ik_solverPosJL_ = NULL;        
     }
 
     if (ik_solverVelPinv_)
     {
-        ik_solverVelPinv_ = NULL;
         delete ik_solverVelPinv_;
+        ik_solverVelPinv_ = NULL;        
     }
 }
 
