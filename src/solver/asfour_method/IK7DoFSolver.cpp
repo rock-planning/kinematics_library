@@ -613,8 +613,13 @@ int Ik7DoFSolver::ikArm()
                     // transfer the joint angles to the robot
                     double ja = ik7dof_config_.joints_mapping[dof] * (theta[dof] - arm_->dh_do[dof]);
                     // and place them in an interval of -pi ... pi
-                    arm_->ja_all[solution_nr][dof] = doubleModulo(ja + PI, 2*PI) - PI;
-                }
+                    if(ja >= PI)
+                        arm_->ja_all[solution_nr][dof] = doubleModulo(ja + PI, 2*PI) - PI;
+                    else if(ja <= -PI)
+                        arm_->ja_all[solution_nr][dof] = doubleModulo(ja - PI, 2*PI) + PI;
+                    else
+                        arm_->ja_all[solution_nr][dof] = ja;                    
+                }                
             } // end inverse wrist
         }   // end inverse shoulder
     }     // end elbow up/down
@@ -624,23 +629,23 @@ int Ik7DoFSolver::ikArm()
     double min_effort = 10000;
     
     unsigned short sol_nr;
-    for(sol_nr = 0; sol_nr < 8; sol_nr++){
+    for(sol_nr = 0; sol_nr < 8; sol_nr++)
+    {
         double effort = 0.0;
         unsigned short dof_nr;
-        for(dof_nr = 0; dof_nr < 7; dof_nr++){
-            effort = effort + fabs(arm_->ja_all[sol_nr][dof_nr] - arm_->ja_last[dof_nr]);
-        }
-        if(effort < min_effort){
+        for(dof_nr = 0; dof_nr < 7; dof_nr++)        
+            effort = effort + fabs(arm_->ja_all[sol_nr][dof_nr] - arm_->ja_last[dof_nr]);        
+        
+        if(effort < min_effort)
+        {
             min_effort = effort;
             best_solution = sol_nr;
         }
     }
     
     unsigned short dof_nr;
-    for(dof_nr = 0; dof_nr < 7; dof_nr++)
-    {
+    for(dof_nr = 0; dof_nr < 7; dof_nr++)    
         arm_->ja_ik_out[dof_nr] = arm_->ja_all[best_solution][dof_nr];
-    }
     
     return 1;
 }

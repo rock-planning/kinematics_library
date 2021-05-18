@@ -635,13 +635,13 @@ void invertMat(double mat[16], double *res)
 
 
 double doubleModulo(double divident, double divisor){
-  // double d_result = divident / divisor;
-  // printf("divident %f / divisor %f = %f\n", divident, divisor, d_result);
+  //double d_result = divident / divisor;
+  //printf("divident %f / divisor %f = %f\n", divident, divisor, d_result);
   int int_result = (int) ( divident / divisor );
   // printf("int_result: %d\n", int_result);
-  double result = (divident - (double) int_result * divisor);
+  //double result = (divident - (double) int_result * divisor);
   // printf("%f transforms to %f\n", divident, result);
-  return result;
+  return (divident - (double) int_result * divisor);
 }
 
 
