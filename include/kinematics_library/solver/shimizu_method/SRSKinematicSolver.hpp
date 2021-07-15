@@ -32,13 +32,8 @@ namespace kinematics_library
 
 struct SRSKinematicConfig
 {
-    SRSKinematicConfig(): offset_base_shoulder(0.0), offset_shoulder_elbow(0.0), offset_elbow_wrist(0.0), 
-                          offset_wrist_tool(0.0), save_psi(false), save_psi_path("") {}
-    double offset_base_shoulder;   // distance between base to shoulder
-    double offset_shoulder_elbow;  // distance between shoulder to elbow
-    double offset_elbow_wrist;     // distance between elbow to wrist
-    double offset_wrist_tool;      // distance between wrist to tool
-
+    SRSKinematicConfig(): save_psi(false), save_psi_path("") {}
+    DHParamConfig dh_param;
     bool save_psi;                  // save the psi and cosine and tangent function for debugging
     std::string save_psi_path;      // path for saving the psi
 };
@@ -88,7 +83,7 @@ class SRSKinematicSolver : public AbstractKinematics
         
         void getChainSegementPose(const base::samples::Joints &joint_angles,  std::vector<KDL::Frame> &segement_pose){}
         
-        base::samples::RigidBodyState direct(const base::samples::Joints &joint_angles);
+        base::samples::RigidBodyState direct(const std::vector<double> &joint_angles);
 
     private:        
         KDL::Frame kdl_frame_;
@@ -104,6 +99,7 @@ class SRSKinematicSolver : public AbstractKinematics
         std::vector<double> l_bs, l_se, l_ew, l_wt;     // vector holding the link length
         
         std::vector<std::pair<double,double> > jts_limits_; // minimum and maximum values for joints
+        std::vector<double> fk_jt_ang_;
 
         std::vector< ArmAngle > feasible_psi;
         std::vector< ArmAngle > infeasible_psi;

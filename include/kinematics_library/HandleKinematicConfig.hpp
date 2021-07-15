@@ -95,5 +95,7 @@ bool getSRSConfig(const YAML::Node &yaml_data, kinematics_library::SRSKinematicC
 
 bool getIK7DoFConfig(const YAML::Node &yaml_data, kinematics_library::IK7DoFConfig &config);
 
+bool getDHParamConfig(const YAML::Node& yaml_data, kinematics_library::DHParamConfig &config);
+
 }
 #endif

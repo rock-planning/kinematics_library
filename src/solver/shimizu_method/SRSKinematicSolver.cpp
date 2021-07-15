@@ -9,13 +9,16 @@ SRSKinematicSolver::SRSKinematicSolver ( const std::vector<std::pair<double, dou
 {
     kdl_tree_  = kdl_tree;
     kdl_chain_ = kdl_chain;
-//     jts_limits_[0].first = -90*kinematics_library::DTR; jts_limits_[0].second = 90*kinematics_library::DTR;
-//     jts_limits_[1].first = -45*kinematics_library::DTR; jts_limits_[1].second = 45*kinematics_library::DTR;
-//     jts_limits_[2].first = -120*kinematics_library::DTR; jts_limits_[2].second = 120*kinematics_library::DTR;
-//     jts_limits_[3].first =  0*kinematics_library::DTR; jts_limits_[3].second = 135*kinematics_library::DTR;
-//     jts_limits_[4].first = -90*kinematics_library::DTR; jts_limits_[4].second = 90*kinematics_library::DTR;
-//     jts_limits_[5].first = -90*kinematics_library::DTR; jts_limits_[5].second = 90*kinematics_library::DTR;
-//     jts_limits_[6].first = -120*kinematics_library::DTR; jts_limits_[6].second = 120*kinematics_library::DTR;
+    fk_jt_ang_.resize(7, 0.0);
+
+    // jts_limits_[0].first = -90*kinematics_library::DTR; jts_limits_[0].second = 90*kinematics_library::DTR;
+    // jts_limits_[1].first = -45*kinematics_library::DTR; jts_limits_[1].second = 45*kinematics_library::DTR;
+    // jts_limits_[2].first = -120*kinematics_library::DTR; jts_limits_[2].second = 120*kinematics_library::DTR;
+    // jts_limits_[3].first =  0*kinematics_library::DTR; jts_limits_[3].second = 135*kinematics_library::DTR;
+    // jts_limits_[4].first = -90*kinematics_library::DTR; jts_limits_[4].second = 90*kinematics_library::DTR;
+    // jts_limits_[5].first = -90*kinematics_library::DTR; jts_limits_[5].second = 90*kinematics_library::DTR;
+    // jts_limits_[6].first = -120*kinematics_library::DTR; jts_limits_[6].second = 120*kinematics_library::DTR;
+
 }
 
 SRSKinematicSolver::~SRSKinematicSolver()
@@ -51,25 +54,25 @@ bool SRSKinematicSolver::loadKinematicConfig( const KinematicsConfig &kinematics
     l_bs.resize(3, 0.0);
     l_bs.at(0) = 0;
     l_bs.at(1) = 0;
-    l_bs.at(2) = srs_config_.offset_base_shoulder;
+    l_bs.at(2) = srs_config_.dh_param.link_offsets[0];//offset_base_shoulder;
 
     // shoulder-elbow vector
     l_se.resize(3, 0.0);
     l_se.at(0) = 0;
-    l_se.at(1) = -srs_config_.offset_shoulder_elbow;
+    l_se.at(1) = -srs_config_.dh_param.link_offsets[2];//srs_config_.offset_shoulder_elbow;
     l_se.at(2) = 0;
 
     // elbow-wrist vector
     l_ew.resize(3, 0.0);
     l_ew.at(0) = 0;
     l_ew.at(1) = 0.0;
-    l_ew.at(2) = srs_config_.offset_elbow_wrist;
+    l_ew.at(2) = srs_config_.dh_param.link_offsets[4];//offset_elbow_wrist;
 
     // wrist-tool vector
     l_wt.resize(3, 0.0);
     l_wt.at(0) = 0;
     l_wt.at(1) = 0;
-    l_wt.at(2) = srs_config_.offset_wrist_tool;
+    l_wt.at(2) = srs_config_.dh_param.link_offsets[6];//offset_wrist_tool;
 
     return true;
 
@@ -128,14 +131,21 @@ bool SRSKinematicSolver::solveFK (const base::samples::Joints &joint_angles, bas
 {
     getKinematicJoints ( kdl_chain_, joint_angles, jt_names_, current_jt_status_ );
 
-    convertVectorToKDLArray ( current_jt_status_, kdl_jt_array_ );
+    assert(current_jt_status_.size() == 7);
+    for(unsigned short i = 0; i < current_jt_status_.size(); ++i)
+    {
+        fk_jt_ang_[i] = srs_config_.dh_param.joints_mapping[i] * joint_angles.getElementByName(srs_config_.dh_param.joint_names[i]).position;
+    }
+
+    //convertVectorToKDLArray ( current_jt_status_, kdl_jt_array_ );
 
 //     if ( fk_kdlsolver_pos_->JntToCart ( kdl_jt_array_, kdl_frame_ ) >= 0 ) 
 //     {
 //         kdlToRbs ( kdl_frame_, kinematic_pose_ );
-        solver_status.statuscode = KinematicsStatus::FK_FOUND;
+//        solver_status.statuscode = KinematicsStatus::FK_FOUND;
 //         convertPoseBetweenDifferentFrames ( kdl_tree_, kinematic_pose_, fk_pose );
-        fk_pose = SRSKinematicSolver::direct(joint_angles);
+        fk_pose = SRSKinematicSolver::direct(fk_jt_ang_);
+        solver_status.statuscode = KinematicsStatus::FK_FOUND;
         return true;
 //     }
 
@@ -144,36 +154,42 @@ bool SRSKinematicSolver::solveFK (const base::samples::Joints &joint_angles, bas
 }
 
 
-base::samples::RigidBodyState SRSKinematicSolver::direct(const base::samples::Joints &joint_angles)
+base::samples::RigidBodyState SRSKinematicSolver::direct(const std::vector<double> &joint_angles)
 {
    double fk[7][16];//variable for forward kinemtaics 
    double sa[7], ca[7];                            // sine and cosine array used on forward kinematics
-   double lk_ofst[7];                              // link offsets
+//    double lk_ofst[7];                              // link offsets
    
-   // initialising the link offsets
-    lk_ofst[0] = srs_config_.offset_base_shoulder;
-    lk_ofst[1] = 0;
-    lk_ofst[2] = srs_config_.offset_shoulder_elbow;
-    lk_ofst[3] = 0;
-    lk_ofst[4] = srs_config_.offset_elbow_wrist;
-    lk_ofst[5] = 0;
-    lk_ofst[6] = srs_config_.offset_wrist_tool;
+//    // initialising the link offsets
+//     lk_ofst[0] = srs_config_.link_offset[0]; // srs_config_.offset_base_shoulder;
+//     lk_ofst[1] = 0;
+//     lk_ofst[2] = srs_config_.link_length[2]; //srs_config_.offset_shoulder_elbow;
+//     lk_ofst[3] = 0;
+//     lk_ofst[4] = srs_config_.link_length[4]; //srs_config_.offset_elbow_wrist;
+//     lk_ofst[5] = 0;
+//     lk_ofst[6] = srs_config_.link_length[6]; //srs_config_.offset_wrist_tool;
 
     // initialising the sine and cosine array used in forward kinematics
-    sa[0] = sin(-kinematics_library::PI/2.0);
-    sa[1] = sin( kinematics_library::PI/2.0);
-    sa[2] = sin(-kinematics_library::PI/2.0);
-    sa[3] = sin( kinematics_library::PI/2.0);
-    sa[4] = sin(-kinematics_library::PI/2.0);
-    sa[5] = sin( kinematics_library::PI/2.0);
-    sa[6] = sin(0.0);
-    ca[0] = cos(-kinematics_library::PI/2.0);
-    ca[1] = cos( kinematics_library::PI/2.0);
-    ca[2] = cos(-kinematics_library::PI/2.0);
-    ca[3] = cos( kinematics_library::PI/2.0);
-    ca[4] = cos(-kinematics_library::PI/2.0);
-    ca[5] = cos( kinematics_library::PI/2.0);
-    ca[6] = cos(0.0);
+    // sa[0] = sin(-kinematics_library::PI/2.0);
+    // sa[1] = sin( kinematics_library::PI/2.0);
+    // sa[2] = sin(-kinematics_library::PI/2.0);
+    // sa[3] = sin( kinematics_library::PI/2.0);
+    // sa[4] = sin(-kinematics_library::PI/2.0);
+    // sa[5] = sin(-kinematics_library::PI/2.0);
+    // sa[6] = sin(0.0);
+    // ca[0] = cos(-kinematics_library::PI/2.0);
+    // ca[1] = cos( kinematics_library::PI/2.0);
+    // ca[2] = cos(-kinematics_library::PI/2.0);
+    // ca[3] = cos( kinematics_library::PI/2.0);
+    // ca[4] = cos(-kinematics_library::PI/2.0);
+    // ca[5] = cos(-kinematics_library::PI/2.0);
+    // ca[6] = cos(0.0);
+
+    for(size_t i = 0; i < 7; i++)
+    {
+        ca[i] = cos(srs_config_.dh_param.link_twists[i]); //calculating cosine of link twist
+        sa[i] = sin(srs_config_.dh_param.link_twists[i]); //calculating sine of link twist        
+    }
     
     
     double ct=0.0, st=0.0;
@@ -182,32 +198,30 @@ base::samples::RigidBodyState SRSKinematicSolver::direct(const base::samples::Jo
                             0.0f, 0.0f, 1.0f, 0.0f,
                             0.0f, 0.0f, 0.0f, 1.0f  };
 
-    ct = cos(joint_angles.elements[0].position);
-    st = sin(joint_angles.elements[0].position);
+    ct = cos((joint_angles[0] + srs_config_.dh_param.theta_offsets[0]) );
+    st = sin((joint_angles[0] + srs_config_.dh_param.theta_offsets[0]) );
 
     // calculate the joint matrix
     fk[0][0] = ct;  fk[0][4] = -st* ca[0];  fk[0][8] = st * sa[0];  fk[0][12] = 0;
     fk[0][1] = st;  fk[0][5] =  ct * ca[0]; fk[0][9] =-ct * sa[0];  fk[0][13] = 0;
-    fk[0][2] = 0;   fk[0][6] =  sa[0];      fk[0][10]= ca[0];       fk[0][14] = lk_ofst[0];
+    fk[0][2] = 0;   fk[0][6] =  sa[0];      fk[0][10]= ca[0];       fk[0][14] = srs_config_.dh_param.link_offsets[0];
     fk[0][3] = 0;   fk[0][7] =  0;          fk[0][11]= 0;           fk[0][15] = 1;
 
     for(int i = 1; i < 7; i++)
     {
-        ct = cos(joint_angles.elements[i].position);
-        st = sin(joint_angles.elements[i].position);
+        ct = cos((joint_angles[i] + srs_config_.dh_param.theta_offsets[i]));
+        st = sin((joint_angles[i] + srs_config_.dh_param.theta_offsets[i]));
 
         // calculate the joint matrix
         tmpMat[0] = ct;         tmpMat[4] = -st * ca[i];        tmpMat[8] = st * sa[i];
         tmpMat[1] = st;         tmpMat[5] =  ct * ca[i];        tmpMat[9] =-ct * sa[i];
-                                tmpMat[6] = sa[i];              tmpMat[10]= ca[i];              tmpMat[14] = lk_ofst[i];
+                                tmpMat[6] = sa[i];              tmpMat[10]= ca[i];              tmpMat[14] = srs_config_.dh_param.link_offsets[i];
 
         // accumulate it
         multMatMat(fk[i-1], tmpMat, fk[i]);
-    }
+    }    
     
-    
-    base::samples::RigidBodyState fk_pose;
-       
+    base::samples::RigidBodyState fk_pose;      
         
     Eigen::Matrix3d rot_mat;
 
@@ -215,15 +229,14 @@ base::samples::RigidBodyState SRSKinematicSolver::direct(const base::samples::Jo
     rot_mat(1,0) = fk[6][1]; rot_mat(1,1) = fk[6][5]; rot_mat(1,2) = fk[6][9];
     rot_mat(2,0) = fk[6][2]; rot_mat(2,1) = fk[6][6]; rot_mat(2,2) = fk[6][10];    
     
-    fk_pose.orientation = rot_mat;
+    //fk_pose.orientation = rot_mat;
+    base::Quaterniond quaternion_rot(rot_mat);
+    fk_pose.orientation = quaternion_rot; 
     
     fk_pose.position(0) = fk[6][12];fk_pose.position(1) = fk[6][13];fk_pose.position(2) = fk[6][14];
     
     return fk_pose;
-    
-
 }
-
 
 int SRSKinematicSolver::invkin(const base::Position &pos, const base::Quaterniond &rot, base::commands::Joints &jointangles)
 {
@@ -255,36 +268,46 @@ int SRSKinematicSolver::invkin(const base::Position &pos, const base::Quaternion
 
     //Eul2RotMat(rot,Rd);  //eul_zyx
     quaternionToRotMat(rot,Rd);
+ 
     multMatVec(Rd,l_wt,t_Xsw);
     std::cout<<"Pos = "<<pos<<std::endl;
     Xsw.at(0) = pos(0)-l_bs.at(0)-t_Xsw.at(0);
     Xsw.at(1) = pos(1)-l_bs.at(1)-t_Xsw.at(1);
     Xsw.at(2) = pos(2)-l_bs.at(2)-t_Xsw.at(2);
     
-    std::cout<<"l_bs = "<<l_bs.at(0)<<"  "<<l_bs.at(1)<<"  "<<l_bs.at(2)<<std::endl;
-    std::cout<<"t_x = "<<t_Xsw.at(0)<<"  "<<t_Xsw.at(1)<<"  "<<t_Xsw.at(2)<<std::endl;
-    std::cout<<pos(0)-l_bs.at(0)-t_Xsw.at(0)<<std::endl;
-    std::cout<<pos(1)-l_bs.at(1)-t_Xsw.at(1)<<std::endl;
-    std::cout<<pos(2)-l_bs.at(2)-t_Xsw.at(2)<<std::endl;
+    // std::cout<<"l_bs = "<<l_bs.at(0)<<"  "<<l_bs.at(1)<<"  "<<l_bs.at(2)<<std::endl;
+    // std::cout<<"t_x = "<<t_Xsw.at(0)<<"  "<<t_Xsw.at(1)<<"  "<<t_Xsw.at(2)<<std::endl;
+    // std::cout<<pos(0)-l_bs.at(0)-t_Xsw.at(0)<<std::endl;
+    // std::cout<<pos(1)-l_bs.at(1)-t_Xsw.at(1)<<std::endl;
+    // std::cout<<pos(2)-l_bs.at(2)-t_Xsw.at(2)<<std::endl;
 
     t_thet4=((Xsw.at(0)*Xsw.at(0))+(Xsw.at(1)*Xsw.at(1))+(Xsw.at(2)*Xsw.at(2)));
 
-    if (sqrt(t_thet4) >(srs_config_.offset_shoulder_elbow + srs_config_.offset_elbow_wrist))
+    //if (sqrt(t_thet4) >(srs_config_.offset_shoulder_elbow + srs_config_.offset_elbow_wrist))
+    if (sqrt(t_thet4) >(srs_config_.dh_param.link_offsets[2] + srs_config_.dh_param.link_offsets[4]))
     {
         succeeded = SRSKinematic::ERR_REACH;
+        
     }
     else
     {
-        thet4=((t_thet4 - (srs_config_.offset_shoulder_elbow * srs_config_.offset_shoulder_elbow) 
-                        - (srs_config_.offset_elbow_wrist * srs_config_.offset_elbow_wrist)) / (2.0 * srs_config_.offset_shoulder_elbow * srs_config_.offset_elbow_wrist) );
+        // thet4=((t_thet4 - (srs_config_.offset_shoulder_elbow * srs_config_.offset_shoulder_elbow) 
+        //                 - (srs_config_.offset_elbow_wrist * srs_config_.offset_elbow_wrist)) / (2.0 * srs_config_.offset_shoulder_elbow * srs_config_.offset_elbow_wrist) );
+        thet4=((t_thet4 - (srs_config_.dh_param.link_offsets[2] * srs_config_.dh_param.link_offsets[2]) 
+                        - (srs_config_.dh_param.link_offsets[4] * srs_config_.dh_param.link_offsets[4])) / 
+                        (2.0 * srs_config_.dh_param.link_offsets[2] * srs_config_.dh_param.link_offsets[4]) );
 
-        jointangles.elements.at(3).position = acos(thet4);  //using cosine law
 
-
-        std::cout<< "JOINT 4 = "<<jointangles.elements.at(3).position*kinematics_library::RTD<<"   "<<t_thet4<<"  "<<sqrt(1-(thet4*thet4))<<std::endl;
-
+        //jointangles.elements.at(3).position = acos(thet4);  //using cosine law
+        jointangles.elements.at(3).position = (acos(thet4));  //using cosine law
+        std::cout<< "JOINT before 4 = "<<jointangles.elements.at(3).position*kinematics_library::RTD<<"   "<<t_thet4<<"  "<<sqrt(1-(thet4*thet4))<<std::endl;
+        
         //Below calculate the reference shoulder angle
         rotMatrix(jointangles.elements.at(3).position, kinematics_library::PI /2.0, R34);
+
+        jointangles.elements.at(3).position = srs_config_.dh_param.joints_mapping[3] * (acos(thet4) - srs_config_.dh_param.theta_offsets[3] );  //using cosine law
+
+        std::cout<< "JOINT 4 = "<<jointangles.elements.at(3).position*kinematics_library::RTD<<"   "<<t_thet4<<"  "<<sqrt(1-(thet4*thet4))<<std::endl;
 
         multMatVec(R34, l_ew, t_R34);
 
@@ -292,8 +315,14 @@ int SRSKinematicSolver::invkin(const base::Position &pos, const base::Quaternion
         t_refthe2.at(1) = l_se.at(1) + t_R34.at(1);
         t_refthe2.at(2) = l_se.at(2) + t_R34.at(2);
 
-        the2_R=atan2(t_refthe2.at(0),t_refthe2.at(1)) - atan2(sqrt((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2))),-Xsw.at(2));
-        //the2_R=atan2(-t_refthe2.at(0),-t_refthe2.at(1)) - atan2(sqrt((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2))),Xsw.at(2));
+        //the2_R=atan2(t_refthe2.at(0),t_refthe2.at(1)) - atan2(sqrt((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2))),-Xsw.at(2));
+        // transcendal equation 
+        //acos0 + bsin0 =c
+        //0 = Atan2(b,a) ± Atan2(sqrt(a2 + b2 —c2),c).
+
+        the2_R=atan2(-t_refthe2.at(0),-t_refthe2.at(1)) - atan2(sqrt((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2))),Xsw.at(2));
+        the2_R=atan2(-t_refthe2.at(0),-t_refthe2.at(1)) + atan2(sqrt((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2))),Xsw.at(2));
+
         //the2_R = 2*atan( (t_refthe2.at(0) + ( sqrt((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2))) ) ) / (Xsw.at(2) - t_refthe2.at(0)) );
         //the2_R = the2_R +(kinematics_library::PI );
 
@@ -311,10 +340,12 @@ int SRSKinematicSolver::invkin(const base::Position &pos, const base::Quaternion
 //                              <<atan2(sqrt((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2))),-Xsw.at(2))*kinematics_library::RTD<<"  "<<
 //                              ((t_refthe2.at(0)*t_refthe2.at(0))+(t_refthe2.at(1)*t_refthe2.at(1))-(Xsw.at(2)*Xsw.at(2)))<<"  "<<Xsw.at(2)<<std::endl;
         
-
+        //the1_R = srs_config_.dh_param.joints_mapping[0] * (the1_R );//- srs_config_.dh_param.theta_offsets[0]);
+        //the2_R = srs_config_.dh_param.joints_mapping[1] * (the2_R );//- srs_config_.dh_param.theta_offsets[1]);
+        //double the3_R = -srs_config_.dh_param.theta_offsets[2];
         rotMatrix(the1_R, -kinematics_library::PI /2.0, R01);
         rotMatrix(the2_R, kinematics_library::PI /2.0, R12);
-        rotMatrix(0.0     , -kinematics_library::PI /2.0, R23);
+        rotMatrix(0, -kinematics_library::PI /2.0, R23);
         multMatMat(R01, R12, t_r03_r);
         multMatMat(t_r03_r, R23, R_03_R);
 
@@ -436,12 +467,18 @@ int SRSKinematicSolver::invkin(const base::Position &pos, const base::Quaternion
 
             AA=final_feasible_armangle.at(0).first;
 
-            jointangles.elements.at(0).position = atan2((-(As[4]*sin(AA))-(Bs[4]*cos(AA))-(Cs[4])),(-(As.at(3)*sin(AA))-(Bs.at(3)*cos(AA))-(Cs.at(3))));
-            jointangles.elements.at(1).position = acos(-(As[5]*sin(AA))-(Bs[5]*cos(AA))-(Cs[5]));
-            jointangles.elements.at(2).position = atan2(((As[8]*sin(AA))+(Bs[8]*cos(AA))+(Cs[8])),(-(As.at(2)*sin(AA))-(Bs.at(2)*cos(AA))-(Cs.at(2))));
-            jointangles.elements.at(4).position = atan2(((Aw[7]*sin(AA))+(Bw[7]*cos(AA))+(Cw[7])),((Aw[6]*sin(AA))+(Bw[6]*cos(AA))+(Cw[6])));
-            jointangles.elements.at(5).position = acos(((Aw[8]*sin(AA))+(Bw[8]*cos(AA))+(Cw[8])));
-            jointangles.elements.at(6).position = atan2(((Aw[5]*sin(AA))+(Bw[5]*cos(AA))+(Cw[5])),(-(Aw.at(2)*sin(AA))-(Bw.at(2)*cos(AA))-(Cw.at(2))));
+            jointangles.elements.at(0).position = srs_config_.dh_param.joints_mapping[0] * 
+                                                ( atan2((-(As[4]*sin(AA))-(Bs[4]*cos(AA))-(Cs[4])),(-(As.at(3)*sin(AA))-(Bs.at(3)*cos(AA))-(Cs.at(3)))) - srs_config_.dh_param.theta_offsets[0]);
+            jointangles.elements.at(1).position = srs_config_.dh_param.joints_mapping[1] * 
+                                                ( acos(-(As[5]*sin(AA))-(Bs[5]*cos(AA))-(Cs[5])) - srs_config_.dh_param.theta_offsets[1] );
+            jointangles.elements.at(2).position = srs_config_.dh_param.joints_mapping[2] *
+                                                ( atan2(((As[8]*sin(AA))+(Bs[8]*cos(AA))+(Cs[8])),(-(As.at(2)*sin(AA))-(Bs.at(2)*cos(AA))-(Cs.at(2)))) - srs_config_.dh_param.theta_offsets[2] );
+            jointangles.elements.at(4).position = srs_config_.dh_param.joints_mapping[4] * 
+                                                ( atan2(((Aw[7]*sin(AA))+(Bw[7]*cos(AA))+(Cw[7])),((Aw[6]*sin(AA))+(Bw[6]*cos(AA))+(Cw[6]))) - srs_config_.dh_param.theta_offsets[4] );
+            jointangles.elements.at(5).position = srs_config_.dh_param.joints_mapping[5] * 
+                                                ( acos(((Aw[8]*sin(AA))+(Bw[8]*cos(AA))+(Cw[8]))) - srs_config_.dh_param.theta_offsets[5] );
+            jointangles.elements.at(6).position = srs_config_.dh_param.joints_mapping[6] * 
+                                                ( atan2(((Aw[5]*sin(AA))+(Bw[5]*cos(AA))+(Cw[5])),(-(Aw.at(2)*sin(AA))-(Bw.at(2)*cos(AA))-(Cw.at(2)))) - srs_config_.dh_param.theta_offsets[6] );
             
             for(int i = 0; i < 7; i++)
                 std::cout<<jointangles.elements.at(i).position*kinematics_library::RTD<<"  ";
@@ -492,27 +529,27 @@ int SRSKinematicSolver::cal_armangle(   const std::vector<double> &As, const std
 
     //Joint 1
     succeeded = tangenttype_armangle(-As[4], -Bs[4], -Cs[4], -As[3], -Bs[3], -Cs[3], at1, bt1, ct1, cond1, 1, jts_limits_[0].first, jts_limits_[0].second, "joint1");
-    // if (succeeded != 0) return succeeded;
+    if (succeeded != 0) return succeeded;
 
     //Joint 2
     succeeded = feasible_armangle_cosinetype_cyclicfunction(-As[5], -Bs[5], -Cs[5], jts_limits_[1].first, jts_limits_[1].second, 2, "joint2");
-    //if (succeeded != 0) return succeeded;
+    if (succeeded != 0) return succeeded;
 
     //Joint 3
     succeeded = tangenttype_armangle(As[8], +Bs[8], +Cs[8], -As[2], -Bs[2], -Cs[2], at3, bt3, ct3, cond3, 3, jts_limits_[2].first, jts_limits_[2].second, "joint3");
-    //if (succeeded != 0)  return succeeded;
+    if (succeeded != 0)  return succeeded;
 
     //Joint 5
     succeeded = tangenttype_armangle(+Aw[7], +Bw[7], +Cw[7], +Aw[6], +Bw[6], +Cw[6], at5, bt5, ct5, cond5, 5, jts_limits_[4].first, jts_limits_[4].second, "joint5");
-    //if (succeeded != 0)  return succeeded;
+    if (succeeded != 0)  return succeeded;
 
     //Joint 6    
     succeeded = feasible_armangle_cosinetype_cyclicfunction(Aw[8], Bw[8], Cw[8], jts_limits_[5].first, jts_limits_[5].second, 6, "joint6");
-    // if (succeeded != 0) return succeeded;
+    if (succeeded != 0) return succeeded;
 
     //Joint 7
     succeeded = tangenttype_armangle(+Aw[5], +Bw[5], +Cw[5], -Aw[2], -Bw[2], -Cw[2], at7, bt7, ct7, cond7, 7, jts_limits_[6].first, jts_limits_[6].second, "joint7");
-    // if (succeeded != 0) return succeeded;
+    if (succeeded != 0) return succeeded;
 
     // debugging
     std::cout<<"Feasible Psi "<<std::endl;
@@ -583,6 +620,7 @@ int SRSKinematicSolver::tangenttype_armangle(   const double &an, const double b
 
     LOG_DEBUG("[SRSKinematicSolver]: Joint number %i with condition %f", jointnumber, condition);
     
+    //std::cout<<"Joint anme = "<<jointname.c_str()<< "cond = " << condition<<std::endl;
 
     if ((condition < kinematics_library::PAC) && (condition > kinematics_library::NAC))
     {    
@@ -594,7 +632,7 @@ int SRSKinematicSolver::tangenttype_armangle(   const double &an, const double b
     }
     else if (condition > 0)
     {    
-//         std::cout<<"Cond 2"<<std::endl;
+        // std::cout<<"Cond 2"<<std::endl;
         succeeded = feasible_armangle_tangenttype_cyclicfunction(an, bn, cn, ad, bd, cd, at, bt, ct, min_jointlimit, max_jointlimit, jointnumber, jointname);
 
         if (succeeded != 0)
@@ -603,7 +641,7 @@ int SRSKinematicSolver::tangenttype_armangle(   const double &an, const double b
     }
     else if (condition < 0)
     {
-//         std::cout<<"Cond 3"<<std::endl;
+        //std::cout<<"Cond 3"<<std::endl;
         succeeded = feasible_armangle_monotonicfunction(an, bn, cn, ad, bd, cd, min_jointlimit, max_jointlimit, jointnumber, jointname);
 
         if (succeeded != 0)
@@ -982,7 +1020,7 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_cyclicfunction(const doubl
     }*/
 
     LOG_DEBUG("[SRSKinematicSolver]: global_min = %f global_max = %f", global_min*kinematics_library::RTD, global_max*kinematics_library::RTD);
-
+    
     calculated_psi.joint_name = jointname;
     calculated_psi.joint_number = jointnumber;
 
@@ -995,7 +1033,7 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_cyclicfunction(const doubl
     else if( (global_min < min_jtag) && (( min_jtag <= global_max) && (global_max <= max_jtag)) )           //cond-2
     {
         
-//         std::cout<< "cond-2"<<std::endl;
+        // std::cout<< "cond-2"<<std::endl;
         calculated_psi.psi.resize(1);
         //calculated_psi.psi.at(0) = std::make_pair(0.0, 0.0);
 
@@ -1007,13 +1045,13 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_cyclicfunction(const doubl
     }
     else if( ((min_jtag <= global_min) && (global_min <= max_jtag)) && (global_max >= max_jtag) )           //cond-3
     {
-//         std::cout<< "cond-3"<<std::endl;
+        // std::cout<< "cond-3"<<std::endl;
         calculated_psi.psi.resize(1);
 
-        succeeded = calculate_region_armAngle_tangentcylic(an, bn, cn, ad, bd, cd, max_jtag, calculated_psi.psi.at(0) );
+        succeeded = calculate_region_armAngle_tangentcylic(an, bn, cn, ad, bd, cd, max_jtag, calculated_psi.psi.at(0) );        
         if( succeeded != 0)
                 return succeeded;
-
+        
         /*if(!check_for_psi_range(calculated_psi.psi.at(0)))
         {std::cout<< "%%%%%%%%%%%%%%%%%%%%%%%%%"<<std::endl;
                 succeeded = calculate_region_armAngle_tangentcylic(an, bn, cn, ad, bd, cd, min_jtag, calculated_psi.psi.at(0) );
@@ -1027,7 +1065,7 @@ int SRSKinematicSolver::feasible_armangle_tangenttype_cyclicfunction(const doubl
     }
     else if( (global_min < min_jtag) && (global_max > max_jtag ) )                                          //cond-4
     {
-//         std::cout<< "cond-4"<<std::endl;
+        //std::cout<< "cond-4"<<std::endl;
         calculated_psi.psi.resize(1);
         //calculated_psi.psi.at(0) = std::make_pair(0.0, 0.0);
 
@@ -1387,8 +1425,8 @@ void SRSKinematicSolver::save_joint_function(const double &an, const double &bn,
             theta = 0;
 
         fprintf(fp,"%f %f \n", (i*kinematics_library::RTD), (theta*kinematics_library::RTD));
-        fprintf(fp_1,"%f %f \n", (i*kinematics_library::RTD), (min_jtag*kinematics_library::RTD));
-        fprintf(fp_1,"%f %f \n", (i*kinematics_library::RTD), (max_jtag*kinematics_library::RTD));
+        fprintf(fp_1,"%f %f %f\n", (i*kinematics_library::RTD), (min_jtag*kinematics_library::RTD), (max_jtag*kinematics_library::RTD));
+        //fprintf(fp_1,"%f %f \n", (i*kinematics_library::RTD), (max_jtag*kinematics_library::RTD));
     }
 
     fclose(fp);

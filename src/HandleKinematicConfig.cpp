@@ -186,15 +186,10 @@ bool getOptIKConfig(const YAML::Node &yaml_data, kinematics_library::ProblemPara
 
 bool getSRSConfig(const YAML::Node &yaml_data, kinematics_library::SRSKinematicConfig &config)
 {
-    if((!handle_kinematic_config::getValue<double>(yaml_data, "offset_base_shoulder", config.offset_base_shoulder)) ||
-       (!handle_kinematic_config::getValue<double>(yaml_data, "offset_shoulder_elbow", config.offset_shoulder_elbow)) ||
-       (!handle_kinematic_config::getValue<double>(yaml_data, "offset_elbow_wrist", config.offset_elbow_wrist)) ||
-       (!handle_kinematic_config::getValue<double>(yaml_data, "offset_wrist_tool", config.offset_wrist_tool)) ||
+    if((!getDHParamConfig(yaml_data, config.dh_param)) || 
        (!handle_kinematic_config::getValue<bool>(yaml_data, "save_psi", config.save_psi)) ||
        (!handle_kinematic_config::getValue<std::string>(yaml_data, "save_psi_path", config.save_psi_path)))
-       return false;
-    
-    return true;
+       return true;
 }
 
 bool getIK7DoFConfig(const YAML::Node& yaml_data, kinematics_library::IK7DoFConfig &config)
@@ -213,4 +208,20 @@ bool getIK7DoFConfig(const YAML::Node& yaml_data, kinematics_library::IK7DoFConf
     
     return true;
 }
+
+bool getDHParamConfig(const YAML::Node& yaml_data, kinematics_library::DHParamConfig &config)
+{        
+    if ((!handle_kinematic_config::getValue<std::vector<double>>(yaml_data, "link_offsets", config.link_offsets)) ||
+        (!handle_kinematic_config::getValue<std::vector<double>>(yaml_data, "theta_offsets", config.theta_offsets)) ||
+        (!handle_kinematic_config::getValue<std::vector<double>>(yaml_data, "link_twists", config.link_twists)) ||
+        (!handle_kinematic_config::getValue<std::vector<int>>(yaml_data, "joints_mapping", config.joints_mapping)))
+        return false;
+
+    config.joint_names              = yaml_data["joint_names"].as<std::vector<std::string>>();  
+    
+    return true;
+}
+
+
+
 }

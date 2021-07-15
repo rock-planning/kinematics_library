@@ -60,6 +60,15 @@ struct KinematicsConfig
     LinearConfig linear_movement_config;
 };
 
+struct DHParamConfig
+{
+    std::vector<double> link_offsets;
+    std::vector<double> theta_offsets;
+    std::vector<double> link_twists;
+    std::vector<int> joints_mapping;
+    std::vector<std::string> joint_names;
+};
+
 struct KinematicsStatus
 {
     enum StatusCode
