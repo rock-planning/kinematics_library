@@ -53,7 +53,7 @@ class OptSolver : public AbstractKinematics
         * @param solver_status Solution status or error code
         * @return true if a inverse solution was found or else return false
         */
-        bool solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status,
+        bool solveIK(const base::samples::RigidBodyState &target_pose, const base::samples::Joints &joint_status,
                      std::vector<base::commands::Joints> &solution, KinematicsStatus &solver_status);
 
         /**

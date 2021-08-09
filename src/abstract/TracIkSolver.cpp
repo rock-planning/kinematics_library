@@ -85,7 +85,7 @@ bool TracIkSolver::loadKinematicConfig( const KinematicsConfig &kinematics_confi
     return true;
 }
 
-bool TracIkSolver::solveIK (const base::samples::RigidBodyState target_pose, 
+bool TracIkSolver::solveIK (const base::samples::RigidBodyState &target_pose, 
                             const base::samples::Joints &joint_status,
                             std::vector<base::commands::Joints> &solution,
                             KinematicsStatus &solver_status )

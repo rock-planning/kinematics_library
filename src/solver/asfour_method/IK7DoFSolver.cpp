@@ -76,7 +76,7 @@ bool Ik7DoFSolver::solveFK ( const base::samples::Joints& joint_angles, base::sa
     }
 }
 
-bool Ik7DoFSolver::solveIK ( const base::samples::RigidBodyState target_pose, const base::samples::Joints& joint_status,
+bool Ik7DoFSolver::solveIK ( const base::samples::RigidBodyState &target_pose, const base::samples::Joints& joint_status,
                                 std::vector< base::commands::Joints >& solution, KinematicsStatus& solver_status )
 {
     convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);    

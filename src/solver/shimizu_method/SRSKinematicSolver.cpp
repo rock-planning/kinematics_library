@@ -78,7 +78,7 @@ bool SRSKinematicSolver::loadKinematicConfig( const KinematicsConfig &kinematics
 
 }
 
-bool SRSKinematicSolver::solveIK (const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status,
+bool SRSKinematicSolver::solveIK (const base::samples::RigidBodyState &target_pose, const base::samples::Joints &joint_status,
                             std::vector<base::commands::Joints> &solution, KinematicsStatus &solver_status )
 {
     convertPoseBetweenDifferentFrames ( kdl_tree_, target_pose, kinematic_pose_ );

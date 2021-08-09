@@ -75,7 +75,7 @@ bool OptSolver::loadKinematicConfig( const KinematicsConfig &kinematics_config, 
     return true;
 }
 
-bool OptSolver::solveIK (const base::samples::RigidBodyState target_pose, 
+bool OptSolver::solveIK (const base::samples::RigidBodyState &target_pose, 
                             const base::samples::Joints &joint_status,
                             std::vector<base::commands::Joints> &solution,
                             KinematicsStatus &solver_status )

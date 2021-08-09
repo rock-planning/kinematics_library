@@ -138,7 +138,7 @@ bool IkFastSolver::getIKFASTFunctionPtr(const std::string ikfast_lib, Kinematics
     return true;
 }
 
-bool IkFastSolver::solveIK(const base::samples::RigidBodyState target_pose, const base::samples::Joints &joint_status, std::vector<base::commands::Joints> &solution,
+bool IkFastSolver::solveIK(const base::samples::RigidBodyState &target_pose, const base::samples::Joints &joint_status, std::vector<base::commands::Joints> &solution,
                            KinematicsStatus &solver_status)
 {
 
