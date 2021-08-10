@@ -68,6 +68,17 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
             #endif
             break;
         }
+        case HYBRIDIK:
+        {
+            LOG_INFO_S<<"[KinematicsFactory]: HYBRIDIK solver is selected";
+            #if(OPT_LIB_FOUND)                
+                kinematic_solver = std::make_shared<HybridIkSolver> ( joints_limits_, kdl_tree_, kinematics_kdl_chain_ );
+            #else
+                LOG_FATAL_S << "[KinematicsFactory]: Optimization library (NLOPT) is not installed. Please select an another solver !";
+                return nullptr;
+            #endif
+            break;
+        }
         default:
         {
             kinematics_status.statuscode = KinematicsStatus::NO_KINEMATIC_SOLVER_FOUND;

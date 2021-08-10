@@ -36,6 +36,38 @@ struct convert<kinematics_library::TracIKSolverType>
 namespace YAML 
 {
     template<>
+    struct convert<kinematics_library::KinematicSolver> 
+    {
+        static Node encode(const kinematics_library::KinematicSolver& solver) 
+        {
+            Node node;
+            node.push_back(solver);   
+            return node;
+        }
+        
+        static bool decode(const Node& node, kinematics_library::KinematicSolver& solver) 
+        {
+            
+            if(!node.IsScalar())
+                return false;  
+
+            std::unordered_map<std::string, kinematics_library::KinematicSolver> stringToenum;
+            stringToenum.insert({":IKFAST", kinematics_library::IKFAST});
+            stringToenum.insert({":SRS", kinematics_library::SRS});
+            stringToenum.insert({":KDL", kinematics_library::KDL});
+            stringToenum.insert({":TRACIK", kinematics_library::TRACIK});
+            stringToenum.insert({":IK7DOF", kinematics_library::IK7DOF});
+            stringToenum.insert({":OPT", kinematics_library::OPT});
+            stringToenum.insert({":HYBRIDIK", kinematics_library::HYBRIDIK});
+            
+            LOG_INFO_S<<"[getKinematicSolverConfig]: Selected solver Type = "<<stringToenum.at(node.Scalar());
+            solver  = stringToenum.at(node.Scalar());
+            return true;
+        }
+    };
+
+
+    template<>
     struct convert<kinematics_library::ZE_MODE> 
     {
         static Node encode(const kinematics_library::ZE_MODE& ze_mode) 
@@ -66,6 +98,31 @@ namespace YAML
 
 namespace handle_kinematic_config
 {
+
+bool getKinematicsConfig(const YAML::Node &yaml_data, kinematics_library::KinematicsConfig &config)
+{
+
+    if( (!handle_kinematic_config::getValue<std::string>(yaml_data, "config_name", config.config_name)) ||
+        (!handle_kinematic_config::getValue<std::string>(yaml_data, "base_name", config.base_name)) ||
+        (!handle_kinematic_config::getValue<std::string>(yaml_data, "tip_name", config.tip_name)) ||
+        (!handle_kinematic_config::getValue<kinematics_library::KinematicSolver>(yaml_data, "kinematic_solver", config.kinematic_solver)) ||
+        (!handle_kinematic_config::getValue<std::string>(yaml_data, "solver_config_abs_path", config.solver_config_abs_path)) ||
+        (!handle_kinematic_config::getValue<std::string>(yaml_data, "solver_config_filename", config.solver_config_filename)) ||
+        (!handle_kinematic_config::getValue<std::string>(yaml_data, "urdf_file", config.urdf_file)) ||
+        (!handle_kinematic_config::getValue<bool>(yaml_data, "urdlinear_relative_movementf_file", config.linear_relative_movement)) )
+        return false;
+
+    if(config.linear_relative_movement)
+    {
+        if( (!handle_kinematic_config::getValue<double>(yaml_data, "interpolation_velocity", config.linear_movement_config.interpolation_velocity)) ||
+            (!handle_kinematic_config::getValue<double>(yaml_data, "sampling_time", config.linear_movement_config.sampling_time)) ||
+            (!handle_kinematic_config::getValue<double>(yaml_data, "position_tolerance_in_m", config.linear_movement_config.position_tolerance_in_m)) )
+            return false;
+    }
+
+    return true;
+}
+
 
 bool getIkFastConfig(const std::string &dir_path, const YAML::Node &yaml_data, kinematics_library::IkFastConfig &config)
 {
@@ -182,6 +239,26 @@ bool getOptIKConfig(const YAML::Node &yaml_data, kinematics_library::ProblemPara
     
     return true;
 }
+
+bool getCostsWeightConfig(const YAML::Node &yaml_data, const std::string &chain, kinematics_library::CostsWeight &weight)
+{   
+    if( (!handle_kinematic_config::getValue<double>(yaml_data, chain+"ik_cost_weight", weight.ik)) ||        
+        (!handle_kinematic_config::getValue<double>(yaml_data, chain+"position_cost_weight", weight.position)) )
+        return false;   
+
+    return true;   
+}
+
+bool getOptParamConfig(const YAML::Node &yaml_data, kinematics_library::OptParamConfig &config)
+{    
+    if( (!handle_kinematic_config::getValue<double>(yaml_data, "joint_movement_cost_weight", config.joint_movement_weight)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "max_time", config.max_time)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "max_iter", config.max_iter)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "abs_tol", config.abs_tol)) )
+        return false;
+
+    return true;        
+}
 #endif
 
 bool getSRSConfig(const YAML::Node &yaml_data, kinematics_library::SRSKinematicConfig &config)
@@ -190,6 +267,7 @@ bool getSRSConfig(const YAML::Node &yaml_data, kinematics_library::SRSKinematicC
        (!handle_kinematic_config::getValue<bool>(yaml_data, "save_psi", config.save_psi)) ||
        (!handle_kinematic_config::getValue<std::string>(yaml_data, "save_psi_path", config.save_psi_path)))
        return true;
+    return true;  
 }
 
 bool getIK7DoFConfig(const YAML::Node& yaml_data, kinematics_library::IK7DoFConfig &config)

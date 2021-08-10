@@ -15,7 +15,8 @@ enum KinematicSolver
     KDL,
     TRACIK,
     IK7DOF,
-    OPT
+    OPT,
+    HYBRIDIK
 };
 
 struct LinearConfig

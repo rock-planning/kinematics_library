@@ -90,17 +90,17 @@ bool OptSolver::solveIK (const base::samples::RigidBodyState &target_pose,
 
     // assign the target pose to non-linear solver
     problem_formulation_.assignTarget(target_pose, opt_var_);
-
+std::cout<<"OPTIM ik number_of_joints_ "<<number_of_joints_<<std::endl;
     double minf;
     
     nlopt::result result = nlopt::FAILURE;
-    for(uint iter = 0; iter < opt_param_.max_iter; iter++)
-    {
+    //for(uint iter = 0; iter < opt_param_.max_iter; iter++)
+    //{
         result = nlopt_solver_.optimize(opt_var_, minf); 
-        //std::cout<<"minf = "<<minf<<std::endl;
-    }   
+        std::cout<<"minf = "<<minf<<std::endl;
+    //}   
 
-    //std::cout<<"Result "<<result<<" minf="<<minf<<std::endl;
+    std::cout<<"Result "<<result<<" minf="<<minf<<std::endl;
 
     solution.resize(1);
     solution[0].resize(number_of_joints_);

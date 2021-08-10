@@ -13,10 +13,12 @@
     #include "kinematics_library/abstract/TracIkSolver.hpp"  
 #endif
 #if OPT_LIB_FOUND    
-    #include "kinematics_library/solver/optimization_method/OptSolver.hpp"  
+    #include "kinematics_library/solver/optimization_method/OptSolver.hpp" 
+    #include "kinematics_library/solver/optimization_method/HybridIkSolver.hpp"
 #endif
 #include "kinematics_library/solver/shimizu_method/SRSKinematicSolver.hpp"
 #include "kinematics_library/solver/asfour_method/IK7DoFSolver.hpp"
+#include "kinematics_library/solver/optimization_method/OptConfig.hpp"
 
 
 namespace handle_kinematic_config
@@ -57,8 +59,8 @@ bool getValue (const YAML::Node &yaml_data, std::string name, T &value)
         value = data.as<T>();
         return true;
     }
-    else    
-        LOG_INFO("[getValue]: Key %s doesn't exist", name);
+    else
+        LOG_INFO("[getValue]: Key %s doesn't exist", name.c_str());
 
     return false; 
 }
@@ -77,6 +79,8 @@ bool getValue (const YAML::Node &yaml_data, std::string name, const T& df, T &va
 
 }
 
+bool getKinematicsConfig(const YAML::Node &yaml_data, kinematics_library::KinematicsConfig &config);
+
 bool getIkFastConfig(const std::string &dir_path, const YAML::Node &yaml_data, kinematics_library::IkFastConfig &config);
 
 bool getKdlConfig(const YAML::Node &yaml_data, kinematics_library::KdlConfig &config);
@@ -88,6 +92,8 @@ bool getKdlConfig(const YAML::Node &yaml_data, kinematics_library::KdlConfig &co
 #if(OPT_LIB_FOUND)
     bool getOptIkGrooveParam(const YAML::Node &yaml_data, const std::string &cost_name, kinematics_library::GrooveVariable &groove_var);
     bool getOptIKConfig(const YAML::Node &yaml_data, kinematics_library::ProblemParameters &config);
+    bool getOptParamConfig(const YAML::Node &yaml_data, kinematics_library::OptParamConfig &config);
+    bool getCostsWeightConfig(const YAML::Node &yaml_data, const std::string &chain, kinematics_library::CostsWeight &weight);
 #endif
 
 

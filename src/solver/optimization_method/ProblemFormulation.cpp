@@ -164,9 +164,9 @@ void ProblemFormulation::calculateDerivatives(const std::vector<double>& x)
 
 double ProblemFormulation::getOverallCost(const std::vector<double>& x, std::vector<double>& grad)
 {
-    // for(size_t i = 0; i < data_size; i++)
-    //     std::cout<<x[i]<<"  ";
-    // std::cout<<std::endl;
+    //  for(size_t i = 0; i < x.size(); i++)
+    //      std::cout<<x[i]<<"  ";
+    //  std::cout<<std::endl;
 
     assert(fk_jac_.size() == x.size());
 
@@ -186,7 +186,7 @@ double ProblemFormulation::getOverallCost(const std::vector<double>& x, std::vec
     double jerk_cost            = getJerkCost(x, grad);
 
     storePreviousRobotState(x);
-    //std::cout<<position_cost <<"  "<<orientation_cost<<"  "<<velocity_cost<<"  "<<acceleration_cost<<"  "<<jerk_cost<<std::endl;
+    std::cout<<"Cost ="<<position_cost <<"  "<<orientation_cost<<"  "<<velocity_cost<<"  "<<acceleration_cost<<"  "<<jerk_cost<<std::endl;
     return ( pos_cost_weight_*position_cost + ort_cost_weight_*orientation_cost + (vel_cost_weight_*velocity_cost) + 
              (acc_cost_weight_*acceleration_cost) + (jerk_cost_weight_*jerk_cost));
 }
