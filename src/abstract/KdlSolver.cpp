@@ -4,11 +4,12 @@ namespace kinematics_library
 {
 
 KdlSolver::KdlSolver(const std::vector< std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
-                     const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain): 
-                     jts_limits_(jts_limits), kdl_kinematic_chain_(kdl_kinematic_chain)
+                     const KDL::Chain &kdl_kinematic_chain, const KDL::Chain &kdl_chain ):
+                     jts_limits_(jts_limits)
 {
     kdl_tree_  = kdl_tree;
     kdl_chain_ = kdl_chain;
+    kdl_kinematic_chain_ = kdl_kinematic_chain;
 }
 
 KdlSolver::~KdlSolver()
@@ -54,14 +55,14 @@ bool KdlSolver::loadKinematicConfig( const KinematicsConfig &kinematics_config, 
         return false;
     }
 
-    fk_solverPos_     = new KDL::ChainFkSolverPos_recursive(kdl_kinematic_chain_);
-    ik_solverVelPinv_ = new KDL::ChainIkSolverVel_pinv(kdl_kinematic_chain_);
+    fk_solverPos_     = new KDL::ChainFkSolverPos_recursive(kdl_chain_);
+    ik_solverVelPinv_ = new KDL::ChainIkSolverVel_pinv(kdl_chain_);
 
-    assignVariables(kinematics_config, kdl_chain_);
+    assignVariables(kinematics_config, kdl_kinematic_chain_);
 
     getJointLimits(min_jtLimits_, max_jtLimits_);       
 
-    ik_solverPosJL_  = new KDL::ChainIkSolverPos_NR_JL(kdl_kinematic_chain_, min_jtLimits_, max_jtLimits_, *fk_solverPos_, *ik_solverVelPinv_, 
+    ik_solverPosJL_  = new KDL::ChainIkSolverPos_NR_JL(kdl_chain_, min_jtLimits_, max_jtLimits_, *fk_solverPos_, *ik_solverVelPinv_, 
                                                        kdl_config_.max_iteration, kdl_config_.eps);
 
     kdl_jtArray_.data.resize(number_of_joints_);
@@ -76,7 +77,7 @@ bool KdlSolver::solveIK(const base::samples::RigidBodyState &target_pose, const 
 {
     convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);
 
-    getKinematicJoints(kdl_chain_, joint_status, jt_names_, current_jt_status_);
+    getKinematicJoints(kdl_kinematic_chain_, joint_status, jt_names_, current_jt_status_);
 
     convertVectorToKDLArray(current_jt_status_, kdl_jtArray_);
     rbsToKdl(kinematic_pose_, kdl_frame_);
@@ -106,7 +107,7 @@ bool KdlSolver::solveIK(const base::samples::RigidBodyState &target_pose, const 
 
 bool KdlSolver::solveFK(const base::samples::Joints &joint_angles, base::samples::RigidBodyState &fk_pose, KinematicsStatus &solver_status)
 {
-    getKinematicJoints(kdl_chain_, joint_angles, jt_names_, current_jt_status_);
+    getKinematicJoints(kdl_kinematic_chain_, joint_angles, jt_names_, current_jt_status_);
 
     convertVectorToKDLArray(current_jt_status_, kdl_jtArray_);
 
@@ -124,11 +125,11 @@ bool KdlSolver::solveFK(const base::samples::Joints &joint_angles, base::samples
 
 void KdlSolver::getChainSegementPose(const base::samples::Joints &joint_angles,  std::vector<KDL::Frame> &segement_pose)
 {
-    getKinematicJoints(kdl_chain_, joint_angles, jt_names_, current_jt_status_);
+    getKinematicJoints(kdl_kinematic_chain_, joint_angles, jt_names_, current_jt_status_);
 
     convertVectorToKDLArray(current_jt_status_, kdl_jtArray_);
     
-    segement_pose.resize(kdl_chain_.getNrOfSegments());
+    segement_pose.resize(kdl_kinematic_chain_.getNrOfSegments());
     
     fk_solverPos_->JntToCart(kdl_jtArray_, segement_pose);
     

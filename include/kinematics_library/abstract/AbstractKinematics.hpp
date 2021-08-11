@@ -95,7 +95,7 @@ class AbstractKinematics
         std::vector<std::string> jt_names_;
         std::size_t number_of_joints_;
         KDL::Tree kdl_tree_;
-        KDL::Chain kdl_chain_;
+        KDL::Chain kdl_chain_; // this chain might have fixed joints.
 
         void assignVariables(const KinematicsConfig &kinematics_config, const KDL::Chain &kdl_chain);
 

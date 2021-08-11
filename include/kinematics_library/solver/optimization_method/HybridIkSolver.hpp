@@ -49,7 +49,7 @@ class HybridIkSolver : public kinematics_library::AbstractKinematics
         * @brief  constructor
         */
         HybridIkSolver( const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree, 
-                        const KDL::Chain &kdl_chain);
+                        const KDL::Chain &kdl_kinematic_chain, const KDL::Chain &kdl_chain);
         /**
         * @brief  destructor
         */
@@ -101,6 +101,7 @@ class HybridIkSolver : public kinematics_library::AbstractKinematics
     private:
 
         KDL::ChainFkSolverPos_recursive *fk_kdlsolver_pos_;
+        KDL::Chain kdl_kinematic_chain_;
         KDL::JntArray kdl_jt_array_;
         KDL::Frame kdl_frame_;
 

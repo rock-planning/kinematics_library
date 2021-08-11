@@ -109,7 +109,7 @@ bool getKinematicsConfig(const YAML::Node &yaml_data, kinematics_library::Kinema
         (!handle_kinematic_config::getValue<std::string>(yaml_data, "solver_config_abs_path", config.solver_config_abs_path)) ||
         (!handle_kinematic_config::getValue<std::string>(yaml_data, "solver_config_filename", config.solver_config_filename)) ||
         (!handle_kinematic_config::getValue<std::string>(yaml_data, "urdf_file", config.urdf_file)) ||
-        (!handle_kinematic_config::getValue<bool>(yaml_data, "urdlinear_relative_movementf_file", config.linear_relative_movement)) )
+        (!handle_kinematic_config::getValue<bool>(yaml_data, "linear_relative_movement", config.linear_relative_movement)) )
         return false;
 
     if(config.linear_relative_movement)

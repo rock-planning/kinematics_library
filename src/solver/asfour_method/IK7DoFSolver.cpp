@@ -254,8 +254,8 @@ int Ik7DoFSolver::ikArm()
     double d = normVec(w_t);
 
     if(lu + lf - d < -kinematics_library::EPSILON){
-        printf("[Arm Inverse Kinematics] The desired position is out of reach!\n");
-        std::cout<<"value = "<<ls +lu + lf<<"  "<<d<<std::endl;
+        //printf("[Arm Inverse Kinematics] The desired position is out of reach!\n");
+        //std::cout<<"value = "<<ls +lu + lf<<"  "<<d<<std::endl;
         return 0;
     }
      

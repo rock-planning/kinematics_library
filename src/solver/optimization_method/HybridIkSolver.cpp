@@ -33,7 +33,7 @@ void redundantJointsLimitsConstraint(unsigned m, double *result, unsigned n, con
 }
 
 HybridIkSolver::HybridIkSolver (const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree, 
-                                const KDL::Chain &kdl_chain)
+                                const KDL::Chain &kdl_kinematic_chain, const KDL::Chain &kdl_chain )
 {
     ik_cost_= 0.0;
     joints_mov_cost_ = 0.0;
@@ -41,7 +41,7 @@ HybridIkSolver::HybridIkSolver (const std::vector<std::pair<double, double> > &j
 
     kdl_tree_  = kdl_tree;
     kdl_chain_ = kdl_chain;
-
+    kdl_kinematic_chain_ = kdl_kinematic_chain;
 }
 
 HybridIkSolver::~HybridIkSolver()
@@ -111,6 +111,8 @@ bool HybridIkSolver::loadKinematicConfig( const kinematics_library::KinematicsCo
         kinematics_status.statuscode = kinematics_library::KinematicsStatus::CONFIG_READ_ERROR;
         return false;
     }
+    // Need to find a nice way to handle this abs path
+    passive_chain_config.solver_config_abs_path = kinematics_config.solver_config_abs_path;
 
     passive_chain_kin_solver_ = nullptr;
     passive_chain_kin_solver_ = kinematics_factory.getKinematicsSolver (passive_chain_config, kinematics_status );
@@ -129,6 +131,7 @@ bool HybridIkSolver::loadKinematicConfig( const kinematics_library::KinematicsCo
         kinematics_status.statuscode = kinematics_library::KinematicsStatus::CONFIG_READ_ERROR;
         return false;
     }
+    active_chain_config.solver_config_abs_path = kinematics_config.solver_config_abs_path;
 
     if ( !kinematics_factory.initialise ( active_chain_config, kinematics_status ) )
         return false;    
@@ -151,7 +154,7 @@ bool HybridIkSolver::initialiseSolver ( const KinematicsConfig &kinematics_confi
 {
     // fk solver
     fk_kdlsolver_pos_ = new KDL::ChainFkSolverPos_recursive ( kdl_chain_ );
-    assignVariables ( kinematics_config, kdl_chain_ );
+    assignVariables ( kinematics_config, kdl_kinematic_chain_ );
     kdl_jt_array_.resize ( number_of_joints_ );
 
     // initialise the problem 
@@ -193,8 +196,6 @@ bool HybridIkSolver::initialiseSolver ( const KinematicsConfig &kinematics_confi
 
     return true;
 }
-
-
 
 bool HybridIkSolver::getKinematicChain(  const KDL::Tree &kdl_tree, const std::string &base_name, const std::string &tip_name, 
                                             kinematics_library::KinematicsStatus &kinematics_status, KDL::Chain &kdl_chain)
@@ -639,13 +640,14 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
 
 bool HybridIkSolver::solveFK (const base::samples::Joints &joint_angles, base::samples::RigidBodyState &fk_pose, kinematics_library::KinematicsStatus &solver_status )
 {
-    kinematics_library::getKinematicJoints ( kdl_chain_, joint_angles, jt_names_, current_jt_status_ );
+    kinematics_library::getKinematicJoints ( kdl_kinematic_chain_, joint_angles, jt_names_, current_jt_status_ );
 
     kinematics_library::convertVectorToKDLArray ( current_jt_status_, kdl_jt_array_ );
-
+    
     if ( fk_kdlsolver_pos_->JntToCart ( kdl_jt_array_, kdl_frame_ ) >= 0 ) 
     {
         kinematics_library::kdlToRbs ( kdl_frame_, kinematic_pose_ );
+        //std::cout<<kinematic_pose_.sourceFrame.c_str()<<"  "<<kinematic_pose_.targetFrame.c_str()<<"  "<<kinematic_pose_.position<<std::endl;
         solver_status.statuscode = kinematics_library::KinematicsStatus::FK_FOUND;
         kinematics_library::convertPoseBetweenDifferentFrames ( kdl_tree_, kinematic_pose_, fk_pose );
         return true;

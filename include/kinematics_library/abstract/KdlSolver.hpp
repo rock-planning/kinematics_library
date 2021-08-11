@@ -40,7 +40,7 @@ class KdlSolver : public AbstractKinematics
         * @brief  constructor
         */
         KdlSolver( const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree,
-                   const KDL::Chain &kdl_chain, const KDL::Chain &kdl_kinematic_chain);
+                   const KDL::Chain &kdl_kinematic_chain, const KDL::Chain &kdl_chain);
 
         /**
         * @brief  destructor
