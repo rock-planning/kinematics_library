@@ -81,7 +81,11 @@ bool SRSKinematicSolver::loadKinematicConfig( const KinematicsConfig &kinematics
 bool SRSKinematicSolver::solveIK (const base::samples::RigidBodyState &target_pose, const base::samples::Joints &joint_status,
                             std::vector<base::commands::Joints> &solution, KinematicsStatus &solver_status )
 {
-    convertPoseBetweenDifferentFrames ( kdl_tree_, target_pose, kinematic_pose_ );
+    if(!convertPoseBetweenDifferentFrames(kdl_tree_, joint_status, target_pose, kinematic_pose_))
+    {
+        solver_status.statuscode = KinematicsStatus::KDL_CHAIN_FAILED;
+        return false;
+    }
     
     getKinematicJoints ( kdl_chain_, joint_status, jt_names_, current_jt_status_ );
     
@@ -91,7 +95,7 @@ bool SRSKinematicSolver::solveIK (const base::samples::RigidBodyState &target_po
     solution[0].names = jt_names_;
     solution[0].elements.resize(jt_names_.size());
     
-    int res = invkin(target_pose.position, target_pose.orientation, solution[0]);
+    int res = invkin(kinematic_pose_.position, kinematic_pose_.orientation, solution[0]);
     
 //     base::Position pos_test;    
 //     Eigen::Matrix3d rot_mat;

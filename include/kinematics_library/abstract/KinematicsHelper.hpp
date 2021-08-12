@@ -11,6 +11,7 @@
 #include <kdl/frames.hpp>
 #include <kdl/jntarray.hpp>
 #include <kdl/tree.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
 #include <iostream>
 #include <base-logging/Logging.hpp>
 
@@ -47,7 +48,12 @@ namespace kinematics_library
     void rbsToKdl(const base::samples::RigidBodyState &rbs, KDL::Frame &kdl);    
     void kdlToRbs(const KDL::Frame &kdl, base::samples::RigidBodyState &rbs);
     void transformFrame( const KDL::Tree &kdl_tree, const std::string &base_link, const std::string &tip_link, KDL::Frame &pose);    
-    void convertPoseBetweenDifferentFrames(const KDL::Tree &kdl_tree, const base::samples::RigidBodyState &source_pose, base::samples::RigidBodyState &target_pose);
+    void convertPoseBetweenDifferentFixedFrames( const KDL::Tree &kdl_tree, const base::samples::RigidBodyState &source_pose, 
+                                            base::samples::RigidBodyState &target_pose);
+    bool convertPoseBetweenDifferentFrames( const KDL::Tree &kdl_tree, const base::samples::Joints &joint_status, 
+                                        const base::samples::RigidBodyState &source_pose, base::samples::RigidBodyState &target_pose);
+    bool frameTransform(const KDL::Tree &kdl_tree, const base::samples::Joints &joint_status, 
+                        const std::string &base_frame, const std::string &tip_frame, KDL::Frame &fk_pose);
     void convertVectorToKDLArray(const std::vector<double> &joint_angles, KDL::JntArray &kdl_jt_array);
     void convertKDLArrayToVector(const KDL::JntArray &kdl_jt_array, std::vector<double> &joint_angles);
     void convertKDLArrayToBaseJoints(const KDL::JntArray &kdl_jt_array, base::commands::Joints &joint_angles);

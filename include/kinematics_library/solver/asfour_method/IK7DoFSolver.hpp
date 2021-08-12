@@ -44,9 +44,7 @@ struct CompareSolutions
     bool operator()(SolutionWithScore const &a, SolutionWithScore const &b) {
         return a.score < b.score;
     }
-    
-};  
-
+};
 
 enum ZE_MODE
 {

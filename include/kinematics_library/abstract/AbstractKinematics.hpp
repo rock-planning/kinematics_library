@@ -69,26 +69,20 @@ class AbstractKinematics
                               double &remaining_distance, KinematicsStatus &solver_status);
 
         base::samples::RigidBodyState getRelativePose( const base::samples::RigidBodyState &current_pose, 
-                                                       const base::samples::RigidBodyState &relative_pose);
-
-        base::samples::RigidBodyState transformPose(const std::string &frame_name, const base::samples::RigidBodyState &current_pose);
+                                                       const base::samples::RigidBodyState &relative_pose);        
 
         base::Pose transformPose(   const base::Vector3d &frame_1_position, const base::Quaterniond &frame_1_orientation,
                                     const base::Vector3d &frame_2_position, const base::Quaterniond &frame_2_orientation);
-        
+
         base::samples::RigidBodyState transformPose(const std::string &source_frame, const std::string &target_frame, 
-                                                    const base::samples::RigidBodyState &source_pose);
+                                                    base::samples::Joints &joints_status, const base::samples::RigidBodyState &source_pose);
 
         std::string getWorldRootName(){return kdl_tree_.getRootSegment()->first;}
 
         std::string getKinematicChainBaseName(){return kinematics_config_.base_name;}
 
         std::string getKinematicChainTipName(){return kinematics_config_.tip_name;}
-        
-        Eigen::Affine3d transformPose(const std::string &source_frame, const std::string &target_frame);
 
-        Eigen::Matrix4d transformPoseMat(const std::string &source_frame, const std::string &target_frame);
-        
     protected:
         base::samples::RigidBodyState kinematic_pose_;
         std::vector<double>current_jt_status_, ik_solution_;

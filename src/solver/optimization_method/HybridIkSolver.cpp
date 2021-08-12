@@ -17,9 +17,7 @@ double redundantObjectives(const std::vector<double>& x, std::vector<double>& gr
     c->joints_mov_cost_    = c->jointMovementCost(x, grad);
     // calculate the overall costs
     c->overall_costs_       =  c->ik_cost_ + c->joints_mov_cost_;
-    
-    //std::cout<<"Overall Cost = "<<c->overall_costs_<<". ik cost = "<<c->ik_cost_<<" : joints_mov_cost = "<<c->joints_mov_cost_<<"\n"<<std::endl;   
-    
+    //std::cout<<"Overall Cost = "<<c->overall_costs_<<". ik cost = "<<c->ik_cost_<<" : joints_mov_cost = "<<c->joints_mov_cost_<<"\n"<<std::endl;
     return c->overall_costs_;
 }
 
@@ -218,7 +216,6 @@ bool HybridIkSolver::getKinematicChain(  const KDL::Tree &kdl_tree, const std::s
 void HybridIkSolver:: getJointsLimitsConstraintCost( const unsigned &constraints_size, const unsigned &x_size,
                                                         const double* x, double *result, double* grad)
 {
-
     //jt - upperlimit lessthanequal 0
     //lowerlimit - jt lessthanequal 0
     for(size_t i =0; i < x_size; i++ )
@@ -261,7 +258,6 @@ void HybridIkSolver::calculateJointGradient(const std::vector<double> &opt_jt_an
             jt_ang_grad_.at(i).at(ii) = opt_jt_ang[ii];
         }
         jt_ang_grad_.at(i).at(i)  = opt_jt_ang[i] + jump_;
-            
     }
 }
 
@@ -270,7 +266,6 @@ double HybridIkSolver::jointMovementCost(const std::vector<double> &opt_jt_ang, 
     double cost = 0.0;
     size_t data_size = opt_jt_ang.size();
     std::vector<double> cost_vec(data_size);
-    
 
     for(size_t i = 0; i < opt_jt_ang.size(); i++)
     {
@@ -280,7 +275,6 @@ double HybridIkSolver::jointMovementCost(const std::vector<double> &opt_jt_ang, 
 
     if(!grad.empty())
     {
-        
         std::vector<double> x_rollout(data_size);
 
         for (std::size_t i=0; i<data_size; i++) 
@@ -311,10 +305,9 @@ void HybridIkSolver::calculateNodeChainFK(const std::vector<double> &opt_jt_ang,
     {
         LOG_FATAL("[calculateFK]: Cannot able to get the forward kinematics");
         return;
-    }
+    }    
     // calculate the redundant chain tip pose
     passive_pose = node_pose.Inverse() * passive_full_chain_pose_;
-    
 }
 
 void HybridIkSolver::calculateNodeChainFKGrad(  const std::vector<double> &opt_jt_ang, KDLFrameVec &node_pose_grad, 
@@ -343,7 +336,6 @@ double HybridIkSolver::positionCost( const KDL::Frame& target_pose, const KDL::F
     kinematics_library::rbsToKdl(fk_pose, fk_pose_kdl);
     
     double position_cost = (target_pose.p - (node_pose*fk_pose_kdl).p).Norm();
-
     return position_cost;
 }
 
@@ -358,7 +350,7 @@ double HybridIkSolver::calculateIKCost(const KDL::Frame &chain_pose, const KDL::
     // calculate the IK
     kinematic_pose.sourceFrame = passive_chain_kin_solver_->getKinematicChainBaseName();
     kinematic_pose.targetFrame = passive_chain_kin_solver_->getKinematicChainTipName();
-    //std::cout<<"Ik for "<<kinematic_pose.sourceFrame.c_str()<<"  "<<kinematic_pose.targetFrame.c_str()<<"  "<<kinematic_pose.position<<std::endl;
+    
     if(!passive_chain_kin_solver_->solveIK(kinematic_pose, passive_chain_joint_status_, ik_solution, solver_status)) 
     {
         double position_cost = positionCost( passive_full_chain_pose_, node_pose, passive_chain_kin_solver_, 
@@ -524,6 +516,11 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
                             std::vector<base::commands::Joints> &solution,
                             kinematics_library::KinematicsStatus &solver_status )
 {
+    if(!convertPoseBetweenDifferentFrames(kdl_tree_, joint_status, target_pose, kinematic_pose_))
+    {
+        solver_status.statuscode = KinematicsStatus::KDL_CHAIN_FAILED;
+        return false;
+    }
 
     // reset the costs to zero
     ik_cost_ = 0.0; joints_mov_cost_ = 0.0; overall_costs_ = 0.0;
@@ -538,33 +535,35 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         //std::cout<<"Joint name: "<<active_chain_.getSegment(chain_jt).getJoint().getName().c_str()<<" = "<<active_jt_array.data(chain_jt)<<std::endl;            
     }
 
-    // get the node chain pose        
+    // get the node chain pose
     if(node_chain_fk_solver_->JntToCart(active_jt_array, node_chain_fk_pose_) < 0)
     {        
         LOG_FATAL("[calculateFK]: Cannot able to get the forward kinematics");
-        std::cout<<"Value = "<<node_chain_fk_solver_->JntToCart(active_jt_array, node_chain_fk_pose_)<<std::endl;
         return false;
     }
 
     passive_jt_array.resize(passive_chain_.getNrOfJoints());
     for(size_t j = 0; j < passive_chain_.getNrOfJoints(); j++)
     {
-        std::cout<< passive_chain_.getSegment(j).getJoint().getName().c_str()<<std::endl;
         passive_jt_array.data(j) = joint_status[passive_chain_.getSegment(j).getJoint().getName()].position;
         passive_chain_joint_status_.elements.at(j).position = passive_jt_array.data(j);
-        passive_chain_ik_solutions_[0].elements.at(j).position = passive_jt_array.data(j);  
-        std::cout<< passive_chain_.getSegment(j).getJoint().getName().c_str()<<"  "<<passive_jt_array.data(j)<<std::endl;
+        passive_chain_ik_solutions_[0].elements.at(j).position = passive_jt_array.data(j);
     }
 
-    base::samples::RigidBodyState kinematic_pose;
+    base::samples::RigidBodyState desired_pose_4_passive;
     
-    kinematic_pose.sourceFrame = passive_chain_kin_solver_->getKinematicChainBaseName();
-    kinematic_pose.targetFrame = passive_chain_kin_solver_->getKinematicChainTipName();
+    desired_pose_4_passive.sourceFrame = passive_chain_kin_solver_->getKinematicChainBaseName();
+    desired_pose_4_passive.targetFrame = passive_chain_kin_solver_->getKinematicChainTipName();
 
-    convertPoseBetweenDifferentFramesFK(kdl_tree_, joint_status, target_pose, kinematic_pose);
+    //convertPoseBetweenDifferentFramesFK(kdl_tree_, joint_status, kinematic_pose_, desired_pose);
+    if(!convertPoseBetweenDifferentFrames(kdl_tree_, joint_status, kinematic_pose_, desired_pose_4_passive))
+    {
+        solver_status.statuscode = KinematicsStatus::KDL_CHAIN_FAILED;
+        return false;
+    }
     
-    kinematics_library::rbsToKdl(kinematic_pose, passive_chain_target_pose_);
-    //std::cout<<" Active hcain "<<kinematic_pose.sourceFrame.c_str()<<"  "<<kinematic_pose.targetFrame.c_str()<<"  "<<kinematic_pose.position<<std::endl;
+    kinematics_library::rbsToKdl(desired_pose_4_passive, passive_chain_target_pose_);
+    //std::cout<<" Active hcain "<<desired_pose.sourceFrame.c_str()<<"  "<<desired_pose.targetFrame.c_str()<<"  "<<desired_pose.position<<std::endl;
     //std::cout<<" target pose "<<target_pose.sourceFrame.c_str()<<"  "<<target_pose.targetFrame.c_str()<<"  "<<target_pose.position<<std::endl;
 
     // Get the target pose of redundant chain
@@ -605,7 +604,8 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
     {
         base::JointState joint_state = base::JointState::Position(opt_var_[i]);
         solution[0].elements.push_back(joint_state);
-        solution[0].names.push_back(jt_names_.at(i));        
+        solution[0].names.push_back(jt_names_.at(i));
+        std::cout<<jt_names_.at(i).c_str()<<"  "<<opt_var_[i]<<std::endl;
     }
     
     // assign the redundant chain
@@ -615,7 +615,7 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         base::JointState joint_state = base::JointState::Position(passive_solution.elements.at(j).position);
         solution[0].elements.push_back(joint_state);
         solution[0].names.push_back(passive_solution.names.at(j));
-        //std::cout<<passive_solution.names.at(j).c_str()<<"  "<<joint_state.position*57.2958<<std::endl;
+        std::cout<<passive_solution.names.at(j).c_str()<<"  "<<joint_state.position*57.2958<<std::endl;
     }
 
     if (( result == nlopt::SUCCESS ) || ( result == nlopt::STOPVAL_REACHED ) || ( result == nlopt::XTOL_REACHED ))
@@ -638,7 +638,8 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
     }
 }
 
-bool HybridIkSolver::solveFK (const base::samples::Joints &joint_angles, base::samples::RigidBodyState &fk_pose, kinematics_library::KinematicsStatus &solver_status )
+bool HybridIkSolver::solveFK (const base::samples::Joints &joint_angles, base::samples::RigidBodyState &fk_pose, 
+                              kinematics_library::KinematicsStatus &solver_status )
 {
     kinematics_library::getKinematicJoints ( kdl_kinematic_chain_, joint_angles, jt_names_, current_jt_status_ );
 
@@ -646,10 +647,11 @@ bool HybridIkSolver::solveFK (const base::samples::Joints &joint_angles, base::s
     
     if ( fk_kdlsolver_pos_->JntToCart ( kdl_jt_array_, kdl_frame_ ) >= 0 ) 
     {
-        kinematics_library::kdlToRbs ( kdl_frame_, kinematic_pose_ );
+        kinematics_library::kdlToRbs ( kdl_frame_, fk_pose );
         //std::cout<<kinematic_pose_.sourceFrame.c_str()<<"  "<<kinematic_pose_.targetFrame.c_str()<<"  "<<kinematic_pose_.position<<std::endl;
         solver_status.statuscode = kinematics_library::KinematicsStatus::FK_FOUND;
-        kinematics_library::convertPoseBetweenDifferentFrames ( kdl_tree_, kinematic_pose_, fk_pose );
+        fk_pose.sourceFrame = kinematic_pose_.sourceFrame;
+        fk_pose.targetFrame = kinematic_pose_.targetFrame;        
         return true;
     }
     solver_status.statuscode = kinematics_library::KinematicsStatus::NO_FK_SOLUTION;

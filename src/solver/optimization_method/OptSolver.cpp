@@ -81,7 +81,12 @@ bool OptSolver::solveIK (const base::samples::RigidBodyState &target_pose,
                             KinematicsStatus &solver_status )
 {
     // get the proper frame for the IK solver
-    convertPoseBetweenDifferentFrames ( kdl_tree_, target_pose, kinematic_pose_ );
+    if(!convertPoseBetweenDifferentFrames(kdl_tree_, joint_status, target_pose, kinematic_pose_))
+    {
+        solver_status.statuscode = KinematicsStatus::KDL_CHAIN_FAILED;
+        return false;
+    }
+
     // get the joint status only for the kinematic chain that this solver intended to solve.
     getKinematicJoints ( kdl_chain_, joint_status, jt_names_, current_jt_status_ );
     // assign the current joint angles as the optimization variables
@@ -89,18 +94,18 @@ bool OptSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         opt_var_[i] = current_jt_status_[i];
 
     // assign the target pose to non-linear solver
-    problem_formulation_.assignTarget(target_pose, opt_var_);
-std::cout<<"OPTIM ik number_of_joints_ "<<number_of_joints_<<std::endl;
+    problem_formulation_.assignTarget(kinematic_pose_, opt_var_);
+    //std::cout<<"OPTIM ik number_of_joints_ "<<number_of_joints_<<std::endl;
     double minf;
     
     nlopt::result result = nlopt::FAILURE;
     //for(uint iter = 0; iter < opt_param_.max_iter; iter++)
     //{
         result = nlopt_solver_.optimize(opt_var_, minf); 
-        std::cout<<"minf = "<<minf<<std::endl;
+        //std::cout<<"minf = "<<minf<<std::endl;
     //}   
 
-    std::cout<<"Result "<<result<<" minf="<<minf<<std::endl;
+    //std::cout<<"Result "<<result<<" minf="<<minf<<std::endl;
 
     solution.resize(1);
     solution[0].resize(number_of_joints_);
@@ -141,9 +146,10 @@ bool OptSolver::solveFK (const base::samples::Joints &joint_angles, base::sample
 
     if ( fk_kdlsolver_pos_->JntToCart ( kdl_jt_array_, kdl_frame_ ) >= 0 ) 
     {
-        kdlToRbs ( kdl_frame_, kinematic_pose_ );
+        kdlToRbs ( kdl_frame_, fk_pose );
         solver_status.statuscode = KinematicsStatus::FK_FOUND;
-        convertPoseBetweenDifferentFrames ( kdl_tree_, kinematic_pose_, fk_pose );
+        fk_pose.sourceFrame = kinematic_pose_.sourceFrame;
+        fk_pose.targetFrame = kinematic_pose_.targetFrame;
         return true;
     }
 

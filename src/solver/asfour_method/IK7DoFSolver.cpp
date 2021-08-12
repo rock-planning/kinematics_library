@@ -63,10 +63,8 @@ bool Ik7DoFSolver::solveFK ( const base::samples::Joints& joint_angles, base::sa
     int success = fkArm();
     if(success ==1)
     {
-        kinematic_pose_ = getRBSPose(arm_->T_Base_2_TCP_fk_out);
-        
-        convertPoseBetweenDifferentFrames(kdl_tree_, kinematic_pose_, fk_pose);
-        solver_status.statuscode = KinematicsStatus::FK_FOUND;   
+        fk_pose = getRBSPose(arm_->T_Base_2_TCP_fk_out);
+        solver_status.statuscode = KinematicsStatus::FK_FOUND;
         return true;
     }
     else 
@@ -79,8 +77,13 @@ bool Ik7DoFSolver::solveFK ( const base::samples::Joints& joint_angles, base::sa
 bool Ik7DoFSolver::solveIK ( const base::samples::RigidBodyState &target_pose, const base::samples::Joints& joint_status,
                                 std::vector< base::commands::Joints >& solution, KinematicsStatus& solver_status )
 {
-    convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);    
-    getKinematicJoints(kdl_chain_, joint_status, jt_names_, current_jt_status_);    
+    if(!convertPoseBetweenDifferentFrames(kdl_tree_, joint_status, target_pose, kinematic_pose_))
+    {
+        solver_status.statuscode = KinematicsStatus::KDL_CHAIN_FAILED;
+        return false;
+    }
+
+    getKinematicJoints(kdl_chain_, joint_status, jt_names_, current_jt_status_);
 
     //for(auto name: jt_names_)
     //    std::cout<<name<<std::endl;

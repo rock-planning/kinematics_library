@@ -24,72 +24,16 @@ void AbstractKinematics::assignVariables(const KinematicsConfig &kinematics_conf
     number_of_joints_ = kdl_chain.getNrOfJoints();
 }
 
-
-base::samples::RigidBodyState AbstractKinematics::transformPose(const std::string &frame_name, const base::samples::RigidBodyState &source_pose)
-{
-    base::samples::RigidBodyState target_pose;
-    target_pose.sourceFrame = frame_name;
-    target_pose.targetFrame = source_pose.targetFrame;
-    
-    convertPoseBetweenDifferentFrames(kdl_tree_, source_pose, target_pose);
-    return target_pose;
-}
-
-base::samples::RigidBodyState AbstractKinematics::transformPose(const std::string &source_frame, const std::string &target_frame, const base::samples::RigidBodyState &source_pose)
+base::samples::RigidBodyState AbstractKinematics::transformPose(const std::string &source_frame, const std::string &target_frame, 
+                                                                base::samples::Joints &joints_status, const base::samples::RigidBodyState &source_pose)
 {
     base::samples::RigidBodyState target_pose;
     target_pose.sourceFrame = source_frame;
     target_pose.targetFrame = target_frame;
     
-    convertPoseBetweenDifferentFrames(kdl_tree_, source_pose, target_pose);
+    convertPoseBetweenDifferentFrames(kdl_tree_, joints_status, source_pose, target_pose);
     return target_pose;
 }
-
-Eigen::Affine3d AbstractKinematics::transformPose(const std::string &source_frame, const std::string &target_frame)
-{
-    KDL::Frame kdl_pose;
-    transformFrame( kdl_tree_, source_frame, target_frame, kdl_pose);
-
-    Eigen::Affine3d res;
-    res.setIdentity();
-    // Position
-    for (std::size_t i = 0; i < 3; ++i)
-        res(i, 3) = kdl_pose.p[i];
-
-    // Orientation
-    for (std::size_t j = 0; j < 9; ++j)
-        res(j/3, j%3) = kdl_pose.M.data[j];
-
-    return res;
-}
-
-Eigen::Matrix4d AbstractKinematics::transformPoseMat(const std::string &source_frame, const std::string &target_frame)
-{
-    KDL::Frame kdl_pose;
-    transformFrame( kdl_tree_, source_frame, target_frame, kdl_pose);
-
-    Eigen::Matrix4d res;
-    res = Eigen::Matrix4d::Zero();
-    res.topLeftCorner<3,3>()  <<
-		kdl_pose.M(0, 0),  kdl_pose.M(0, 1), kdl_pose.M(0, 2),
-		kdl_pose.M(1, 0),  kdl_pose.M(1, 1), kdl_pose.M(1, 2),
-		kdl_pose.M(2, 0),  kdl_pose.M(2, 1), kdl_pose.M(2, 2);
-    res.topRightCorner<3,1>() <<kdl_pose.p[0], kdl_pose.p[1], kdl_pose.p[2];
-    res(3,3) = 1.0;
-
-
-    // res.setIdentity();
-    // // Position
-    // for (std::size_t i = 0; i < 3; ++i)
-    //     res(i, 3) = kdl_pose.p[i];
-
-    // // Orientation
-    // for (std::size_t j = 0; j < 9; ++j)
-    //     res(j/3, j%3) = kdl_pose.M.data[j];
-
-    return res;
-}
-
 
 bool AbstractKinematics::solveIKRelatively(const base::samples::RigidBodyState &current_pose, const base::samples::Joints &joint_angles, 
                                            const base::samples::RigidBodyState &relative_pose,
@@ -230,5 +174,4 @@ const Eigen::Vector3d AbstractKinematics::interpolate( const Eigen::Vector3d& cu
     //retrun the calculation of the new interpolated target position
     return ((linear_start_position_ * ( 1 - linear_eta_)) + (target_position * linear_eta_ ));
 }
-
 }

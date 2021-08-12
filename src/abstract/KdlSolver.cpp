@@ -75,7 +75,11 @@ bool KdlSolver::loadKinematicConfig( const KinematicsConfig &kinematics_config, 
 bool KdlSolver::solveIK(const base::samples::RigidBodyState &target_pose, const base::samples::Joints &joint_status, std::vector<base::commands::Joints> &solution,
                         KinematicsStatus &solver_status)
 {
-    convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);
+    if(!convertPoseBetweenDifferentFrames(kdl_tree_, joint_status, target_pose, kinematic_pose_))
+    {
+        solver_status.statuscode = KinematicsStatus::KDL_CHAIN_FAILED;
+        return false;
+    }
 
     getKinematicJoints(kdl_kinematic_chain_, joint_status, jt_names_, current_jt_status_);
 
@@ -113,9 +117,10 @@ bool KdlSolver::solveFK(const base::samples::Joints &joint_angles, base::samples
 
     if(fk_solverPos_->JntToCart(kdl_jtArray_, kdl_frame_) >= 0)
     {
-        kdlToRbs(kdl_frame_, kinematic_pose_);
+        kdlToRbs(kdl_frame_, fk_pose);
         solver_status.statuscode = KinematicsStatus::FK_FOUND;
-        convertPoseBetweenDifferentFrames(kdl_tree_, kinematic_pose_, fk_pose);
+        fk_pose.sourceFrame = kinematic_pose_.sourceFrame;
+        fk_pose.targetFrame = kinematic_pose_.targetFrame;
         return true;
     }
 

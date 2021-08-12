@@ -141,8 +141,12 @@ bool IkFastSolver::getIKFASTFunctionPtr(const std::string ikfast_lib, Kinematics
 bool IkFastSolver::solveIK(const base::samples::RigidBodyState &target_pose, const base::samples::Joints &joint_status, std::vector<base::commands::Joints> &solution,
                            KinematicsStatus &solver_status)
 {
-
-    convertPoseBetweenDifferentFrames(kdl_tree_, target_pose, kinematic_pose_);
+    // convert the input pose to kinematics solver's desired frame
+    if(!convertPoseBetweenDifferentFrames(kdl_tree_, joint_status, target_pose, kinematic_pose_))
+    {
+        solver_status.statuscode = KinematicsStatus::KDL_CHAIN_FAILED;
+        return false;
+    }
 
     getKinematicJoints(kdl_chain_, joint_status, jt_names_, current_jt_status_);
 
@@ -152,8 +156,8 @@ bool IkFastSolver::solveIK(const base::samples::RigidBodyState &target_pose, con
     eetrans[1] = kinematic_pose_.position(1);
     eetrans[2] = kinematic_pose_.position(2);
 
-    quaternionToRotationMatrixArray(kinematic_pose_.orientation, eerot); 
-    
+    quaternionToRotationMatrixArray(kinematic_pose_.orientation, eerot);
+
     //ik_solution needs to be clear orelse the container holds the old value
     ik_solutions_.Clear();
     // copy the current status as free joint param    
@@ -210,9 +214,9 @@ bool IkFastSolver::solveFK(const base::samples::Joints &joint_angles, base::samp
 
     computeFkFn(angles,eetrans,eerot);
 
-    kinematic_pose_.position(0) = eetrans[0];
-    kinematic_pose_.position(1) = eetrans[1];
-    kinematic_pose_.position(2) = eetrans[2];
+    fk_pose.position(0) = eetrans[0];
+    fk_pose.position(1) = eetrans[1];
+    fk_pose.position(2) = eetrans[2];
 
     // The below rotation conversion is based on ZYX. The user need to make sure that he useit properly.
     // So inorder to avoid confusion. The eigen conversion will be used.
@@ -224,12 +228,12 @@ bool IkFastSolver::solveFK(const base::samples::Joints &joint_angles, base::samp
     rot_mat(2,0) = eerot[6]; 		rot_mat(2,1) = eerot[7]; 		rot_mat(2,2) = eerot[8];
 
     base::Quaterniond quaternion_rot(rot_mat);
-    kinematic_pose_.orientation = quaternion_rot;
+    fk_pose.orientation = quaternion_rot;
+
+    fk_pose.sourceFrame = kinematic_pose_.sourceFrame;
+    fk_pose.targetFrame = kinematic_pose_.targetFrame;
 
     solver_status.statuscode = KinematicsStatus::FK_FOUND;
- 
-    convertPoseBetweenDifferentFrames(kdl_tree_, kinematic_pose_, fk_pose);
-
     return true;
 }
 
