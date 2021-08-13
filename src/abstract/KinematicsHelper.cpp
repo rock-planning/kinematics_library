@@ -322,7 +322,6 @@ bool transformFrame(const KDL::Tree &kdl_tree, const base::samples::Joints &join
     transform_base_tk.Identity();
 
     KDL::Chain new_chain;
-
     if(!kdl_tree.getChain(base_frame, tip_frame, new_chain))
     {
         LOG_FATAL("[KinematicsHelper]: Could not get KDL transformation chain between base_link: %s to tip_link: %s", 
@@ -331,7 +330,6 @@ bool transformFrame(const KDL::Tree &kdl_tree, const base::samples::Joints &join
     }
 
     KDL::ChainFkSolverPos_recursive fk ( new_chain);
-    
     int ct = 0;
     for(unsigned int i = 0; i < new_chain.segments.size(); i++)
     {
@@ -347,13 +345,12 @@ bool transformFrame(const KDL::Tree &kdl_tree, const base::samples::Joints &join
     {
         if ( ! ( new_chain.getSegment (i).getJoint().getType() == KDL::Joint::None ) )
         {
-            kdl_jt_array.data(jt_ct) = joint_status[new_chain.getSegment(i).getJoint().getName()].position;
+            kdl_jt_array.data(jt_ct) = joint_status[new_chain.getSegment(i).getJoint().getName()].position;            
             jt_ct++;
         }
     }
-
     if(fk.JntToCart(kdl_jt_array, fk_pose) < 0)
-    {        
+    {
         LOG_FATAL("[calculateFK]: Cannot able to get the forward kinematics");        
         return false;
     }
@@ -404,11 +401,11 @@ bool convertPoseBetweenDifferentFrames( const KDL::Tree &kdl_tree, const base::s
         target_pose.targetFrame = source_pose.targetFrame;
         return false;
     }
-    //LOG_DEBUG_S<<"[RobotKinematics]: Target pose after frame transformation: source frame "<<target_pose.sourceFrame.c_str()<<"  target frame: "<<
-    //                target_pose.targetFrame.c_str();
-    //LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", target_pose.position(0), target_pose.position(1), target_pose.position(2));		
-    //LOG_DEBUG("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
-    //target_pose.orientation.x(), target_pose.orientation.y(), target_pose.orientation.z(), target_pose.orientation.w());
+    // LOG_DEBUG_S<<"[RobotKinematics]: Target pose after frame transformation: source frame "<<target_pose.sourceFrame.c_str()<<"  target frame: "<<
+    //                 target_pose.targetFrame.c_str();
+    // LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", target_pose.position(0), target_pose.position(1), target_pose.position(2));		
+    // LOG_DEBUG("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
+    // target_pose.orientation.x(), target_pose.orientation.y(), target_pose.orientation.z(), target_pose.orientation.w());
 
     return true;
 }
