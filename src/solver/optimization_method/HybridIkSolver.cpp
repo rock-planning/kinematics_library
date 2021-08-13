@@ -568,7 +568,8 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
 
     // Get the target pose of redundant chain
     passive_full_chain_pose_ = node_chain_fk_pose_ * passive_chain_target_pose_;
-    //std::cout<<" passive_full_chain_pose_ "<<passive_full_chain_pose_.at(i).p[0]<<"  "<<passive_full_chain_pose_.at(i).p[1]<<"  "<<passive_full_chain_pose_.at(i).p[2]<<std::endl;
+    //std::cout<<" passive_full_chain_pose_ "<<passive_full_chain_pose_.p[0]<<"  "<<passive_full_chain_pose_.p[1]<<"  "<<passive_full_chain_pose_.p[2]<<std::endl;
+    //std::cout<<" passive_chain_target_pose_ "<<passive_chain_target_pose_.p[0]<<"  "<<passive_chain_target_pose_.p[1]<<"  "<<passive_chain_target_pose_.p[2]<<std::endl;
     
 
     // Optimize the active chain
@@ -605,7 +606,7 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         base::JointState joint_state = base::JointState::Position(opt_var_[i]);
         solution[0].elements.push_back(joint_state);
         solution[0].names.push_back(jt_names_.at(i));
-        std::cout<<jt_names_.at(i).c_str()<<"  "<<opt_var_[i]<<std::endl;
+        //std::cout<<jt_names_.at(i).c_str()<<"  "<<opt_var_[i]<<std::endl;
     }
     
     // assign the redundant chain
@@ -615,7 +616,7 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         base::JointState joint_state = base::JointState::Position(passive_solution.elements.at(j).position);
         solution[0].elements.push_back(joint_state);
         solution[0].names.push_back(passive_solution.names.at(j));
-        std::cout<<passive_solution.names.at(j).c_str()<<"  "<<joint_state.position*57.2958<<std::endl;
+        //std::cout<<passive_solution.names.at(j).c_str()<<"  "<<joint_state.position<<std::endl;  //*57.2958
     }
 
     if (( result == nlopt::SUCCESS ) || ( result == nlopt::STOPVAL_REACHED ) || ( result == nlopt::XTOL_REACHED ))
@@ -671,9 +672,9 @@ void HybridIkSolver::initialiseProblem(const OptParamConfig &problem_param)
     nlopt_solver_.set_maxtime(problem_param.max_time);
 
     nlopt_solver_.set_xtol_abs(problem_param.abs_tol);
-    nlopt_solver_.set_xtol_rel(problem_param.abs_tol);
+    nlopt_solver_.set_xtol_rel(problem_param.rel_tol);
 
-    nlopt_solver_.set_stopval(0.015);
+    //nlopt_solver_.set_stopval(0.015);
 
     // objectives
     nlopt_solver_.set_min_objective(redundantObjectives, this);

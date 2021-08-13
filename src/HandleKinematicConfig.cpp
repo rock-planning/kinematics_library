@@ -254,7 +254,8 @@ bool getOptParamConfig(const YAML::Node &yaml_data, kinematics_library::OptParam
     if( (!handle_kinematic_config::getValue<double>(yaml_data, "joint_movement_cost_weight", config.joint_movement_weight)) ||
         (!handle_kinematic_config::getValue<double>(yaml_data, "max_time", config.max_time)) ||
         (!handle_kinematic_config::getValue<double>(yaml_data, "max_iter", config.max_iter)) ||
-        (!handle_kinematic_config::getValue<double>(yaml_data, "abs_tol", config.abs_tol)) )
+        (!handle_kinematic_config::getValue<double>(yaml_data, "abs_tol", config.abs_tol)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "rel_tol", config.rel_tol)) )
         return false;
 
     return true;        
