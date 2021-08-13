@@ -313,7 +313,7 @@ void transformFrame( const KDL::Tree &kdl_tree, const std::string &base_link, co
     }
 }
 
-bool frameTransform(const KDL::Tree &kdl_tree, const base::samples::Joints &joint_status, 
+bool transformFrame(const KDL::Tree &kdl_tree, const base::samples::Joints &joint_status, 
                     const std::string &base_frame, const std::string &tip_frame, KDL::Frame &fk_pose)
 {
     // calculate fk between two frames
@@ -374,7 +374,7 @@ bool convertPoseBetweenDifferentFrames( const KDL::Tree &kdl_tree, const base::s
 
         KDL::Frame fk_pose, calculated_frame, new_frame;
         
-        if ( !frameTransform(kdl_tree, joint_status, target_pose.sourceFrame, source_pose.sourceFrame, fk_pose))
+        if ( !transformFrame(kdl_tree, joint_status, target_pose.sourceFrame, source_pose.sourceFrame, fk_pose))
             return false;
 
         kinematics_library::rbsToKdl(target_pose, calculated_frame);
@@ -390,7 +390,7 @@ bool convertPoseBetweenDifferentFrames( const KDL::Tree &kdl_tree, const base::s
         // transform_tip_kt_  -> transformation from kinematic tip to target tip
         KDL::Frame fk_pose, new_frame, calculated_frame;
         
-        if ( !frameTransform(kdl_tree, joint_status, source_pose.targetFrame, target_pose.targetFrame, fk_pose))
+        if ( !transformFrame(kdl_tree, joint_status, source_pose.targetFrame, target_pose.targetFrame, fk_pose))
             return false;
         
         kinematics_library::rbsToKdl(target_pose, calculated_frame);

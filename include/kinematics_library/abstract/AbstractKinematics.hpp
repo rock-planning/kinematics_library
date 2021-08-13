@@ -75,7 +75,11 @@ class AbstractKinematics
                                     const base::Vector3d &frame_2_position, const base::Quaterniond &frame_2_orientation);
 
         base::samples::RigidBodyState transformPose(const std::string &source_frame, const std::string &target_frame, 
-                                                    base::samples::Joints &joints_status, const base::samples::RigidBodyState &source_pose);
+                                                    const base::samples::Joints &joints_status, const base::samples::RigidBodyState &source_pose);
+
+        // get the transformation between the source frame and target frame
+        bool transformPose( const std::string &source_frame, const std::string &target_frame, 
+                            const base::samples::Joints &joints_status, Eigen::Affine3d &res);
 
         std::string getWorldRootName(){return kdl_tree_.getRootSegment()->first;}
 

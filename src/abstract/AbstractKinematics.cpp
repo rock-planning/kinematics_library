@@ -24,17 +24,6 @@ void AbstractKinematics::assignVariables(const KinematicsConfig &kinematics_conf
     number_of_joints_ = kdl_chain.getNrOfJoints();
 }
 
-base::samples::RigidBodyState AbstractKinematics::transformPose(const std::string &source_frame, const std::string &target_frame, 
-                                                                base::samples::Joints &joints_status, const base::samples::RigidBodyState &source_pose)
-{
-    base::samples::RigidBodyState target_pose;
-    target_pose.sourceFrame = source_frame;
-    target_pose.targetFrame = target_frame;
-    
-    convertPoseBetweenDifferentFrames(kdl_tree_, joints_status, source_pose, target_pose);
-    return target_pose;
-}
-
 bool AbstractKinematics::solveIKRelatively(const base::samples::RigidBodyState &current_pose, const base::samples::Joints &joint_angles, 
                                            const base::samples::RigidBodyState &relative_pose,
                                            std::vector<base::commands::Joints> &solution, KinematicsStatus &solver_status)
@@ -46,27 +35,6 @@ bool AbstractKinematics::solveIKRelatively(const base::samples::RigidBodyState &
 
     //solve inverse kinematics
     return solveIK( target_pose, joint_angles, solution, solver_status);
-}
-
-base::Pose AbstractKinematics::transformPose(const base::Vector3d &frame_1_position, const base::Quaterniond &frame_1_orientation,
-                                             const base::Vector3d &frame_2_position, const base::Quaterniond &frame_2_orientation)
-{
-    // The transformation is calculated by multiply the homogeneous matrix of the two frames
-    // target = frame_1 x frame_2
-  
-    // get a homogeneous matrix form for the frame 1
-    Eigen::Matrix4d frame_1_matrix;
-    getHomogeneousMatrix(frame_1_position, frame_1_orientation, frame_1_matrix);
-    // get a homogeneous matrix form for the frame 2
-    Eigen::Matrix4d frame_2_matrix;
-    getHomogeneousMatrix(frame_2_position, frame_2_orientation, frame_2_matrix);
-    // tranformation: target = frame_1 x frame_2
-    Eigen::Matrix4d target_matrix = frame_1_matrix * frame_2_matrix;
-
-    base::Pose target_pose;    
-    getPositionRotation(target_matrix, target_pose.position, target_pose.orientation);
-
-    return target_pose;
 }
 
 base::samples::RigidBodyState AbstractKinematics::getRelativePose( const base::samples::RigidBodyState &current_pose, 
@@ -101,6 +69,58 @@ bool AbstractKinematics::solveIKLinearly( const base::samples::RigidBodyState &c
     return solveIK( intermediate_pose, joint_angles, solution, solver_status);
     
 }
+base::Pose AbstractKinematics::transformPose(const base::Vector3d &frame_1_position, const base::Quaterniond &frame_1_orientation,
+                                             const base::Vector3d &frame_2_position, const base::Quaterniond &frame_2_orientation)
+{
+    // The transformation is calculated by multiply the homogeneous matrix of the two frames
+    // target = frame_1 x frame_2
+  
+    // get a homogeneous matrix form for the frame 1
+    Eigen::Matrix4d frame_1_matrix;
+    getHomogeneousMatrix(frame_1_position, frame_1_orientation, frame_1_matrix);
+    // get a homogeneous matrix form for the frame 2
+    Eigen::Matrix4d frame_2_matrix;
+    getHomogeneousMatrix(frame_2_position, frame_2_orientation, frame_2_matrix);
+    // tranformation: target = frame_1 x frame_2
+    Eigen::Matrix4d target_matrix = frame_1_matrix * frame_2_matrix;
+
+    base::Pose target_pose;    
+    getPositionRotation(target_matrix, target_pose.position, target_pose.orientation);
+
+    return target_pose;
+}
+
+bool AbstractKinematics::transformPose( const std::string &source_frame, const std::string &target_frame, 
+                                        const base::samples::Joints &joints_status, Eigen::Affine3d &res)
+{
+    KDL::Frame kdl_pose;
+    if(!transformFrame( kdl_tree_, joints_status, source_frame, target_frame, kdl_pose))
+        return false;
+    
+    res.setIdentity();
+    // Position
+    for (std::size_t i = 0; i < 3; ++i)
+        res(i, 3) = kdl_pose.p[i];
+
+    // Orientation
+    for (std::size_t j = 0; j < 9; ++j)
+        res(j/3, j%3) = kdl_pose.M.data[j];
+
+    return true;
+}
+
+
+base::samples::RigidBodyState AbstractKinematics::transformPose(const std::string &source_frame, const std::string &target_frame, 
+                                                                const base::samples::Joints &joints_status, const base::samples::RigidBodyState &source_pose)
+{
+    base::samples::RigidBodyState target_pose;
+    target_pose.sourceFrame = source_frame;
+    target_pose.targetFrame = target_frame;
+    
+    convertPoseBetweenDifferentFrames(kdl_tree_, joints_status, source_pose, target_pose);
+    return target_pose;
+}
+
 
 const Eigen::Vector3d AbstractKinematics::interpolate( const Eigen::Vector3d& current_position, const Eigen::Vector3d& target_position, 
                                                        double& remaining_distance )
