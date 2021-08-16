@@ -233,7 +233,6 @@ int Ik7DoFSolver::ikArm()
     double lu = arm_->dh_d[2];
     double lf = arm_->dh_d[4];
     double lh = arm_->dh_a[6];
-   
     
     // input arm->rot_ination in 3x3 matrix
     double n[3], vec[3], w[3];
@@ -250,21 +249,19 @@ int Ik7DoFSolver::ikArm()
     // subtract the shoulder offset to facilitate the equations
     // TODO: This subtraction (w[2] - ls)  is  depends on the base frame
     w_t[0] = w[0]; w_t[1] = w[1]; w_t[2] = w[2] - ls;
-
     //std::cout<<"WT = "<<w_t[0]<<"  "<< w_t[1]<<"  "<< w_t[2] <<std::endl;
-    
+
     // quit if the position is not reachable
     double d = normVec(w_t);
 
-    if(lu + lf - d < -kinematics_library::EPSILON){
+    if(lu + lf - d < -kinematics_library::ZERO_PRECISION){
         //printf("[Arm Inverse Kinematics] The desired position is out of reach!\n");
         //std::cout<<"value = "<<ls +lu + lf<<"  "<<d<<std::endl;
         return 0;
-    }
-     
+    }     
     // if the elbow is straight, some equations simplify and some problems have to be solved differently
     unsigned short elbowIsStraight;
-    if(fabs(lu + lf - d) < kinematics_library::EPSILON){
+    if(fabs(lu + lf - d) < kinematics_library::ZERO_PRECISION){
         elbowIsStraight = 1;
         LOG_DEBUG_S<<"Straight"<<std::endl;
     }else{
@@ -371,28 +368,29 @@ int Ik7DoFSolver::ikArm()
         double d_xy_sq = w_t[0]*w_t[0] + w_t[1]*w_t[1];
         double C = (r1_sq - r2_sq + d_xy_sq) / 2.0;        
         double minus_p_half = C * w_t[1] / d_xy_sq;
-        
-        e1[1] =  minus_p_half + sqrt( minus_p_half*minus_p_half - (C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq);
-        e2[1] =  minus_p_half - sqrt( minus_p_half*minus_p_half - (C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq);
-        
+
+        double e_sqrt_term = minus_p_half*minus_p_half - ((C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq);
+
         e1[2] = ze + ls;
         e2[2] = e1[2];
         
-        if(fabs(w_t[0]) < kinematics_library::EPSILON){
+        if((fabs(w_t[0]) < kinematics_library::ZERO_PRECISION) || (fabs(e_sqrt_term) < kinematics_library::ZERO_PRECISION))
+        {
             // when the x-component is zero, the normal equations simplify or cannot be used
             e1[1] =  minus_p_half;                     // because the sqrt term is zero
             e2[1] =  minus_p_half;                     // because the sqrt term is zero
             
             // use the Euclidean distance instead to avoid division by 0
             double xe_sq = lu*lu - e1[1]*e1[1] - ze*ze;
-            if(xe_sq > kinematics_library::EPSILON){
+            if(xe_sq > kinematics_library::ZERO_PRECISION){
                 e1[0] = sqrt(lu*lu - e1[1]*e1[1] - ze*ze); // use the Euclidean distance instead
                 e2[0] =-sqrt(lu*lu - e2[1]*e2[1] - ze*ze); // to avoid division by 0
             }else{
                 e1[0] = e2[0] = 0.0;
             }
-            
-        }else{
+        }
+        else
+        {
             // the usual case
             e1[1] =  minus_p_half + sqrt( minus_p_half*minus_p_half - (C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq);
             e2[1] =  minus_p_half - sqrt( minus_p_half*minus_p_half - (C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq);
@@ -400,8 +398,15 @@ int Ik7DoFSolver::ikArm()
             e1[0] =  (C - w_t[1] * e1[1]) / w_t[0];
             e2[0] =  (C - w_t[1] * e2[1]) / w_t[0];
         }
+
+        // std::cout<<"Ze ="<<ze<<" e[0] "<<e1[0]<<" e1[1]= "<<e1[1]<<"  e1[2] "<<e1[2]<<" e2[0] ="<<e2[0]<<" e2[1]"<<e2[1]<<" e2[2]"<<e2[2]<<std::endl;
+        // std::cout<<"e1 ="<<minus_p_half*minus_p_half <<"  "<< (C*C - r1_sq * w_t[0]*w_t[0]) <<" "<< d_xy_sq<<"  "<<(C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq<<std::endl;
+        // std::cout<<"b4 sqrt ="<<(minus_p_half*minus_p_half - (C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq)<<std::endl;
+        // std::cout<<"sqrt ="<<sqrt( minus_p_half*minus_p_half - (C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq)<<std::endl;
+        // std::cout<<"Epsilon ="<<kinematics_library::EPSILON<<std::endl;
+        // std::cout<<"e_sqrt_term ="<<e_sqrt_term<<std::endl;
     }
-        
+
     // determine the vectors of the axis of the coordinate systems at joint4
     // from now on, two solutions arm_->pos_insible (elbow up or down)
     double e[3];
@@ -636,20 +641,22 @@ int Ik7DoFSolver::ikArm()
     {
         double effort = 0.0;
         unsigned short dof_nr;
-        for(dof_nr = 0; dof_nr < 7; dof_nr++)        
-            effort = effort + fabs(arm_->ja_all[sol_nr][dof_nr] - arm_->ja_last[dof_nr]);        
-        
+        for(dof_nr = 0; dof_nr < 7; dof_nr++)
+        {
+            effort = effort + fabs(arm_->ja_all[sol_nr][dof_nr] - arm_->ja_last[dof_nr]);
+        }
+    
         if(effort < min_effort)
         {
             min_effort = effort;
             best_solution = sol_nr;
         }
     }
-    
     unsigned short dof_nr;
-    for(dof_nr = 0; dof_nr < 7; dof_nr++)    
+    for(dof_nr = 0; dof_nr < 7; dof_nr++)
+    {
         arm_->ja_ik_out[dof_nr] = arm_->ja_all[best_solution][dof_nr];
-    
+    }
     return 1;
 }
 

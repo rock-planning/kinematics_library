@@ -17,14 +17,14 @@
 
 namespace kinematics_library
 {
-    static constexpr double PI          = 3.1415926535897932384626433832795;
-    static constexpr double DTR         = 0.0174532925;    //Degree to Radians
-    static constexpr double RTD         = 57.29577951;     //Radians to Degree    
-    static constexpr double NAC         = -0.000005;
-    static constexpr double PAC         = 0.000005;
-    static constexpr double HALFDEGREE  = 0.008726646;
-    static constexpr double EPSILON     = std::numeric_limits<double>::epsilon();
-    
+    static constexpr double PI              = 3.1415926535897932384626433832795;
+    static constexpr double DTR             = 0.0174532925;    //Degree to Radians
+    static constexpr double RTD             = 57.29577951;     //Radians to Degree    
+    static constexpr double NAC             = -0.000005;
+    static constexpr double PAC             = 0.000005;
+    static constexpr double HALFDEGREE      = 0.008726646;
+    static constexpr double EPSILON         = std::numeric_limits<double>::epsilon();
+    static constexpr double ZERO_PRECISION  = 0.000001;
     
     void zyxEuler2rotMat(const std::vector<double> &eul_zyx, Eigen::Matrix3d &rot_mat);
     void rotationMatrix2zyzEuler(const Eigen::Matrix3d &rotMat, double *zyz_euler);
