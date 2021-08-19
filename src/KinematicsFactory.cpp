@@ -24,13 +24,13 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
     {
         case IKFAST:
         {
-            LOG_INFO_S<<"[KinematicsFactory]: IKFAST solver is selected";            
-            kinematic_solver = std::make_shared<IkFastSolver> ( joints_limits_, kdl_tree_, kinematics_kdl_chain_ );            
+            LOG_INFO_S<<"[KinematicsFactory]: IKFAST solver is selected";
+            kinematic_solver = std::make_shared<IkFastSolver> ( joints_limits_, kdl_tree_, kinematics_kdl_chain_ );
             break;
         }
         case SRS:
         {
-            LOG_INFO_S<<"[KinematicsFactory]: SRS solver is selected";            
+            LOG_INFO_S<<"[KinematicsFactory]: SRS solver is selected";
             kinematic_solver = std::make_shared<SRSKinematicSolver> ( joints_limits_, kdl_tree_, kinematics_kdl_chain_ );
             break;
         }
@@ -42,14 +42,14 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
         }
         case KDL:
         {
-            LOG_INFO_S<<"[KinematicsFactory]: KDL solver is selected";            
+            LOG_INFO_S<<"[KinematicsFactory]: KDL solver is selected";
             kinematic_solver = std::make_shared<KdlSolver>  ( joints_limits_, kdl_tree_, kinematics_kdl_chain_, kdl_chain_ );
             break;
         }
         case TRACIK:
         {
             LOG_INFO_S<<"[KinematicsFactory]: TRACIK solver is selected";
-            #if(TRAC_IK_LIB_FOUND)                
+            #if(TRAC_IK_LIB_FOUND)
                 kinematic_solver = std::make_shared<TracIkSolver> ( kdl_tree_, kinematics_kdl_chain_, kdl_chain_ );
             #else
                 LOG_FATAL_S << "[KinematicsFactory]: TRACIK is not installed. Please select an another solver !";
@@ -60,7 +60,7 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
         case OPT:
         {
             LOG_INFO_S<<"[KinematicsFactory]: OPTIM solver is selected";
-            #if(OPT_LIB_FOUND)                
+            #if(OPT_LIB_FOUND)
                 kinematic_solver = std::make_shared<OptSolver> ( joints_limits_, kdl_tree_, kinematics_kdl_chain_, kdl_chain_ );
             #else
                 LOG_FATAL_S << "[KinematicsFactory]: Optimization library (NLOPT) is not installed. Please select an another solver !";
@@ -71,7 +71,7 @@ AbstractKinematicPtr KinematicsFactory::getKinematicsSolver ( const KinematicsCo
         case HYBRIDIK:
         {
             LOG_INFO_S<<"[KinematicsFactory]: HYBRIDIK solver is selected";
-            #if(OPT_LIB_FOUND)                
+            #if(OPT_LIB_FOUND)
                 kinematic_solver = std::make_shared<HybridIkSolver> ( joints_limits_, kdl_tree_, kinematics_kdl_chain_, kdl_chain_ );
             #else
                 LOG_FATAL_S << "[KinematicsFactory]: Optimization library (NLOPT) is not installed. Please select an another solver !";
@@ -137,11 +137,13 @@ bool KinematicsFactory::initialise ( const KinematicsConfig &kinematics_config, 
 
     //pack the joint limit as std::pair
     joints_limits_.clear();
+    jt_names_.clear();
     for ( std::size_t jn = 0; jn < kinematics_kdl_chain_.getNrOfJoints(); jn++ )
     {
         joints_limits_.push_back ( std::make_pair ( urdf_model_->getJoint ( kinematics_kdl_chain_.getSegment ( jn ).getJoint().getName() )->limits->lower,
                                    urdf_model_->getJoint ( kinematics_kdl_chain_.getSegment ( jn ).getJoint().getName() )->limits->upper ) );
 
+        jt_names_.push_back(kinematics_kdl_chain_.getSegment ( jn ).getJoint().getName());
     }
 
     LOG_DEBUG ( "[KinematicsFactory]: Kinematics initialisation finished" );

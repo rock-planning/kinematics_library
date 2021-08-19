@@ -47,7 +47,9 @@ class KinematicsFactory
 
         std::vector< std::pair<double, double> > getJointLimits(){return joints_limits_;}
 
-    private:        
+        std::vector<std::string> getJointNames(){return jt_names_;}
+
+    private:
 
         bool initiailiseURDF(std::string urdf_file);
 
@@ -59,7 +61,7 @@ class KinematicsFactory
         KDL::Chain kinematics_kdl_chain_;
 
         std::vector<std::string> jt_names_;
-        urdf::ModelInterfaceSharedPtr urdf_model_;		
+        urdf::ModelInterfaceSharedPtr urdf_model_;
         std::vector< std::pair<double, double> > joints_limits_;
 };
 };
