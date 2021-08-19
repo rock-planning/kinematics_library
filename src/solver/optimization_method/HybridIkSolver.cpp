@@ -8,9 +8,9 @@ double redundantObjectives(const std::vector<double>& x, std::vector<double>& gr
     HybridIkSolver *c = (HybridIkSolver *) data;
     //std::cout<<"Opt. Param X = "<<x[0]<<"  "<<x[1]<<"  "<<x[2]<<std::endl;
     // first calculate the gradient for the opt. param
-    c->calculateJointGradient(x);
+    c->calculateJointGradient(x);    
     // calculate the forward kinematics and the gradient's forward kinematics for all the redundant chain
-    c->calculateFK(x);
+    c->calculateFK(x);    
     // calculate the inverse kinematics
     c->ik_cost_             = c->calculateOverallIKCost(x, grad);
     // calculate the joint movement cost. This cost make sure that the active chain has less joints movement
@@ -233,19 +233,18 @@ void HybridIkSolver:: getJointsLimitsConstraintCost( const unsigned &constraints
         for(size_t i =0; i < (constraints_size/2) ; i++ )
         {
             for(size_t j =0; j < (x_size) ; j++ )
-            {                
-                grad[(i*x_size) + j] =  ((jts_lower_limit_[j] - jt_ang_grad_.at(i).at(j) ) - result[j]) / (2*jump_);               
+            {
+                grad[(i*x_size) + j] =  ((jts_lower_limit_[j] - jt_ang_grad_.at(i).at(j) ) - result[j]) / (2*jump_);
             }
-        }        
+        }
         // upper limit
         for(size_t i =constraints_size/2; i < (constraints_size) ; i++ )
         {
             for(size_t j =0; j < (x_size) ; j++ )
-            {                
+            {
                 grad[(i*x_size)+ j] = ((jt_ang_grad_.at(i-constraints_size/2).at(j) - jts_upper_limit_[j] ) - result[j+x_size]) / (2*jump_);
-                
             }
-        }    
+        }
     }
 }
 
@@ -331,7 +330,7 @@ double HybridIkSolver::positionCost( const KDL::Frame& target_pose, const KDL::F
     {
         exit(0);
         return 0;
-    }
+    }    
     KDL::Frame fk_pose_kdl;
     kinematics_library::rbsToKdl(fk_pose, fk_pose_kdl);
     
@@ -504,10 +503,9 @@ void HybridIkSolver::convertPoseBetweenDifferentFramesFK( const KDL::Tree &kdl_t
 
     //LOG_DEBUG_S<<"[RobotKinematics]: Target pose after frame transformation: source frame "<<target_pose.sourceFrame.c_str()<<"  target frame: "<<
     //                target_pose.targetFrame.c_str();
-    //LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", target_pose.position(0), target_pose.position(1), target_pose.position(2));		
+    //LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", target_pose.position(0), target_pose.position(1), target_pose.position(2));
     //LOG_DEBUG("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
     //target_pose.orientation.x(), target_pose.orientation.y(), target_pose.orientation.z(), target_pose.orientation.w());
-
 }
 
 
@@ -516,6 +514,7 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
                             std::vector<base::commands::Joints> &solution,
                             kinematics_library::KinematicsStatus &solver_status )
 {
+
     if(!convertPoseBetweenDifferentFrames(kdl_tree_, joint_status, target_pose, kinematic_pose_))
     {
         solver_status.statuscode = KinematicsStatus::KDL_CHAIN_FAILED;
@@ -569,6 +568,7 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
     // Get the target pose of redundant chain
     passive_full_chain_pose_ = node_chain_fk_pose_ * passive_chain_target_pose_;
     //std::cout<<" passive_full_chain_pose_ "<<passive_full_chain_pose_.p[0]<<"  "<<passive_full_chain_pose_.p[1]<<"  "<<passive_full_chain_pose_.p[2]<<std::endl;
+    //std::cout<<" node_chain_fk_pose_ "<<node_chain_fk_pose_.p[0]<<"  "<<node_chain_fk_pose_.p[1]<<"  "<<node_chain_fk_pose_.p[2]<<std::endl;
     //std::cout<<" passive_chain_target_pose_ "<<passive_chain_target_pose_.p[0]<<"  "<<passive_chain_target_pose_.p[1]<<"  "<<passive_chain_target_pose_.p[2]<<std::endl;
     
 
@@ -619,22 +619,27 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         //std::cout<<passive_solution.names.at(j).c_str()<<"  "<<joint_state.position<<std::endl;  //*57.2958
     }
 
-    if (( result == nlopt::SUCCESS ) || ( result == nlopt::STOPVAL_REACHED ) || ( result == nlopt::XTOL_REACHED ))
+    if ( result == nlopt::SUCCESS )
     {
         solver_status.statuscode = kinematics_library::KinematicsStatus::IK_FOUND;
-        std::cout<<"[MULT_IK]: IK FOUND"<<std::endl;
+        //std::cout<<"[MULT_IK]: IK FOUND"<<std::endl;
+        return true;
+    }
+    else if (( result == nlopt::STOPVAL_REACHED)  || ( result == nlopt::XTOL_REACHED ))
+    {
+        solver_status.statuscode = KinematicsStatus::APPROX_IK_SOLUTION;
         return true;
     }
     else if (( result == nlopt::MAXTIME_REACHED ) || ( result == nlopt::MAXEVAL_REACHED ))
     {
-        solver_status.statuscode = kinematics_library::KinematicsStatus::APPROX_IK_SOLUTION;
-        std::cout<<"[MULT_IK]: NO_IK_SOLUTION"<<std::endl;
+        solver_status.statuscode = kinematics_library::KinematicsStatus::IK_TIMEOUT;
+        //std::cout<<"[MULT_IK]: IK_TIMEOUT"<<std::endl;
         return false;
     }
     else
     {
         solver_status.statuscode = kinematics_library::KinematicsStatus::NO_IK_SOLUTION;
-        std::cout<<"[MULT_IK]: NO_IK_SOLUTION"<<std::endl;
+        //std::cout<<"[MULT_IK]: NO_IK_SOLUTION"<<std::endl;
         return false;
     }
 }

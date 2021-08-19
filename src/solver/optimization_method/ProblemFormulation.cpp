@@ -99,7 +99,7 @@ bool ProblemFormulation::initialise(const ProblemParameters &problem_param, cons
     jtang_jac_.resize(opt_var_size_);
     for(size_t i = 0; i < opt_var_size_; i++)
     {
-        jtang_jac_.at(i).resize(opt_var_size_);        
+        jtang_jac_.at(i).resize(opt_var_size_);
     }
 
     // variable to store the previous joint value, which will be used to calculate velocity, acc., and jerk.
@@ -114,13 +114,13 @@ bool ProblemFormulation::initialise(const ProblemParameters &problem_param, cons
 
     jump_ = std::numeric_limits<float>::epsilon();
 
-    jt_vel_lower_limits_.resize(opt_var_size_);
-    jt_vel_upper_limits_.resize(opt_var_size_);   
+    jts_lower_limit_.resize(opt_var_size_);
+    jts_upper_limit_.resize(opt_var_size_);   
 
     for(size_t i = 0; i < opt_var_size_;i ++)
     {
-        jt_vel_lower_limits_.at(i) = jts_limits_.at(i).first;
-        jt_vel_upper_limits_.at(i) = jts_limits_.at(i).second;
+        jts_lower_limit_.at(i) = jts_limits_.at(i).first;
+        jts_upper_limit_.at(i) = jts_limits_.at(i).second;
     }
 
     // forward kinematic using KDL
@@ -164,9 +164,9 @@ void ProblemFormulation::calculateDerivatives(const std::vector<double>& x)
 
 double ProblemFormulation::getOverallCost(const std::vector<double>& x, std::vector<double>& grad)
 {
-    //  for(size_t i = 0; i < x.size(); i++)
-    //      std::cout<<x[i]<<"  ";
-    //  std::cout<<std::endl;
+    //   for(size_t i = 0; i < x.size(); i++)
+    //       std::cout<<x[i]<<"  ";
+    //   std::cout<<std::endl;
 
     assert(fk_jac_.size() == x.size());
 
@@ -181,14 +181,16 @@ double ProblemFormulation::getOverallCost(const std::vector<double>& x, std::vec
     // position cost
     double position_cost        = getPosistionCost(kdl_frame_, grad);
     double orientation_cost     = getOrientationCost(kdl_frame_, grad);
-    double velocity_cost        = getVelocityCost(x, grad);
-    double acceleration_cost    = getAccelerationCost(x, grad);
-    double jerk_cost            = getJerkCost(x, grad);
+    //double velocity_cost        = getVelocityCost(x, grad);
+    //double acceleration_cost    = getAccelerationCost(x, grad);
+    //double jerk_cost            = getJerkCost(x, grad);
 
     storePreviousRobotState(x);
-    std::cout<<"Cost ="<<position_cost <<"  "<<orientation_cost<<"  "<<velocity_cost<<"  "<<acceleration_cost<<"  "<<jerk_cost<<std::endl;
-    return ( pos_cost_weight_*position_cost + ort_cost_weight_*orientation_cost + (vel_cost_weight_*velocity_cost) + 
-             (acc_cost_weight_*acceleration_cost) + (jerk_cost_weight_*jerk_cost));
+    //std::cout<<"Cost ="<<position_cost <<"  "<<orientation_cost<<"  "<<velocity_cost<<"  "<<acceleration_cost<<"  "<<jerk_cost<<std::endl;
+    //std::cout<<"Cost ="<<position_cost <<"  "<<orientation_cost<<std::endl;
+    //return ( pos_cost_weight_*position_cost + ort_cost_weight_*orientation_cost + (vel_cost_weight_*velocity_cost) + 
+    //         (acc_cost_weight_*acceleration_cost) + (jerk_cost_weight_*jerk_cost));
+    return ( pos_cost_weight_*position_cost + ort_cost_weight_*orientation_cost );
 }
 
 void ProblemFormulation::getJointsLimitsConstraintCost( const unsigned &constraints_size, const unsigned &x_size,
@@ -198,10 +200,10 @@ void ProblemFormulation::getJointsLimitsConstraintCost( const unsigned &constrai
     for(size_t i =0; i < x_size; i++ )
     {
         // lower limit
-        result[i] = (jt_vel_lower_limits_[i] - jt_vel_(i,0));
+        result[i] = (jts_lower_limit_[i] - x[i]);
         //upper limit     
-        result[i+x_size] = (jt_vel_(i,0) - jt_vel_upper_limits_[i]);
-           //std::cout<<result[i]<<"   "<<result[i+x_size]<<"  "<<jt_vel_(i,0)<<std::endl;
+        result[i+x_size] = (x[i] - jts_upper_limit_[i]);
+           //std::cout<<result[i]<<"   "<<result[i+x_size]<<"  "<<x(i,0)<<std::endl;
     }
 
     // gradient
@@ -212,10 +214,7 @@ void ProblemFormulation::getJointsLimitsConstraintCost( const unsigned &constrai
         {
             for(size_t j =0; j < (x_size) ; j++ )
             {
-                if(i == j)                
-                    grad[(i*x_size) + j] = (-jt_acc_(j,0));
-                else
-                    grad[(i*x_size) + j] = 0.0;            
+                grad[(i*x_size) + j] =  ((jts_lower_limit_[j] - jtang_jac_.at(i).at(j) ) - result[j]) / (2*jump_);
             }
         }
         
@@ -224,10 +223,7 @@ void ProblemFormulation::getJointsLimitsConstraintCost( const unsigned &constrai
         {
             for(size_t j =0; j < (x_size) ; j++ )
             {
-                if((i-constraints_size/2) == j)
-                    grad[(i*x_size)+ j] = (jt_acc_(j,0));
-                else
-                    grad[(i*x_size) + j] = 0.0;            
+                grad[(i*x_size)+ j] = ((jtang_jac_.at(i-constraints_size/2).at(j) - jts_upper_limit_[j] ) - result[j+x_size]) / (2*jump_);
             }
         }
         

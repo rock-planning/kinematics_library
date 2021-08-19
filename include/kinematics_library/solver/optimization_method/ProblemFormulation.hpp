@@ -57,6 +57,7 @@ struct ProblemParameters
     double max_time;
     double max_iter;
     double abs_tol; // absolute tolerance on optimization parameter 
+    double rel_tol; // absolute tolerance on optimization parameter 
 };
 
     
@@ -110,7 +111,7 @@ private:
     std::vector<std::vector<double>> jtang_jac_;
     Eigen::MatrixXd jt_vel_;
     Eigen::MatrixXd jt_acc_;
-    std::vector<double> jt_vel_lower_limits_, jt_vel_upper_limits_;
+    std::vector<double> jts_lower_limit_, jts_upper_limit_;
     float jump_;
     size_t opt_var_size_;
     std::vector<std::vector<double>> prev_jtang_;

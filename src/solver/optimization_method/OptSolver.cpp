@@ -92,18 +92,18 @@ bool OptSolver::solveIK (const base::samples::RigidBodyState &target_pose,
     // assign the current joint angles as the optimization variables
     for(std::size_t i = 0; i < number_of_joints_; i++)
         opt_var_[i] = current_jt_status_[i];
-
+    
     // assign the target pose to non-linear solver
     problem_formulation_.assignTarget(kinematic_pose_, opt_var_);
     //std::cout<<"OPTIM ik number_of_joints_ "<<number_of_joints_<<std::endl;
     double minf;
     
     nlopt::result result = nlopt::FAILURE;
-    //for(uint iter = 0; iter < opt_param_.max_iter; iter++)
-    //{
+    for(uint iter = 0; iter < opt_param_.max_iter; iter++)
+    {
         result = nlopt_solver_.optimize(opt_var_, minf); 
-        //std::cout<<"minf = "<<minf<<std::endl;
-    //}   
+    //   std::cout<<"minf = "<<minf<<std::endl;
+    }
 
     //std::cout<<"Result "<<result<<" minf="<<minf<<std::endl;
 
@@ -121,11 +121,11 @@ bool OptSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         solver_status.statuscode = KinematicsStatus::IK_FOUND;
         return true;
     }
-    else if ( result == nlopt::XTOL_REACHED )
+    else if (( result == nlopt::STOPVAL_REACHED)  || ( result == nlopt::XTOL_REACHED ))
     {
         solver_status.statuscode = KinematicsStatus::APPROX_IK_SOLUTION;
         return true;
-    }    
+    }
     else if (( result == nlopt::MAXTIME_REACHED ) || ( result == nlopt::MAXEVAL_REACHED ))
     {
         solver_status.statuscode = KinematicsStatus::IK_TIMEOUT;
@@ -171,11 +171,12 @@ bool OptSolver::initialiseProblem(const ProblemParameters &problem_param)
     nlopt_solver_.set_maxtime(problem_param.max_time);
 
     nlopt_solver_.set_xtol_abs(problem_param.abs_tol);
+    nlopt_solver_.set_xtol_rel(problem_param.rel_tol);
 
     // objectives
     nlopt_solver_.set_min_objective(objectives, this);
     // in-equality constraint - upper and lower limits
-    std::vector<double> tolerance(number_of_joints_ * 2, 0.00001);        
+    std::vector<double> tolerance(number_of_joints_ * 2, 0.00001);
     nlopt_solver_.add_inequality_mconstraint(jointsLimitsConstraint, this, tolerance);
 
     opt_var_.resize(number_of_joints_);
@@ -185,22 +186,17 @@ bool OptSolver::initialiseProblem(const ProblemParameters &problem_param)
     return (problem_formulation_.initialise(problem_param, kdl_kinematic_chain_, jts_limits_));   
 }
 
-
 void OptSolver::getJointLimits(const std::vector<std::pair<double, double> > jts_limits, 
                                std::vector< double > &lower_limits, std::vector< double > &upper_limits)
 {
-
     lower_limits.clear();
     upper_limits.clear();
 
     for(auto it = jts_limits.begin(); it != jts_limits.end(); it++)
     {
         lower_limits.push_back(it->first)  ;
-        upper_limits.push_back(it->second)  ;	
+        upper_limits.push_back(it->second)  ;
     }
-
     assert(lower_limits.size() == jts_limits.size());
 }
-
-
 }
