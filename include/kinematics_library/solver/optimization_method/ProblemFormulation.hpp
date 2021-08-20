@@ -119,8 +119,7 @@ private:
     kinematics_library::AbstractKinematicPtr kin_solver_;
 
     void calculateFK(const std::vector<double> &opt_jt_ang, KDL::JntArray &kdl_jt_array, KDL::Frame &kdl_frame);
-    void calculateJacobian(const std::vector<double>& x);
-    double getQuaternionDiff(const KDL::Rotation& rot_1, const KDL::Rotation& rot_2);    
+    void calculateJacobian(const std::vector<double>& x);    
     Eigen::MatrixXd getDerivative(const DerivType &deriv_type, const std::vector<double>& x);
     void storePreviousRobotState(const std::vector<double>& x);
 };

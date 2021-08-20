@@ -90,7 +90,7 @@ bool HybridIkSolver::loadKinematicConfig( const kinematics_library::KinematicsCo
     // get the active and passive chain weight
     const YAML::Node& hybrid_ik_config_node = input_config["hybrid_ik_config"];
     
-    if(!handle_kinematic_config::getCostsWeightConfig(hybrid_ik_config_node, "passive_", passive_chain_costs_weight_))        
+    if(!handle_kinematic_config::getCostsWeightConfig(hybrid_ik_config_node, "passive_", passive_chain_costs_weight_))
     {
         LOG_ERROR("[HybridIkSolver]: Unable to read passive chain cost weights from kinematic config file");
         kinematics_status.statuscode = kinematics_library::KinematicsStatus::CONFIG_READ_ERROR;        
@@ -589,14 +589,38 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
     
     nlopt::result result = nlopt::FAILURE;
     
-    //for(uint iter = 0; iter < opt_param_.max_iter; iter++)
+    for(uint iter = 0; iter < opt_param_.max_iter; iter++)
     {
         result = nlopt_solver_.optimize(opt_var_, minf); 
         //std::cout<<" minf = "<<minf<<" "<<iter<<"  "<<opt_param_.opt_param.max_iter<<std::endl;
         //std::cout<<" minf = "<<minf<<" "<<std::endl;
-    }   
+    }  
+    std::cout<<"Result "<<result<<" minf="<<minf<<std::endl;
+    if(fabs(minf) > 0.001)
+    {
+        std::random_device rd;  //Will be used to obtain a seed for the random number engine
+        std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+        // joint limit distributor
+        std::vector<std::uniform_real_distribution<double>> dis(jts_upper_limit_.size());
+        for(size_t i = 0; i < jts_upper_limit_.size(); i++)
+        {
+            dis.at(i) = std::uniform_real_distribution<double>(jts_lower_limit_[i], jts_upper_limit_[i]);
+        }
+        for (uint ik=0; ik< 5; ik++)
+        {
+            for (uint i=0; i< opt_var_.size(); i++)
+                opt_var_[i]=dis.at(i)(gen); 
+            std::cout<<"opt var  "<<opt_var_[0]<<" "<<opt_var_[1]<<"  "<<opt_var_[2]<<std::endl;
+            result = nlopt_solver_.optimize(opt_var_, minf); 
+            if(fabs(minf) < 0.001)
+                break;
+            
+            std::cout<<"Result loop "<<result<<" new minf loop="<<minf<<std::endl;
+        }
+        std::cout<<"New Result "<<result<<" new minf="<<minf<<std::endl;
+    }
 
-    //std::cout<<"\n\n\n\nResult "<<result<<" minf="<<minf<<std::endl;
+    
 
     solution.clear();
     solution.resize(1);
@@ -607,6 +631,11 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         solution[0].elements.push_back(joint_state);
         solution[0].names.push_back(jt_names_.at(i));
         //std::cout<<jt_names_.at(i).c_str()<<"  "<<opt_var_[i]<<std::endl;
+        if(std::isnan(opt_var_[i]))
+        {
+            std::cout<<"NAN "<<jt_names_.at(i).c_str()<<"  "<<opt_var_[i]<<std::endl;
+            exit(0);
+        }
     }
     
     // assign the redundant chain
@@ -617,6 +646,11 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         solution[0].elements.push_back(joint_state);
         solution[0].names.push_back(passive_solution.names.at(j));
         //std::cout<<passive_solution.names.at(j).c_str()<<"  "<<joint_state.position<<std::endl;  //*57.2958
+        if(std::isnan(passive_solution.elements.at(j).position))
+        {
+            std::cout<<"NAN "<<passive_solution.names.at(j).c_str()<<"  "<<passive_solution.elements.at(j).position<<std::endl;
+            exit(0);
+        }
     }
 
     if ( result == nlopt::SUCCESS )
@@ -625,7 +659,7 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         //std::cout<<"[MULT_IK]: IK FOUND"<<std::endl;
         return true;
     }
-    else if (( result == nlopt::STOPVAL_REACHED)  || ( result == nlopt::XTOL_REACHED ))
+    else if ((( result == nlopt::STOPVAL_REACHED)  || ( result == nlopt::XTOL_REACHED )) && (fabs(minf) < 0.001)) 
     {
         solver_status.statuscode = KinematicsStatus::APPROX_IK_SOLUTION;
         return true;

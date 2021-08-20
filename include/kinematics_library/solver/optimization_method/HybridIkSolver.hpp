@@ -98,6 +98,12 @@ class HybridIkSolver : public kinematics_library::AbstractKinematics
         void calculateJointGradient(const std::vector<double> &opt_jt_ang);
         double ik_cost_, joints_mov_cost_, overall_costs_;
 
+        inline static double fRand(double min, double max)
+    {
+      double f = (double)rand() / RAND_MAX;
+      return min + f * (max - min);
+    }
+
     private:
 
         KDL::ChainFkSolverPos_recursive *fk_kdlsolver_pos_;

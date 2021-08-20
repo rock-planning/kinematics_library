@@ -230,6 +230,31 @@ void quaternionToRotationMatrixArray(const base::Quaterniond &quat, double *rot_
 
 }
 
+double getQuaternionDiff(const KDL::Rotation& rot_1, const KDL::Rotation& rot_2)
+{    
+    Eigen::Quaterniond quat_1, quat_2;
+    rot_1.GetQuaternion(quat_1.x(), quat_1.y(), quat_1.z(), quat_1.w());
+    rot_2.GetQuaternion(quat_2.x(), quat_2.y(), quat_2.z(), quat_2.w());
+    Eigen::Quaterniond diff_quat =  (quat_1.inverse() * quat_2) ;
+
+    //take log map vec3 of quaternion
+    Eigen::Vector3d vec(diff_quat.x(), diff_quat.y(), diff_quat.z());
+    if (fabs(diff_quat.w()) < 1.0)
+    {
+        double a = 1;
+        a = acos(diff_quat.w());
+        double sina = sin(a);
+        if (fabs(sina) >= 0.005)
+        {
+            double c = a/sina;
+            vec(0) *= c;
+            vec(1) *= c;
+            vec(2) *= c;
+        }
+    }    
+    return vec.norm();
+}
+
 void getHomogeneousMatrix(const base::Vector3d &fk_position, const base::Quaterniond &fk_orientation, Eigen::Matrix4d &matrix)
 {
     matrix = Eigen::Matrix4d::Zero();
@@ -405,6 +430,12 @@ bool convertPoseBetweenDifferentFrames( const KDL::Tree &kdl_tree, const base::s
     //                 target_pose.targetFrame.c_str();
     // LOG_DEBUG("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f", target_pose.position(0), target_pose.position(1), target_pose.position(2));		
     // LOG_DEBUG("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f",
+    // target_pose.orientation.x(), target_pose.orientation.y(), target_pose.orientation.z(), target_pose.orientation.w());
+
+    // std::cout<<"[RobotKinematics]: Target pose after frame transformation: source frame "<<target_pose.sourceFrame.c_str()<<"  target frame: "<<
+    //                 target_pose.targetFrame.c_str()<<std::endl;
+    // printf("[RobotKinematics]: Position:/n X: %f Y: %f Z: %f \n", target_pose.position(0), target_pose.position(1), target_pose.position(2));
+    // printf("[RobotKinematics]: Orientation:/n X: %f Y: %f Z: %f W: %f \n",
     // target_pose.orientation.x(), target_pose.orientation.y(), target_pose.orientation.z(), target_pose.orientation.w());
 
     return true;

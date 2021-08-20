@@ -43,6 +43,7 @@ namespace kinematics_library
     */
     void quaternionToRotationMatrix(const base::Quaterniond &quat, Eigen::Matrix3d &rot_mat);
     void quaternionToRotationMatrixArray(const base::Quaterniond &quat, double *rot_mat);
+    double getQuaternionDiff(const KDL::Rotation& rot_1, const KDL::Rotation& rot_2);
     void getHomogeneousMatrix(const base::Vector3d &fk_position, const base::Quaterniond &fk_orientation, Eigen::Matrix4d &homogeneous_matrix);
     void inversematrix(const Eigen::Matrix4d &homogeneous_matrix, Eigen::Matrix4d &inverse_matrix);
     void rbsToKdl(const base::samples::RigidBodyState &rbs, KDL::Frame &kdl);    

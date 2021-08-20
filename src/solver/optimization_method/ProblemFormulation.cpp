@@ -312,30 +312,7 @@ double ProblemFormulation::getOrientationCost(const KDL::Frame& fk_pose, std::ve
     return grooveFunction(ort_groove_var_, cost);    
 }
 
-double ProblemFormulation::getQuaternionDiff(const KDL::Rotation& rot_1, const KDL::Rotation& rot_2)
-{    
-    Eigen::Quaterniond quat_1, quat_2;
-    rot_1.GetQuaternion(quat_1.x(), quat_1.y(), quat_1.z(), quat_1.w());
-    rot_2.GetQuaternion(quat_2.x(), quat_2.y(), quat_2.z(), quat_2.w());
-    Eigen::Quaterniond diff_quat =  (quat_1.inverse() * quat_2) ;
 
-    //take log map vec3 of quaternion
-    Eigen::Vector3d vec(diff_quat.x(), diff_quat.y(), diff_quat.z());
-    if (fabs(diff_quat.w()) < 1.0)
-    {
-        double a = 1;
-        a = acos(diff_quat.w());
-        double sina = sin(a);
-        if (fabs(sina) >= 0.005)
-        {
-            double c = a/sina;
-            vec(0) *= c;
-            vec(1) *= c;
-            vec(2) *= c;
-        }
-    }    
-    return vec.norm();
-}
 
 double ProblemFormulation::getVelocityCost(const std::vector<double>& x, std::vector<double>& grad)
 {
