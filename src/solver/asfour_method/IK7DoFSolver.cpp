@@ -2,7 +2,7 @@
 
 namespace kinematics_library 
 {
-    
+
 Ik7DoFSolver::Ik7DoFSolver (const std::vector<std::pair<double, double> > &jts_limits, const KDL::Tree &kdl_tree, 
                             const KDL::Chain &kdl_chain): jts_limits_(jts_limits)
 {
@@ -272,7 +272,8 @@ int Ik7DoFSolver::ikArm()
     // get the ze_min and ze_max (by solving sqrt(xw^2+yw^2) <= r1+r2)
     double e1[3], e2[3];
     double ze_min, ze_max;
-    if(elbowIsStraight){
+    if(elbowIsStraight)
+    {
         // if we have a straight elbow, the elbow arm_->pos_ine is simple to determine
         double ratio = lu / (lu + lf);
         scaleVec(w_t, ratio, e1);
@@ -284,7 +285,9 @@ int Ik7DoFSolver::ikArm()
         // update the z plane parameters for higher levels
         arm_->ze_out = arm_->ze_max = arm_->ze_min = e1[2];
         
-    }else{
+    }
+    else
+    {
         // if the elbow is not straight, it is way more complex
         
         // first the limits for ze have to be calculated
@@ -292,8 +295,14 @@ int Ik7DoFSolver::ikArm()
         + lu*lu*(-lu*lu+2.0*d*d)  + w_t[0]*w_t[0]*(-w_t[0]*w_t[0] - 2.0*w_t[1]*w_t[1] - 2.0*w_t[2]*w_t[2])
         + w_t[1]*w_t[1] * (-w_t[1]*w_t[1] - 2*w_t[2]*w_t[2]) - w_t[2]*w_t[2]*w_t[2]*w_t[2]));
         
+        if(std::isnan(sqrt_term))
+        {
+            sqrt_term = 0.0;
+        }
+        
         ze_max = (w_t[2]*(lu*lu - lf*lf + d*d) + sqrt_term) / (2.0*d*d);
         ze_min = (w_t[2]*(lu*lu - lf*lf + d*d) - sqrt_term) / (2.0*d*d);
+        //std::cout<<"ze max "<<w_t[2]<<"  "<<lu*lu <<"  "<<lf*lf <<"  "<<d*d<<"  "<<sqrt_term<<" "<<(2.0*d*d)<<std::endl;
         
         // transform the limits in the base coordinate system and update the z plane parameters for higher levels
         arm_->ze_max = ze_max;
@@ -369,12 +378,12 @@ int Ik7DoFSolver::ikArm()
         double C = (r1_sq - r2_sq + d_xy_sq) / 2.0;        
         double minus_p_half = C * w_t[1] / d_xy_sq;
 
-        double e_sqrt_term = minus_p_half*minus_p_half - ((C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq);
+        double e_sqrt_term =  sqrt( minus_p_half*minus_p_half - ((C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq));
 
         e1[2] = ze + ls;
         e2[2] = e1[2];
         
-        if((fabs(w_t[0]) < kinematics_library::ZERO_PRECISION) || (fabs(e_sqrt_term) < kinematics_library::ZERO_PRECISION))
+        if((fabs(w_t[0]) < kinematics_library::ZERO_PRECISION) || (std::isnan(sqrt(e_sqrt_term))) )
         {
             // when the x-component is zero, the normal equations simplify or cannot be used
             e1[1] =  minus_p_half;                     // because the sqrt term is zero
@@ -392,19 +401,20 @@ int Ik7DoFSolver::ikArm()
         else
         {
             // the usual case
-            e1[1] =  minus_p_half + sqrt( minus_p_half*minus_p_half - (C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq);
-            e2[1] =  minus_p_half - sqrt( minus_p_half*minus_p_half - (C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq);
+            e1[1] =  minus_p_half + e_sqrt_term;
+            e2[1] =  minus_p_half - e_sqrt_term;
             
             e1[0] =  (C - w_t[1] * e1[1]) / w_t[0];
             e2[0] =  (C - w_t[1] * e2[1]) / w_t[0];
         }
 
-        // std::cout<<"Ze ="<<ze<<" e[0] "<<e1[0]<<" e1[1]= "<<e1[1]<<"  e1[2] "<<e1[2]<<" e2[0] ="<<e2[0]<<" e2[1]"<<e2[1]<<" e2[2]"<<e2[2]<<std::endl;
+        //std::cout<<"Ze ="<<ze<<" e1[0] "<<e1[0]<<" e1[1]= "<<e1[1]<<"  e1[2] "<<e1[2]<<" e2[0] ="<<e2[0]<<" e2[1]"<<e2[1]<<" e2[2]"<<e2[2]<<std::endl;
         // std::cout<<"e1 ="<<minus_p_half*minus_p_half <<"  "<< (C*C - r1_sq * w_t[0]*w_t[0]) <<" "<< d_xy_sq<<"  "<<(C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq<<std::endl;
         // std::cout<<"b4 sqrt ="<<(minus_p_half*minus_p_half - (C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq)<<std::endl;
         // std::cout<<"sqrt ="<<sqrt( minus_p_half*minus_p_half - (C*C - r1_sq * w_t[0]*w_t[0]) / d_xy_sq)<<std::endl;
         // std::cout<<"Epsilon ="<<kinematics_library::EPSILON<<std::endl;
         // std::cout<<"e_sqrt_term ="<<e_sqrt_term<<std::endl;
+
     }
 
     // determine the vectors of the axis of the coordinate systems at joint4

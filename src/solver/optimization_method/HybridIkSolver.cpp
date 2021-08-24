@@ -16,9 +16,9 @@ double redundantObjectives(const std::vector<double>& x, std::vector<double>& gr
     // calculate the joint movement cost. This cost make sure that the active chain has less joints movement
     //c->joints_mov_cost_    = c->jointMovementCost(x, grad);
     // calculate the overall costs
-    c->overall_costs_       =  c->ik_cost_ ; //+ c->joints_mov_cost_;
+    c->overall_costs_       =  c->ik_cost_ + c->joints_mov_cost_;
     //std::cout<<"Overall Cost = "<<c->overall_costs_<<". ik cost = "<<c->ik_cost_<<" : joints_mov_cost = "<<c->joints_mov_cost_<<"\n"<<std::endl;
-    std::cout<<"Overall Cost = "<<c->overall_costs_<<std::endl;
+    //std::cout<<"Overall Cost = "<<c->overall_costs_<<std::endl;
     return c->overall_costs_;
 }
 
@@ -372,7 +372,7 @@ double HybridIkSolver::calculateIKCost(const KDL::Frame &chain_pose, const KDL::
     }
     else
     {
-        std::cout<<"Ik found for "<<std::endl;
+        //std::cout<<"Ik found for "<<std::endl;
         //std::cout<<"Ik found for "<<kinematic_pose.sourceFrame.c_str()<<"  "<<kinematic_pose.targetFrame.c_str()<<"  "<<kinematic_pose.position<<std::endl;            
         ikcost = passive_chain_costs_weight_.ik;
         for(int kk=0; kk < ik_solution[0].names.size();kk++)
@@ -613,44 +613,43 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
     
     nlopt::result result = nlopt::FAILURE;
     auto start_time = std::chrono::high_resolution_clock::now();
-    for(uint iter = 0; iter < opt_param_.max_iter; iter++)
+
+    try
     {
         result = nlopt_solver_.optimize(opt_var_, minf); 
-        //std::cout<<" minf = "<<minf<<" "<<iter<<"  "<<opt_param_.opt_param.max_iter<<std::endl;
-        //std::cout<<" minf = "<<minf<<" "<<std::endl;
-    }  
-    //std::cout<<"opt var  "<<opt_var_[0]<<" "<<opt_var_[1]<<"  "<<opt_var_[2]<<std::endl;
-    std::cout<<"\nResult "<<result<<" minf="<<minf<<std::endl;
-
-    //nlopt_solver_.set_maxtime(problem_parammax_time);
-
+    }
+    catch(const std::exception& e)
+    {}
+    //std::cout<<"\nResult "<<result<<" minf="<<minf<<std::endl;
     auto finish_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = finish_time - start_time;
     double best_minf = minf;
     std::vector<double> best_opt_var;
     best_opt_var = opt_var_;
 
-    if( (fabs(minf) > 0.01) && (elapsed.count() < opt_param_.max_time) )
+    if( (fabs(minf) > opt_param_.min_cost ) && (elapsed.count() < opt_param_.max_time) )
     {
         do
         {
             for (uint i=0; i< opt_var_.size(); i++)
-                opt_var_[i]=random_dist_.at(i)(random_gen_); 
-            //std::cout<<"loop opt var  "<<opt_var_[0]<<" "<<opt_var_[1]<<"  "<<opt_var_[2]<<std::endl;
-            result = nlopt_solver_.optimize(opt_var_, minf);        
-                
-                   
+                opt_var_[i]=random_dist_.at(i)(random_gen_);
+            try
+            {
+                result = nlopt_solver_.optimize(opt_var_, minf);
+            }
+            catch(const std::exception& e)
+            {}
+
             finish_time = std::chrono::high_resolution_clock::now();
             elapsed = finish_time - start_time;
             //std::cout<<"Result loop "<<result<<" new minf loop="<<minf<<"  "<<elapsed.count()<<"  "<<opt_param_.max_time<<std::endl;
-            //std::cout<<"loop var  "<<opt_var_[0]<<" "<<opt_var_[1]<<"  "<<opt_var_[2]<<std::endl;
             if(minf < best_minf)
             {
                 best_minf = minf;
                 best_opt_var = opt_var_;
             }
 
-            if(fabs(minf) < 0.05)
+            if(fabs(minf) <= opt_param_.min_cost)
             {
                 best_minf = minf;
                 best_opt_var = opt_var_;
@@ -660,7 +659,7 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
     }
 
     //std::cout<<"\n\nNw opt var  "<<opt_var_[0]<<" "<<opt_var_[1]<<"  "<<opt_var_[2]<<std::endl;
-    std::cout<<"New Result "<<result<<" new minf="<<best_minf<<"\n\n"<<std::endl;
+    //std::cout<<"New Result "<<result<<" new minf="<<best_minf<<"\n\n"<<std::endl;
     
     opt_var_ = best_opt_var;
 
@@ -701,7 +700,7 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         //std::cout<<"[MULT_IK]: IK FOUND"<<std::endl;
         return true;
     }
-    else if ((( result == nlopt::STOPVAL_REACHED)  || ( result == nlopt::XTOL_REACHED )) && ( best_minf < 2.0 ) ) 
+    else if ((( result == nlopt::STOPVAL_REACHED)  || ( result == nlopt::XTOL_REACHED )) && ( best_minf <= opt_param_.min_cost ) )
     {
         solver_status.statuscode = KinematicsStatus::APPROX_IK_SOLUTION;
         return true;
