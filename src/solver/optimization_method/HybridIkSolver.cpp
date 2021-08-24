@@ -14,10 +14,11 @@ double redundantObjectives(const std::vector<double>& x, std::vector<double>& gr
     // calculate the inverse kinematics
     c->ik_cost_             = c->calculateOverallIKCost(x, grad);
     // calculate the joint movement cost. This cost make sure that the active chain has less joints movement
-    c->joints_mov_cost_    = c->jointMovementCost(x, grad);
+    //c->joints_mov_cost_    = c->jointMovementCost(x, grad);
     // calculate the overall costs
-    c->overall_costs_       =  c->ik_cost_ + c->joints_mov_cost_;
+    c->overall_costs_       =  c->ik_cost_ ; //+ c->joints_mov_cost_;
     //std::cout<<"Overall Cost = "<<c->overall_costs_<<". ik cost = "<<c->ik_cost_<<" : joints_mov_cost = "<<c->joints_mov_cost_<<"\n"<<std::endl;
+    std::cout<<"Overall Cost = "<<c->overall_costs_<<std::endl;
     return c->overall_costs_;
 }
 
@@ -192,6 +193,18 @@ bool HybridIkSolver::initialiseSolver ( const KinematicsConfig &kinematics_confi
 
     jump_ = std::numeric_limits<float>::epsilon();
 
+    // random generator 
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    // std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    // std::mt19937 gen1;
+    random_gen_ = std::mt19937(rd());
+    
+    // joint limit distributor
+    random_dist_.resize(num_active_joints_);
+    for(size_t i = 0; i < num_active_joints_; i++)
+        random_dist_.at(i) = std::uniform_real_distribution<double>(jts_lower_limit_[i], jts_upper_limit_[i]);
+        
+
     return true;
 }
 
@@ -355,12 +368,23 @@ double HybridIkSolver::calculateIKCost(const KDL::Frame &chain_pose, const KDL::
         double position_cost = positionCost( passive_full_chain_pose_, node_pose, passive_chain_kin_solver_, 
                                              passive_chain_joint_status_, solver_status);
         ikcost += (passive_chain_costs_weight_.position * position_cost);
+        // std::cout<<"NO Ik found for "<<std::endl;
     }
     else
     {
+        std::cout<<"Ik found for "<<std::endl;
         //std::cout<<"Ik found for "<<kinematic_pose.sourceFrame.c_str()<<"  "<<kinematic_pose.targetFrame.c_str()<<"  "<<kinematic_pose.position<<std::endl;            
         ikcost = passive_chain_costs_weight_.ik;
+        for(int kk=0; kk < ik_solution[0].names.size();kk++)
+        {
+            if(std::isnan(ik_solution[0].elements[kk].position))
+            {
+                std::cout<<"NAN "<<ik_solution[0].names.at(kk).c_str()<<"  "<<ik_solution[0].elements[kk].position<<std::endl;
+                exit(0);
+            }
+        }
     }
+    
     return ikcost;
 }
 
@@ -373,7 +397,7 @@ double HybridIkSolver::calculateOverallIKCost(const std::vector<double>& opt_jt_
         for (std::size_t i = 0; i < data_size; i++) 
         {   
             double tt = calculateIKCost( passive_chain_pose_grad_.at(i), node_chain_fk_pose_grad_.at(i), passive_chain_ik_solutions_grad_.at(i));            
-            grad[i] = (((tt- ikcost) / (2.0*jump_)));
+            grad[i] = (((tt- ikcost) / (2.0*jump_)));            
         }
     }
     return ikcost;
@@ -588,39 +612,57 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
     double minf;
     
     nlopt::result result = nlopt::FAILURE;
-    
+    auto start_time = std::chrono::high_resolution_clock::now();
     for(uint iter = 0; iter < opt_param_.max_iter; iter++)
     {
         result = nlopt_solver_.optimize(opt_var_, minf); 
         //std::cout<<" minf = "<<minf<<" "<<iter<<"  "<<opt_param_.opt_param.max_iter<<std::endl;
         //std::cout<<" minf = "<<minf<<" "<<std::endl;
     }  
-    std::cout<<"Result "<<result<<" minf="<<minf<<std::endl;
-    if(fabs(minf) > 0.001)
+    //std::cout<<"opt var  "<<opt_var_[0]<<" "<<opt_var_[1]<<"  "<<opt_var_[2]<<std::endl;
+    std::cout<<"\nResult "<<result<<" minf="<<minf<<std::endl;
+
+    //nlopt_solver_.set_maxtime(problem_parammax_time);
+
+    auto finish_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish_time - start_time;
+    double best_minf = minf;
+    std::vector<double> best_opt_var;
+    best_opt_var = opt_var_;
+
+    if( (fabs(minf) > 0.01) && (elapsed.count() < opt_param_.max_time) )
     {
-        std::random_device rd;  //Will be used to obtain a seed for the random number engine
-        std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-        // joint limit distributor
-        std::vector<std::uniform_real_distribution<double>> dis(jts_upper_limit_.size());
-        for(size_t i = 0; i < jts_upper_limit_.size(); i++)
-        {
-            dis.at(i) = std::uniform_real_distribution<double>(jts_lower_limit_[i], jts_upper_limit_[i]);
-        }
-        for (uint ik=0; ik< 5; ik++)
+        do
         {
             for (uint i=0; i< opt_var_.size(); i++)
-                opt_var_[i]=dis.at(i)(gen); 
-            std::cout<<"opt var  "<<opt_var_[0]<<" "<<opt_var_[1]<<"  "<<opt_var_[2]<<std::endl;
-            result = nlopt_solver_.optimize(opt_var_, minf); 
-            if(fabs(minf) < 0.001)
+                opt_var_[i]=random_dist_.at(i)(random_gen_); 
+            //std::cout<<"loop opt var  "<<opt_var_[0]<<" "<<opt_var_[1]<<"  "<<opt_var_[2]<<std::endl;
+            result = nlopt_solver_.optimize(opt_var_, minf);        
+                
+                   
+            finish_time = std::chrono::high_resolution_clock::now();
+            elapsed = finish_time - start_time;
+            //std::cout<<"Result loop "<<result<<" new minf loop="<<minf<<"  "<<elapsed.count()<<"  "<<opt_param_.max_time<<std::endl;
+            //std::cout<<"loop var  "<<opt_var_[0]<<" "<<opt_var_[1]<<"  "<<opt_var_[2]<<std::endl;
+            if(minf < best_minf)
+            {
+                best_minf = minf;
+                best_opt_var = opt_var_;
+            }
+
+            if(fabs(minf) < 0.05)
+            {
+                best_minf = minf;
+                best_opt_var = opt_var_;
                 break;
-            
-            std::cout<<"Result loop "<<result<<" new minf loop="<<minf<<std::endl;
-        }
-        std::cout<<"New Result "<<result<<" new minf="<<minf<<std::endl;
+            }
+        }while ( (elapsed.count() < opt_param_.max_time) );
     }
 
+    //std::cout<<"\n\nNw opt var  "<<opt_var_[0]<<" "<<opt_var_[1]<<"  "<<opt_var_[2]<<std::endl;
+    std::cout<<"New Result "<<result<<" new minf="<<best_minf<<"\n\n"<<std::endl;
     
+    opt_var_ = best_opt_var;
 
     solution.clear();
     solution.resize(1);
@@ -659,7 +701,7 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         //std::cout<<"[MULT_IK]: IK FOUND"<<std::endl;
         return true;
     }
-    else if ((( result == nlopt::STOPVAL_REACHED)  || ( result == nlopt::XTOL_REACHED )) && (fabs(minf) < 0.001)) 
+    else if ((( result == nlopt::STOPVAL_REACHED)  || ( result == nlopt::XTOL_REACHED )) && ( best_minf < 2.0 ) ) 
     {
         solver_status.statuscode = KinematicsStatus::APPROX_IK_SOLUTION;
         return true;

@@ -138,6 +138,8 @@ class HybridIkSolver : public kinematics_library::AbstractKinematics
         KDL::Chain node_chain_;
         KDL::Frame node_chain_fk_pose_;
         KDLFrameVec node_chain_fk_pose_grad_;
+        std::vector<std::uniform_real_distribution<double>> random_dist_;
+        std::mt19937 random_gen_; //Standard mersenne_twister_engine seeded with rd()
 
         void initialiseProblem(const OptParamConfig &problem_param);        
 
