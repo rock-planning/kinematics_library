@@ -60,7 +60,7 @@ else(${TRAC_IK_FOUND})
 endif()
 
 add_definitions(-DTRAC_IK_LIB_FOUND=${TRAC_IK_LIB_FOUND})
-message("trac_ik = ${TRAC_IK_LIB_FOUND}")
+#message("trac_ik = ${TRAC_IK_LIB_FOUND}")
 
 # if nlopt is found, add it to the kinematic factory
 set(OPT_LIB_FOUND false)  #This variable need to be defined here, so that C++ complier knows about it.
@@ -78,10 +78,15 @@ if(${NLOPT_FOUND})
     list(APPEND PKGCONFIG_REQUIRES nlopt)
 else(${NLOPT_FOUND})
     message ("NLOPT not found !")
+    message ("-------------------------------------------------------------------------")
+    message (" ")
+    message ("Optimization-based kinematics libraries (OptIK & HybridIK) won't be build")
+    message (" ")
+    message ("-------------------------------------------------------------------------")
 endif()
 
 add_definitions(-DOPT_LIB_FOUND=${OPT_LIB_FOUND})
-message("nlopt = ${OPT_LIB_FOUND}")
+#message("nlopt = ${OPT_LIB_FOUND}")
 
 
 add_library(kinematics_library SHARED ${SRCS})
