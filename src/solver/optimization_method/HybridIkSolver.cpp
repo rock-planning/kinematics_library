@@ -78,7 +78,7 @@ bool HybridIkSolver::loadKinematicConfig( const kinematics_library::KinematicsCo
         return false;
     }
 
-    // get the optimization relatec config
+    // get the optimization related config
     const YAML::Node& opt_config_node = input_config["opt_config"];
     
     if(!handle_kinematic_config::getOptParamConfig(opt_config_node, opt_param_))
@@ -89,11 +89,11 @@ bool HybridIkSolver::loadKinematicConfig( const kinematics_library::KinematicsCo
     }
 
     // get the active and passive chain weight
-    const YAML::Node& hybrid_ik_config_node = input_config["hybrid_ik_config"];
+    const YAML::Node& cost_config_node = input_config["cost_config"];
     
-    if(!handle_kinematic_config::getCostsWeightConfig(hybrid_ik_config_node, "passive_", passive_chain_costs_weight_))
+    if(!handle_kinematic_config::getCostsWeightConfig(cost_config_node, chain_costs_weight_))
     {
-        LOG_ERROR("[HybridIkSolver]: Unable to read passive chain cost weights from kinematic config file");
+        LOG_ERROR("[HybridIkSolver]: Unable to read chain cost weights from kinematic config file");
         kinematics_status.statuscode = kinematics_library::KinematicsStatus::CONFIG_READ_ERROR;        
         return false;
     }
@@ -104,7 +104,7 @@ bool HybridIkSolver::loadKinematicConfig( const kinematics_library::KinematicsCo
 
     const YAML::Node& kinematics_config_node = input_config["passive_chain_config"];
 
-    if( !handle_kinematic_config::getKinematicsConfig(kinematics_config_node, passive_chain_config))
+    if( !handle_kinematic_config::getPassiveChainConfig(kinematics_config_node, passive_chain_config))
     {
         LOG_ERROR("[HybridIkSolver]: Unable to read kinematic config for passive chain");
         kinematics_status.statuscode = kinematics_library::KinematicsStatus::CONFIG_READ_ERROR;
@@ -112,6 +112,7 @@ bool HybridIkSolver::loadKinematicConfig( const kinematics_library::KinematicsCo
     }
     // Need to find a nice way to handle this abs path
     passive_chain_config.solver_config_abs_path = kinematics_config.solver_config_abs_path;
+    passive_chain_config.urdf_file = kinematics_config.urdf_file;
 
     passive_chain_kin_solver_ = nullptr;
     passive_chain_kin_solver_ = kinematics_factory.getKinematicsSolver (passive_chain_config, kinematics_status );
@@ -124,13 +125,14 @@ bool HybridIkSolver::loadKinematicConfig( const kinematics_library::KinematicsCo
     // now the active chain
     const YAML::Node& active_chain_node = input_config["active_chain_config"];
 
-    if( !handle_kinematic_config::getKinematicsConfig(active_chain_node, active_chain_config))
+    if( !handle_kinematic_config::getActiveChainConfig(active_chain_node, active_chain_config))
     {
         LOG_ERROR("[HybridIkSolver]: Unable to read kinematic config for active chain");
         kinematics_status.statuscode = kinematics_library::KinematicsStatus::CONFIG_READ_ERROR;
         return false;
     }
-    active_chain_config.solver_config_abs_path = kinematics_config.solver_config_abs_path;
+    active_chain_config.solver_config_abs_path  = kinematics_config.solver_config_abs_path;
+    active_chain_config.urdf_file               = kinematics_config.urdf_file;
 
     if ( !kinematics_factory.initialise ( active_chain_config, kinematics_status ) )
         return false;    
@@ -281,7 +283,7 @@ double HybridIkSolver::jointMovementCost(const std::vector<double> &opt_jt_ang, 
 
     for(size_t i = 0; i < opt_jt_ang.size(); i++)
     {
-        cost_vec[i] = fabs(opt_jt_ang[i] * opt_param_.joint_movement_weight);
+        cost_vec[i] = fabs(opt_jt_ang[i] * chain_costs_weight_.joint_movement);
         cost += cost_vec[i] ;
     }
 
@@ -291,7 +293,7 @@ double HybridIkSolver::jointMovementCost(const std::vector<double> &opt_jt_ang, 
 
         for (std::size_t i=0; i<data_size; i++) 
         {
-            grad[i] +=  (((fabs(jt_ang_grad_.at(i).at(i))* opt_param_.joint_movement_weight )- cost_vec[i]) / (2.0*jump_));            
+            grad[i] +=  (((fabs(jt_ang_grad_.at(i).at(i))* chain_costs_weight_.joint_movement)- cost_vec[i]) / (2.0*jump_));            
         }
     }
     return cost;
@@ -367,14 +369,14 @@ double HybridIkSolver::calculateIKCost(const KDL::Frame &chain_pose, const KDL::
     {
         double position_cost = positionCost( passive_full_chain_pose_, node_pose, passive_chain_kin_solver_, 
                                              passive_chain_joint_status_, solver_status);
-        ikcost += (passive_chain_costs_weight_.position * position_cost);
+        ikcost += (chain_costs_weight_.position * position_cost);
         // std::cout<<"NO Ik found for "<<std::endl;
     }
     else
     {
         //std::cout<<"Ik found for "<<std::endl;
         //std::cout<<"Ik found for "<<kinematic_pose.sourceFrame.c_str()<<"  "<<kinematic_pose.targetFrame.c_str()<<"  "<<kinematic_pose.position<<std::endl;            
-        ikcost = passive_chain_costs_weight_.ik;
+        ikcost = chain_costs_weight_.ik;
         for(int kk=0; kk < ik_solution[0].names.size();kk++)
         {
             if(std::isnan(ik_solution[0].elements[kk].position))

@@ -93,7 +93,9 @@ bool getKdlConfig(const YAML::Node &yaml_data, kinematics_library::KdlConfig &co
     bool getOptIkGrooveParam(const YAML::Node &yaml_data, const std::string &cost_name, kinematics_library::GrooveVariable &groove_var);
     bool getOptIKConfig(const YAML::Node &yaml_data, kinematics_library::ProblemParameters &config);
     bool getOptParamConfig(const YAML::Node &yaml_data, kinematics_library::OptParamConfig &config);
-    bool getCostsWeightConfig(const YAML::Node &yaml_data, const std::string &chain, kinematics_library::CostsWeight &weight);
+    bool getCostsWeightConfig(const YAML::Node &yaml_data, kinematics_library::CostsWeight &weight);
+    bool getPassiveChainConfig(const YAML::Node &yaml_data, kinematics_library::KinematicsConfig &config);
+    bool getActiveChainConfig(const YAML::Node &yaml_data, kinematics_library::KinematicsConfig &config);
 #endif
 
 

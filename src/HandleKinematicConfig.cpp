@@ -241,10 +241,11 @@ bool getOptIKConfig(const YAML::Node &yaml_data, kinematics_library::ProblemPara
     return true;
 }
 
-bool getCostsWeightConfig(const YAML::Node &yaml_data, const std::string &chain, kinematics_library::CostsWeight &weight)
+bool getCostsWeightConfig(const YAML::Node &yaml_data, kinematics_library::CostsWeight &weight)
 {   
-    if( (!handle_kinematic_config::getValue<double>(yaml_data, chain+"ik_cost_weight", weight.ik)) ||        
-        (!handle_kinematic_config::getValue<double>(yaml_data, chain+"position_cost_weight", weight.position)) )
+    if( (!handle_kinematic_config::getValue<double>(yaml_data, "ik_cost_weight", weight.ik)) ||        
+        (!handle_kinematic_config::getValue<double>(yaml_data, "position_cost_weight", weight.position)) ||
+        (!handle_kinematic_config::getValue<double>(yaml_data, "joint_movement_cost_weight", weight.joint_movement)) )
         return false;   
 
     return true;   
@@ -252,7 +253,7 @@ bool getCostsWeightConfig(const YAML::Node &yaml_data, const std::string &chain,
 
 bool getOptParamConfig(const YAML::Node &yaml_data, kinematics_library::OptParamConfig &config)
 {    
-    if( (!handle_kinematic_config::getValue<double>(yaml_data, "joint_movement_cost_weight", config.joint_movement_weight)) ||
+    if( (!handle_kinematic_config::getValue<double>(yaml_data, "max_iter", config.max_iter)) ||
         (!handle_kinematic_config::getValue<double>(yaml_data, "max_time", config.max_time)) ||
         (!handle_kinematic_config::getValue<double>(yaml_data, "abs_tol", config.abs_tol)) ||
         (!handle_kinematic_config::getValue<double>(yaml_data, "rel_tol", config.rel_tol)) || 
@@ -260,6 +261,30 @@ bool getOptParamConfig(const YAML::Node &yaml_data, kinematics_library::OptParam
         return false;
 
     return true;        
+}
+
+bool getPassiveChainConfig(const YAML::Node &yaml_data, kinematics_library::KinematicsConfig &config)
+{
+
+    if( (!handle_kinematic_config::getValue<std::string>(yaml_data, "config_name", config.config_name)) ||
+        (!handle_kinematic_config::getValue<std::string>(yaml_data, "base_name", config.base_name)) ||
+        (!handle_kinematic_config::getValue<std::string>(yaml_data, "tip_name", config.tip_name)) ||
+        (!handle_kinematic_config::getValue<kinematics_library::KinematicSolver>(yaml_data, "kinematic_solver", config.kinematic_solver)) ||        
+        (!handle_kinematic_config::getValue<std::string>(yaml_data, "solver_config_filename", config.solver_config_filename)) )
+        return false;    
+
+    return true;
+}
+
+bool getActiveChainConfig(const YAML::Node &yaml_data, kinematics_library::KinematicsConfig &config)
+{
+
+    if( (!handle_kinematic_config::getValue<std::string>(yaml_data, "config_name", config.config_name)) ||
+        (!handle_kinematic_config::getValue<std::string>(yaml_data, "base_name", config.base_name)) ||
+        (!handle_kinematic_config::getValue<std::string>(yaml_data, "tip_name", config.tip_name)) )
+        return false; 
+
+    return true;
 }
 #endif
 

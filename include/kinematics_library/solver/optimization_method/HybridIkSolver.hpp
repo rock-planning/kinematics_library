@@ -24,15 +24,6 @@
 
 namespace kinematics_library
 {
-
-struct HybridIkConfig
-{
-    kinematics_library::KinematicsConfig passive_chain_config;
-    kinematics_library::KinematicsConfig active_chain_config;
-    kinematics_library::OptParamConfig opt_config;
-    CostsWeight passive_chain_costs_weight;
-};
-
 /**
  * @class HybridIkSolver
  * @brief Kinematics solvers for solving different task.
@@ -116,7 +107,7 @@ class HybridIkSolver : public kinematics_library::AbstractKinematics
         std::vector<std::pair<double,double> > active_chain_jts_limits_;
         std::vector< double > jts_lower_limit_, jts_upper_limit_;
         OptParamConfig opt_param_;
-        CostsWeight passive_chain_costs_weight_;
+        CostsWeight chain_costs_weight_;
         kinematics_library::AbstractKinematicPtr passive_chain_kin_solver_;
         KDL::ChainFkSolverPos_recursive* passive_chain_fk_solver_;
         KDL::Frame passive_chain_target_pose_;
