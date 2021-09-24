@@ -347,10 +347,14 @@ double HybridIkSolver::positionCost( const KDL::Frame& target_pose, const KDL::F
         return 0;
     }    
     KDL::Frame fk_pose_kdl;
-    kinematics_library::rbsToKdl(fk_pose, fk_pose_kdl);
-    
-    double position_cost = (target_pose.p - (node_pose*fk_pose_kdl).p).Norm();
-    return position_cost;
+    kinematics_library::rbsToKdl(fk_pose, fk_pose_kdl);      
+
+    return (target_pose.p - (node_pose*fk_pose_kdl).p).Norm();
+}
+
+double HybridIkSolver::positionCost( const KDL::Frame& target_pose, const KDL::Frame& node_pose)
+{
+    return ((target_pose.p - node_pose.p).Norm());
 }
 
 double HybridIkSolver::calculateIKCost(const KDL::Frame &chain_pose, const KDL::Frame &node_pose, IkSolutions &ik_solution)
@@ -367,15 +371,11 @@ double HybridIkSolver::calculateIKCost(const KDL::Frame &chain_pose, const KDL::
     
     if(!passive_chain_kin_solver_->solveIK(kinematic_pose, passive_chain_joint_status_, ik_solution, solver_status)) 
     {
-        double position_cost = positionCost( passive_full_chain_pose_, node_pose, passive_chain_kin_solver_, 
-                                             passive_chain_joint_status_, solver_status);
-        ikcost += (chain_costs_weight_.position * position_cost);
-        // std::cout<<"NO Ik found for "<<std::endl;
+        double position_cost = positionCost( passive_full_chain_pose_, node_pose);
+        ikcost += (chain_costs_weight_.position * position_cost);        
     }
     else
-    {
-        //std::cout<<"Ik found for "<<std::endl;
-        //std::cout<<"Ik found for "<<kinematic_pose.sourceFrame.c_str()<<"  "<<kinematic_pose.targetFrame.c_str()<<"  "<<kinematic_pose.position<<std::endl;            
+    {        
         ikcost = chain_costs_weight_.ik;
         for(int kk=0; kk < ik_solution[0].names.size();kk++)
         {
@@ -659,10 +659,7 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
             }
         }while ( (elapsed.count() < opt_param_.max_time) );
     }
-
-    //std::cout<<"\n\nNw opt var  "<<opt_var_[0]<<" "<<opt_var_[1]<<"  "<<opt_var_[2]<<std::endl;
-    //std::cout<<"New Result "<<result<<" new minf="<<best_minf<<"\n\n"<<std::endl;
-    
+  
     opt_var_ = best_opt_var;
 
     solution.clear();
@@ -672,8 +669,7 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
     {
         base::JointState joint_state = base::JointState::Position(opt_var_[i]);
         solution[0].elements.push_back(joint_state);
-        solution[0].names.push_back(jt_names_.at(i));
-        //std::cout<<jt_names_.at(i).c_str()<<"  "<<opt_var_[i]<<std::endl;
+        solution[0].names.push_back(jt_names_.at(i));        
         if(std::isnan(opt_var_[i]))
         {
             std::cout<<"NAN "<<jt_names_.at(i).c_str()<<"  "<<opt_var_[i]<<std::endl;

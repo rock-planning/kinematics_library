@@ -147,6 +147,8 @@ class HybridIkSolver : public kinematics_library::AbstractKinematics
 
         double positionCost( const KDL::Frame& target_pose,  const KDL::Frame& node_pose, const kinematics_library::AbstractKinematicPtr &kinematic_solver, 
                                         const base::samples::Joints &joint_status, kinematics_library::KinematicsStatus &solver_status);
+
+        double positionCost( const KDL::Frame& target_pose, const KDL::Frame& node_pose);
 };
 }
 #endif
