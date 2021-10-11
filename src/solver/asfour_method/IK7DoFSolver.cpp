@@ -703,8 +703,8 @@ void Ik7DoFSolver::setDesiredPose(const base::samples::RigidBodyState& rbs_pose,
     eigenMat3x3ToArray(rot_eigen, rot_mat);      
 }
 
-base::samples::Joints Ik7DoFSolver::listJointsInDesiredOrder(double* joint_values, const std::vector< std::__cxx11::string >& desired_joint_names_order, 
-                                                                const std::vector< std::__cxx11::string >& actual_joint_names_order)
+base::samples::Joints Ik7DoFSolver::listJointsInDesiredOrder(double* joint_values, const std::vector< std::string >& desired_joint_names_order,
+                                                                const std::vector< std::string >& actual_joint_names_order)
 {   
 
     assert(desired_joint_names_order.size() == actual_joint_names_order);
