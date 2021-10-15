@@ -132,7 +132,7 @@ bool Ik7DoFSolver::solveIK ( const base::samples::RigidBodyState &target_pose, c
             else
             {
                 //std::cout<<"invalid_solution_list"<<std::endl;
-                solver_status.statuscode = KinematicsStatus::NO_IK_SOLUTION;
+                solver_status.statuscode = KinematicsStatus::IK_JOINTLIMITS_VIOLATED;
                 return false;
             }
         }      
