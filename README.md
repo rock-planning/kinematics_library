@@ -1,9 +1,7 @@
 kinematics_library
 =============
 
-A framework for handling serial robot kinematics. This framework contains state of the art kinematic solvers
-such as kdl, ikfast, trac_ik, etc.. The aim of this framework is to offer the user different kinematic solvers by just changing the 
-configuration.
+A framework for handling serial robot kinematics. This framework contains the following kinematic solvers: kdl, trac_ik, ikfast, analytical solver for 7 dof manipulator and an optimisation-based kinematic solvers. The aim of this framework is to offer the user to use different types kinematic solvers by just changing the configuration.
 
 ![kinematics](kinematics.png)
 
