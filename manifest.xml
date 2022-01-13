@@ -1,6 +1,6 @@
 <package>
     <description brief="Kinematics library">A framework for handling serial robot kinematics. This framework contains state of the art kinematic solvers
-    such as kdl, ikfast, and trac_ik. This framework can handle any type of serial robots.</description>
+    such as kdl, tracik, ikfast, analytical solver for 7 DOF manipulator and an optimisation-based solver. This framework can handle any type of serial robots.</description>
     <author>Sankaranarayanan Natarajan/sankar.natarajan@dfki.de</author>
     <!-- Use the short version name from:https://spdx.org/licenses/ -->
     <license></license>
