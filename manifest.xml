@@ -17,7 +17,7 @@
     <depend package="libnlopt-dev" optional ="1"/>
     <name>kinematics_library</name>
     <maintainer>Sankar/sankar.natarajan@dfki.de</maintainer>
-    <stage>-1</stage>
+    <stage>0</stage>
     <keywords>
         <keyword>control</keyword>
     </keywords>
