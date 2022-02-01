@@ -293,7 +293,7 @@ double HybridIkSolver::jointMovementCost(const std::vector<double> &opt_jt_ang, 
 
         for (std::size_t i=0; i<data_size; i++) 
         {
-            grad[i] +=  (((fabs(jt_ang_grad_.at(i).at(i))* chain_costs_weight_.joint_movement)- cost_vec[i]) / (2.0*jump_));            
+            grad[i] +=  (((fabs(jt_ang_grad_.at(i).at(i))* chain_costs_weight_.joint_movement)- cost_vec[i]) / (2.0*jump_));
         }
     }
     return cost;
