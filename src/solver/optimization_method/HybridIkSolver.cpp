@@ -709,12 +709,11 @@ bool HybridIkSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         //std::cout<<"[MULT_IK]: IK_TIMEOUT"<<std::endl;
         return false;
     }
-    else
-    {
-        solver_status.statuscode = kinematics_library::KinematicsStatus::NO_IK_SOLUTION;
-        //std::cout<<"[MULT_IK]: NO_IK_SOLUTION"<<std::endl;
-        return false;
-    }
+    
+    solver_status.statuscode = kinematics_library::KinematicsStatus::NO_IK_SOLUTION;
+    //std::cout<<"[MULT_IK]: NO_IK_SOLUTION"<<std::endl;
+    return false;
+
 }
 
 bool HybridIkSolver::solveFK (const base::samples::Joints &joint_angles, base::samples::RigidBodyState &fk_pose, 

@@ -231,12 +231,14 @@ bool getOptIKConfig(const YAML::Node &yaml_data, kinematics_library::ProblemPara
         (!getOptIkGrooveParamAndWeight(yaml_data, "orientation_cost", kinematics_library::ORIENTATION_COST, config)) ||
         (!getOptIkGrooveParamAndWeight(yaml_data, "velocity_cost", kinematics_library::VELOCITY_COST, config)) ||
         (!getOptIkGrooveParamAndWeight(yaml_data, "acceleration_cost", kinematics_library::ACCELERATION_COST, config)) ||
-        (!getOptIkGrooveParamAndWeight(yaml_data, "jerk_cost", kinematics_library::JERK_COST, config)) ||
-        (!handle_kinematic_config::getValue<double>(yaml_data, "max_time", config.max_time)) ||
-        (!handle_kinematic_config::getValue<double>(yaml_data, "max_iter", config.max_iter)) ||
-        (!handle_kinematic_config::getValue<double>(yaml_data, "abs_tol", config.abs_tol)) || 
-        (!handle_kinematic_config::getValue<double>(yaml_data, "rel_tol", config.rel_tol)))
+        (!getOptIkGrooveParamAndWeight(yaml_data, "jerk_cost", kinematics_library::JERK_COST, config)) )
             return false;
+    
+    // get the optimization related config
+    const YAML::Node& opt_config_node = yaml_data["opt_config"];
+    
+    if(!handle_kinematic_config::getOptParamConfig(opt_config_node, config.opt_config))
+        return false;
     
     return true;
 }
@@ -253,8 +255,7 @@ bool getCostsWeightConfig(const YAML::Node &yaml_data, kinematics_library::Costs
 
 bool getOptParamConfig(const YAML::Node &yaml_data, kinematics_library::OptParamConfig &config)
 {    
-    if( (!handle_kinematic_config::getValue<double>(yaml_data, "max_iter", config.max_iter)) ||
-        (!handle_kinematic_config::getValue<double>(yaml_data, "max_time", config.max_time)) ||
+    if( (!handle_kinematic_config::getValue<double>(yaml_data, "max_time", config.max_time)) ||
         (!handle_kinematic_config::getValue<double>(yaml_data, "abs_tol", config.abs_tol)) ||
         (!handle_kinematic_config::getValue<double>(yaml_data, "rel_tol", config.rel_tol)) || 
         (!handle_kinematic_config::getValue<double>(yaml_data, "min_cost", config.min_cost)) )

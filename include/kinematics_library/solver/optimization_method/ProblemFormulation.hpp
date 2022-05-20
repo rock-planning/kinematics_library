@@ -10,7 +10,7 @@
 // #include <robot_model/RobotModel.hpp>
 #include <kinematics_library/KinematicsConfig.hpp>
 #include "kinematics_library/abstract/AbstractKinematics.hpp"
-// #include <collision_detection/CollisionFactory.hpp>
+#include <kinematics_library/solver/optimization_method/OptConfig.hpp>
 
 //#include <base/samples/RigidBodyState.hpp>
 #include <base/JointLimits.hpp>
@@ -54,10 +54,7 @@ struct ProblemParameters
 {
     std::map<CostType, GrooveVariable> groove_param;
     std::map<CostType, double> costs_weight;
-    double max_time;
-    double max_iter;
-    double abs_tol; // absolute tolerance on optimization parameter 
-    double rel_tol; // absolute tolerance on optimization parameter 
+    OptParamConfig opt_config;
 };
 
     

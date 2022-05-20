@@ -13,9 +13,11 @@
 #define _OPTSOLVER_HPP_
 
 #include <vector>
+#include <cmath>
 #include <boost/function.hpp>
 #include <string>
 #include <iostream>
+#include <chrono>
 
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <nlopt.hpp>
@@ -79,11 +81,14 @@ class OptSolver : public AbstractKinematics
         std::vector<double> opt_var_;
         std::vector<std::pair<double,double> > jts_limits_;
         ProblemParameters opt_param_;
+        std::vector<std::uniform_real_distribution<double>> random_dist_;
+        std::mt19937 random_gen_; //Standard mersenne_twister_engine seeded with rd()
 
         bool initialiseProblem(const ProblemParameters &problem_param);
 
         void getJointLimits(const std::vector<std::pair<double, double> > jts_limits, 
                             std::vector< double > &lower_limits, std::vector< double > &upper_limits);
+                            
 
 };
 }

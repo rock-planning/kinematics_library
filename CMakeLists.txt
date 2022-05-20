@@ -1,6 +1,13 @@
 # CMakeLists.txt has to be located in the project folder and cmake has to be
 # executed from 'project/build' with 'cmake ../'.
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.6)
+project(kinematics_librar
+        VERSION 0.1
+        DESCRIPTION "A framework for handling serial robot kinematics")
 find_package(Rock)
-rock_init(kinematics_library 0.1)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+rock_init()
 rock_standard_layout()

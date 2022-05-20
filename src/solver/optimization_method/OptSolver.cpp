@@ -27,6 +27,7 @@ OptSolver::OptSolver ( const std::vector<std::pair<double, double> > &jts_limits
     kdl_chain_           = kdl_chain;
     kdl_kinematic_chain_ = kdl_kinematic_chain;
     jts_limits_          = jts_limits;
+
 }
 
 OptSolver::~OptSolver()
@@ -99,13 +100,53 @@ bool OptSolver::solveIK (const base::samples::RigidBodyState &target_pose,
     double minf;
     
     nlopt::result result = nlopt::FAILURE;
-    for(uint iter = 0; iter < opt_param_.max_iter; iter++)
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    try
     {
         result = nlopt_solver_.optimize(opt_var_, minf); 
-    //   std::cout<<"minf = "<<minf<<std::endl;
+    }
+    catch(const std::exception& e)
+    {}
+
+    auto finish_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish_time - start_time;
+    double best_minf = minf;
+    std::vector<double> best_opt_var;
+    best_opt_var = opt_var_;
+
+    if( (fabs(minf) > opt_param_.opt_config.min_cost ) && (elapsed.count() < opt_param_.opt_config.max_time) )
+    {
+        do
+        {
+            for (uint i=0; i< opt_var_.size(); i++)
+                opt_var_[i]=random_dist_.at(i)(random_gen_);
+            try
+            {
+                result = nlopt_solver_.optimize(opt_var_, minf);
+            }
+            catch(const std::exception& e)
+            {}
+
+            finish_time = std::chrono::high_resolution_clock::now();
+            elapsed = finish_time - start_time;
+            //std::cout<<"Result loop "<<result<<" new minf loop="<<minf<<"  "<<elapsed.count()<<"  "<<opt_param_.max_time<<std::endl;
+            if(minf < best_minf)
+            {
+                best_minf = minf;
+                best_opt_var = opt_var_;
+            }
+
+            if(fabs(minf) <= opt_param_.opt_config.min_cost)
+            {
+                best_minf = minf;
+                best_opt_var = opt_var_;
+                break;
+            }
+        }while ( (elapsed.count() < opt_param_.opt_config.max_time) );
     }
 
-    //std::cout<<"Result "<<result<<" minf="<<minf<<std::endl;
+    opt_var_ = best_opt_var;
 
     solution.resize(1);
     solution[0].resize(number_of_joints_);
@@ -116,26 +157,25 @@ bool OptSolver::solveIK (const base::samples::RigidBodyState &target_pose,
         solution[0].elements.at(i).speed = 0.0;
     }
 
-    if (( result == nlopt::SUCCESS ) )
+    if ( result == nlopt::SUCCESS )
     {
-        solver_status.statuscode = KinematicsStatus::IK_FOUND;
+        solver_status.statuscode = kinematics_library::KinematicsStatus::IK_FOUND;
         return true;
     }
-    else if (( result == nlopt::STOPVAL_REACHED)  || ( result == nlopt::XTOL_REACHED ))
+    else if ((( result == nlopt::STOPVAL_REACHED)  || ( result == nlopt::XTOL_REACHED )) && ( best_minf <= opt_param_.opt_config.min_cost ) )
     {
         solver_status.statuscode = KinematicsStatus::APPROX_IK_SOLUTION;
         return true;
     }
     else if (( result == nlopt::MAXTIME_REACHED ) || ( result == nlopt::MAXEVAL_REACHED ))
     {
-        solver_status.statuscode = KinematicsStatus::IK_TIMEOUT;
+        solver_status.statuscode = kinematics_library::KinematicsStatus::IK_TIMEOUT;
         return false;
     }
-    else
-    {
-        solver_status.statuscode = KinematicsStatus::NO_IK_SOLUTION;
-        return false;
-    }
+
+    solver_status.statuscode = kinematics_library::KinematicsStatus::NO_IK_SOLUTION;
+    return false;
+
 }
 
 bool OptSolver::solveFK (const base::samples::Joints &joint_angles, base::samples::RigidBodyState &fk_pose, KinematicsStatus &solver_status )
@@ -168,10 +208,10 @@ bool OptSolver::initialiseProblem(const ProblemParameters &problem_param)
     nlopt_solver_.set_upper_bounds(upper_limits);
     nlopt_solver_.set_lower_bounds(lower_limits);
 
-    nlopt_solver_.set_maxtime(problem_param.max_time);
+    nlopt_solver_.set_maxtime(problem_param.opt_config.max_time);
 
-    nlopt_solver_.set_xtol_abs(problem_param.abs_tol);
-    nlopt_solver_.set_xtol_rel(problem_param.rel_tol);
+    nlopt_solver_.set_xtol_abs(problem_param.opt_config.abs_tol);
+    nlopt_solver_.set_xtol_rel(problem_param.opt_config.rel_tol);
 
     // objectives
     nlopt_solver_.set_min_objective(objectives, this);
@@ -180,6 +220,17 @@ bool OptSolver::initialiseProblem(const ProblemParameters &problem_param)
     nlopt_solver_.add_inequality_mconstraint(jointsLimitsConstraint, this, tolerance);
 
     opt_var_.resize(number_of_joints_);
+
+    // random generator 
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    // std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    // std::mt19937 gen1;
+    random_gen_ = std::mt19937(rd());
+    
+    // joint limit distributor
+    random_dist_.resize(number_of_joints_);
+    for(size_t i = 0; i < number_of_joints_; i++)
+        random_dist_.at(i) = std::uniform_real_distribution<double>(lower_limits[i], upper_limits[i]);
 
     // initialise the problem formulation.
     // It sets the parameters for different costs

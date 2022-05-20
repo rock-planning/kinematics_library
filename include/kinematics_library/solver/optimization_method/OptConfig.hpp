@@ -3,6 +3,7 @@
 
 
 #include <iostream>
+#include <random>
 
 namespace kinematics_library
 {
