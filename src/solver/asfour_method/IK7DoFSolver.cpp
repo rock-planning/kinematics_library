@@ -101,17 +101,17 @@ bool Ik7DoFSolver::solveIK ( const base::samples::RigidBodyState &target_pose, c
     if(success ==1)
     {
 
-        base::samples::Joints joints_least_effort = listJointsInDesiredOrder(arm_->ja_ik_out, jt_names_, ik7dof_config_.joint_names);
+        // base::samples::Joints joints_least_effort = listJointsInDesiredOrder(arm_->ja_ik_out, jt_names_, ik7dof_config_.joint_names);
 
-        if(validateJointLimits(joints_least_effort,  jts_limits_ ) && !joints_least_effort.names.empty())
-        {
-            solution.resize(1);
-            joints_least_effort.time = target_pose.time;
-            solution[0] = joints_least_effort;
-            solver_status.statuscode = KinematicsStatus::IK_FOUND;
-            return true;
-        }
-        else
+        // if(validateJointLimits(joints_least_effort,  jts_limits_ ) && !joints_least_effort.names.empty())
+        // {
+        //     solution.resize(1);
+        //     joints_least_effort.time = target_pose.time;
+        //     solution[0] = joints_least_effort;
+        //     solver_status.statuscode = KinematicsStatus::IK_FOUND;
+        //     return true;
+        // }
+        // else
         {
             std::vector<base::samples::Joints> valid_solution_list;
             for(unsigned short i = 0; i < 8; ++i)
@@ -127,6 +127,17 @@ bool Ik7DoFSolver::solveIK ( const base::samples::RigidBodyState &target_pose, c
             {
                 solution = pickOptimalSolution(valid_solution_list, joint_status);
                 solver_status.statuscode = KinematicsStatus::IK_FOUND;
+                // std::cout<<"Current status = ";
+                // for(int i = 0; i < 7; i++)
+                //     std::cout<<joint_status.elements.at(i).position<<"  ";
+                // std::cout<<std::endl;
+                // std::cout<<"Possible sol = ";
+                // for(int i = 0; i < solution.size(); i++)
+                // {
+                //    for(int j = 0; j < 7; j++)
+                //     std::cout<<solution.at(i).elements.at(j).position<<"  ";
+                // std::cout<<std::endl;
+                // }
                 return true;
             }
             else
@@ -642,31 +653,31 @@ int Ik7DoFSolver::ikArm()
         }   // end inverse shoulder
     }     // end elbow up/down
     
-    // find the best solution
-    unsigned short best_solution = 1;
-    double min_effort = 10000;
+    // // find the best solution
+    // unsigned short best_solution = 1;
+    // double min_effort = 10000;
     
-    unsigned short sol_nr;
-    for(sol_nr = 0; sol_nr < 8; sol_nr++)
-    {
-        double effort = 0.0;
-        unsigned short dof_nr;
-        for(dof_nr = 0; dof_nr < 7; dof_nr++)
-        {
-            effort = effort + fabs(arm_->ja_all[sol_nr][dof_nr] - arm_->ja_last[dof_nr]);
-        }
+    // unsigned short sol_nr;
+    // for(sol_nr = 0; sol_nr < 8; sol_nr++)
+    // {
+    //     double effort = 0.0;
+    //     unsigned short dof_nr;
+    //     for(dof_nr = 0; dof_nr < 7; dof_nr++)
+    //     {
+    //         effort = effort + fabs(arm_->ja_all[sol_nr][dof_nr] - arm_->ja_last[dof_nr]);
+    //     }
     
-        if(effort < min_effort)
-        {
-            min_effort = effort;
-            best_solution = sol_nr;
-        }
-    }
-    unsigned short dof_nr;
-    for(dof_nr = 0; dof_nr < 7; dof_nr++)
-    {
-        arm_->ja_ik_out[dof_nr] = arm_->ja_all[best_solution][dof_nr];
-    }
+    //     if(effort < min_effort)
+    //     {
+    //         min_effort = effort;
+    //         best_solution = sol_nr;
+    //     }
+    // }
+    // unsigned short dof_nr;
+    // for(dof_nr = 0; dof_nr < 7; dof_nr++)
+    // {
+    //     arm_->ja_ik_out[dof_nr] = arm_->ja_all[best_solution][dof_nr];
+    // }
     return 1;
 }
 

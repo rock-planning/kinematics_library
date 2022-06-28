@@ -82,7 +82,7 @@ class KdlSolver : public AbstractKinematics
         KDL::Chain kdl_kinematic_chain_;
         KDL::ChainFkSolverPos_recursive *fk_solverPos_;
         KDL::ChainIkSolverPos_NR_JL *ik_solverPosJL_;
-        KDL::ChainIkSolverVel_pinv *ik_solverVelPinv_;        
+        KDL::ChainIkSolverVel_pinv *ik_solverVelPinv_;
         KDL::JntArray kdl_jtArray_, kdl_ik_jtArray_;
         KDL::JntArray min_jtLimits_, max_jtLimits_;
         KDL::Frame kdl_frame_;        
