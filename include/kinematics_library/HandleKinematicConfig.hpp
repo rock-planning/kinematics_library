@@ -20,6 +20,101 @@
 #include "kinematics_library/solver/asfour_method/IK7DoFSolver.hpp"
 #include "kinematics_library/solver/optimization_method/OptConfig.hpp"
 
+#if(TRAC_IK_LIB_FOUND)
+namespace YAML {
+template<>
+struct convert<kinematics_library::TracIKSolverType> 
+{
+    static Node encode(const kinematics_library::TracIKSolverType& solver_type) 
+    {
+        Node node;
+        node.push_back(solver_type);   
+        return node;
+    }
+
+    static bool decode(const Node& node, kinematics_library::TracIKSolverType& solver_type) 
+    {
+
+        if(!node.IsScalar())
+            return false;  
+
+        std::unordered_map<std::string, kinematics_library::TracIKSolverType> stringToenum;
+        stringToenum.insert({":SPEED", kinematics_library::SPEED});
+        stringToenum.insert({":DISTANCE", kinematics_library::DISTANCE});
+        stringToenum.insert({":MANIP1", kinematics_library::MANIP1});
+        stringToenum.insert({":MANIP2", kinematics_library::MANIP2});
+
+        LOG_INFO_S<<"[getTracIkConfig]: Selected solver Type = "<<stringToenum.at(node.Scalar());
+        solver_type  = stringToenum.at(node.Scalar());
+        return true;
+    }
+};
+}
+#endif
+
+
+namespace YAML 
+{
+    template<>
+    struct convert<kinematics_library::KinematicSolver> 
+    {
+        static Node encode(const kinematics_library::KinematicSolver& solver) 
+        {
+            Node node;
+            node.push_back(solver);   
+            return node;
+        }
+        
+        static bool decode(const Node& node, kinematics_library::KinematicSolver& solver) 
+        {
+            
+            if(!node.IsScalar())
+                return false;  
+
+            std::unordered_map<std::string, kinematics_library::KinematicSolver> stringToenum;
+            stringToenum.insert({":IKFAST", kinematics_library::IKFAST});
+            stringToenum.insert({":SRS", kinematics_library::SRS});
+            stringToenum.insert({":KDL", kinematics_library::KDL});
+            stringToenum.insert({":TRACIK", kinematics_library::TRACIK});
+            stringToenum.insert({":IK7DOF", kinematics_library::IK7DOF});
+            stringToenum.insert({":OPT", kinematics_library::OPT});
+            stringToenum.insert({":HYBRIDIK", kinematics_library::HYBRIDIK});
+            
+            LOG_INFO_S<<"[getKinematicSolverConfig]: Selected solver Type = "<<stringToenum.at(node.Scalar());
+            solver  = stringToenum.at(node.Scalar());
+            return true;
+        }
+    };
+
+
+    template<>
+    struct convert<kinematics_library::ZE_MODE> 
+    {
+        static Node encode(const kinematics_library::ZE_MODE& ze_mode) 
+        {
+            Node node;
+            node.push_back(ze_mode);   
+            return node;
+        }
+        
+        static bool decode(const Node& node, kinematics_library::ZE_MODE& ze_mode) 
+        {
+            
+            if(!node.IsScalar())
+                return false;  
+            
+            std::unordered_map<std::string, kinematics_library::ZE_MODE> stringToenum;
+            stringToenum.insert({":AUTO_ZSTABLE", kinematics_library::AUTO_ZSTABLE});
+            stringToenum.insert({":AUTO_ZMAX", kinematics_library::AUTO_ZMAX});
+            stringToenum.insert({":AUTO_YMAX", kinematics_library::AUTO_YMAX});
+            stringToenum.insert({":MANUAL", kinematics_library::MANUAL});
+            
+            LOG_INFO_S<<"[getIK7DoFConfig]: Selected ZE Mode Type = "<<stringToenum.at(node.Scalar());
+            ze_mode  = stringToenum.at(node.Scalar());
+            return true;
+        }
+    };
+}
 
 namespace handle_kinematic_config
 {
