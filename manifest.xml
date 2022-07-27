@@ -14,7 +14,7 @@
     <depend package="control/urdfdom_headers" />
     <depend package="yaml-cpp" />
     <depend package="nlopt"/>
-    <depend package="trac_ik" optional ="1"/>
+    <depend package="external/trac_ik/trac_ik_lib" optional ="1"/>
     <name>kinematics_library</name>
     <maintainer>Sankar/sankar.natarajan@dfki.de</maintainer>
     <stage>0</stage>
