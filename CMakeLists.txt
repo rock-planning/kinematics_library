@@ -6,7 +6,7 @@ project(kinematics_librar
         DESCRIPTION "A framework for handling serial robot kinematics")
 find_package(Rock)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 rock_init()
