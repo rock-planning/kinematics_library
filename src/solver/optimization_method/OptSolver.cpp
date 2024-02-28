@@ -51,10 +51,8 @@ bool OptSolver::loadKinematicConfig( const KinematicsConfig &kinematics_config, 
         kinematics_status.statuscode = KinematicsStatus::NO_CONFIG_FILE;
         return false;
     }
-     
-    const YAML::Node& opt_ik_config_node = input_config["opt_ik_config"];
-    
-    if(!handle_kinematic_config::getOptIKConfig(opt_ik_config_node, opt_param_))
+
+    if(!handle_kinematic_config::getOptIKConfig(input_config, opt_param_))
     {
         LOG_ERROR("[OptSolver]: Unable to read kinematic config file %s from %s", kinematics_config.solver_config_filename.c_str(), 
                     kinematics_config.solver_config_abs_path.c_str());
@@ -118,7 +116,7 @@ bool OptSolver::solveIK (const base::samples::RigidBodyState &target_pose,
     if( (fabs(minf) > opt_param_.opt_config.min_cost ) && (elapsed.count() < opt_param_.opt_config.max_time) )
     {
         do
-        {
+        {            
             for (uint i=0; i< opt_var_.size(); i++)
                 opt_var_[i]=random_dist_.at(i)(random_gen_);
             try
@@ -130,7 +128,7 @@ bool OptSolver::solveIK (const base::samples::RigidBodyState &target_pose,
 
             finish_time = std::chrono::high_resolution_clock::now();
             elapsed = finish_time - start_time;
-            //std::cout<<"Result loop "<<result<<" new minf loop="<<minf<<"  "<<elapsed.count()<<"  "<<opt_param_.max_time<<std::endl;
+            //std::cout<<"Result loop "<<result<<" new minf loop="<<minf<<"  "<<elapsed.count()<<"  "<<opt_param_.opt_config.max_time<<std::endl;
             if(minf < best_minf)
             {
                 best_minf = minf;
@@ -145,17 +143,26 @@ bool OptSolver::solveIK (const base::samples::RigidBodyState &target_pose,
             }
         }while ( (elapsed.count() < opt_param_.opt_config.max_time) );
     }
+    std::cout<<"Result loop "<<result<<" new minf loop="<<minf<<"  "<<elapsed.count()<<"  "<<best_minf<<std::endl;
 
     opt_var_ = best_opt_var;
 
     solution.resize(1);
     solution[0].resize(number_of_joints_);
     solution[0].names = jt_names_;
+    std::cout<<"Sol = "<<" ";
     for(std::size_t i = 0; i < opt_var_.size(); ++i)
     {
         solution[0].elements.at(i).position = opt_var_[i];
         solution[0].elements.at(i).speed = 0.0;
+        std::cout<<opt_var_[i]<<" ";
     }
+     std::cout<<std::endl;
+    // base::samples::RigidBodyState fk_pose;
+    
+    // bool ll = solveFK (solution[0], fk_pose, solver_status );
+    // std::cout<<"Pose = "<<fk_pose.position.x()<<" "<<fk_pose.position.y()<<" "<<fk_pose.position.z()<<std::endl;
+    // std::cout<<"------"<<std::endl;
 
     if ( result == nlopt::SUCCESS )
     {

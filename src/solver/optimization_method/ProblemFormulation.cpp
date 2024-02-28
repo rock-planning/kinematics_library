@@ -147,6 +147,7 @@ void ProblemFormulation::assignTarget(const base::samples::RigidBodyState &targe
 {
     //target_pose_ = target_pose;
     kinematics_library::rbsToKdl(target_pose, target_pose_);
+    //std::cout<<"target_pose_ "<<target_pose_.p[0]<<"  "<<target_pose_.p[1]<<" "<<target_pose_.p[2]<<std::endl;
 
     // now we assign the previous joint value as current joint value
     for(size_t i = 0; i < cur_jts.size(); i++)
@@ -181,16 +182,20 @@ double ProblemFormulation::getOverallCost(const std::vector<double>& x, std::vec
     // position cost
     double position_cost        = getPosistionCost(kdl_frame_, grad);
     double orientation_cost     = getOrientationCost(kdl_frame_, grad);
+    double joint_movement_cost  = jointMovementCost(x,  grad);
     //double velocity_cost        = getVelocityCost(x, grad);
     //double acceleration_cost    = getAccelerationCost(x, grad);
     //double jerk_cost            = getJerkCost(x, grad);
 
     storePreviousRobotState(x);
     //std::cout<<"Cost ="<<position_cost <<"  "<<orientation_cost<<"  "<<velocity_cost<<"  "<<acceleration_cost<<"  "<<jerk_cost<<std::endl;
-    //std::cout<<"Cost ="<<position_cost <<"  "<<orientation_cost<<std::endl;
+    
+    
+    //std::cout<<"Cost ="<<pos_cost_weight_*position_cost <<"  "<<rt_cost_weight_*orientation_cost<<"  "<<0.1*joint_movement_cost<<std::endl;
     //return ( pos_cost_weight_*position_cost + ort_cost_weight_*orientation_cost + (vel_cost_weight_*velocity_cost) + 
     //         (acc_cost_weight_*acceleration_cost) + (jerk_cost_weight_*jerk_cost));
-    return ( pos_cost_weight_*position_cost + ort_cost_weight_*orientation_cost );
+    return ( pos_cost_weight_*position_cost + ort_cost_weight_*orientation_cost + joint_movement_cost*0.0);
+    //return (( pos_cost_weight_*position_cost));// + (joint_movement_cost*1.05));
 }
 
 void ProblemFormulation::getJointsLimitsConstraintCost( const unsigned &constraints_size, const unsigned &x_size,
@@ -230,6 +235,34 @@ void ProblemFormulation::getJointsLimitsConstraintCost( const unsigned &constrai
     }
     //std::cout<<std::endl;
 }
+
+double ProblemFormulation::jointMovementCost(const std::vector<double> &opt_jt_ang,  std::vector<double>& grad)
+{
+    double cost = 0.0;
+    size_t data_size = opt_jt_ang.size();
+    std::vector<double> cost_vec(data_size);    
+
+    std::vector<double> jt_movement_cost{0.5, 0.5, 0.5, 0.25, 0.25, 0.25, 0.25, 0.5, 0.5, 0.5};
+    for(size_t i = 0; i < opt_jt_ang.size(); i++)
+    {
+        cost_vec[i] = (std::pow((prev_jtang_[i][0]-opt_jt_ang[i]),2) * jt_movement_cost[i]);
+        cost += cost_vec[i] ;
+    }
+
+    if(!grad.empty())
+    {
+        
+        std::vector<double> x_rollout(data_size);
+
+        for (std::size_t i=0; i<data_size; i++) 
+        {
+            grad[i] =  (((std::pow((prev_jtang_[i][0] - jtang_jac_.at(i).at(i)), 2)* jt_movement_cost[i] )- cost_vec[i]) / (2.0*jump_));            
+        }
+    }
+    return cost;
+}
+
+
 
 void ProblemFormulation::storePreviousRobotState(const std::vector<double>& x)
 {
@@ -273,14 +306,15 @@ double ProblemFormulation::getPosistionCost(const KDL::Frame& fk_pose, std::vect
         {            
             //grad[i] = ((target_pose_.position - fk_jac_[i].position).norm() - position_cost) / (2.0*jump);
 
-            double new_cost_1 = ((target_pose_.p - fk_jac_[i].p).Norm() - position_cost) / (2.0*jump_);
-            
-            grad[i] = grooveDerivativeFunction(pos_groove_var_, new_cost_1);
+            //double new_cost_1 = ((target_pose_.p - fk_jac_[i].p).Norm() - position_cost) / (2.0*jump_);
+            grad[i] = ((target_pose_.p - fk_jac_[i].p).Norm() - position_cost) / (2.0*jump_);
+            //grad[i] = grooveDerivativeFunction(pos_groove_var_, new_cost_1);
         }
     }
 
     // return a normalised cost using the groove function
-    return grooveFunction(pos_groove_var_, position_cost);
+    //return grooveFunction(pos_groove_var_, position_cost);
+    return position_cost;
 }
 
 double ProblemFormulation::getOrientationCost(const KDL::Frame& fk_pose, std::vector<double>& grad)
@@ -303,13 +337,15 @@ double ProblemFormulation::getOrientationCost(const KDL::Frame& fk_pose, std::ve
             // grad[i] += ((dervi_cost - cost) / (2.0*jump) );            
     
             double dervi_cost = getQuaternionDiff(target_pose_.M, fk_jac_[i].M);
-            double new_cost_1 = ((dervi_cost - cost) / (2.0*jump_) );
-            grad[i] += grooveDerivativeFunction(ort_groove_var_, new_cost_1);
+            //double new_cost_1 = ((dervi_cost - cost) / (2.0*jump_) );
+            grad[i] = ((dervi_cost - cost) / (2.0*jump_) );
+            //grad[i] += grooveDerivativeFunction(ort_groove_var_, new_cost_1);
         }
     }
 
     // return a normalised cost using the groove function
-    return grooveFunction(ort_groove_var_, cost);    
+    //return grooveFunction(ort_groove_var_, cost);    
+    return cost;
 }
 
 

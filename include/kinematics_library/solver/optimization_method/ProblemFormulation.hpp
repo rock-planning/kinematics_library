@@ -86,6 +86,8 @@ public:
     void getJointsLimitsConstraintCost( const unsigned &constraints_size, const unsigned &x_size,
                                         const double* x, double *result, double* grad);
 
+    double jointMovementCost(const std::vector<double> &opt_jt_ang,  std::vector<double>& grad);
+
     KDL::Frame target_pose_;
     void assingGoal(const KDL::Frame &frame);
 

@@ -132,12 +132,14 @@ bool getOptIkGrooveParamAndWeight(  const YAML::Node &yaml_data, const std::stri
 }
 
 bool getOptIKConfig(const YAML::Node &yaml_data, kinematics_library::ProblemParameters &config)
-{           
-    if( (!getOptIkGrooveParamAndWeight(yaml_data, "position_cost", kinematics_library::POSITION_COST, config))    ||
-        (!getOptIkGrooveParamAndWeight(yaml_data, "orientation_cost", kinematics_library::ORIENTATION_COST, config)) ||
-        (!getOptIkGrooveParamAndWeight(yaml_data, "velocity_cost", kinematics_library::VELOCITY_COST, config)) ||
-        (!getOptIkGrooveParamAndWeight(yaml_data, "acceleration_cost", kinematics_library::ACCELERATION_COST, config)) ||
-        (!getOptIkGrooveParamAndWeight(yaml_data, "jerk_cost", kinematics_library::JERK_COST, config)) )
+{   
+    const YAML::Node& cost_config_node = yaml_data["cost_config"];
+
+    if( (!getOptIkGrooveParamAndWeight(cost_config_node, "position_cost", kinematics_library::POSITION_COST, config))    ||
+        (!getOptIkGrooveParamAndWeight(cost_config_node, "orientation_cost", kinematics_library::ORIENTATION_COST, config)) ||
+        (!getOptIkGrooveParamAndWeight(cost_config_node, "velocity_cost", kinematics_library::VELOCITY_COST, config)) ||
+        (!getOptIkGrooveParamAndWeight(cost_config_node, "acceleration_cost", kinematics_library::ACCELERATION_COST, config)) ||
+        (!getOptIkGrooveParamAndWeight(cost_config_node, "jerk_cost", kinematics_library::JERK_COST, config)) )
             return false;
     
     // get the optimization related config
