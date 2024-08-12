@@ -11,3 +11,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 rock_init()
 rock_standard_layout()
+add_subdirectory(test)

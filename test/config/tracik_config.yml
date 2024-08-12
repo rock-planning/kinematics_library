@@ -1,0 +1,13 @@
+trac_ik_config:
+
+  #Type of solver for trac_ik- selecting speed gives the first ik soln selecting distance tries to minimize distance between current and solution in given time
+  solver_type: :SPEED #:DISTANCE #:DISTANCE SPEED
+  #Maximum iteration allowed for numerical solver
+  max_iteration: 50
+  #time out - used if trac ik is available
+  timeout_sec: 55.0 #0.0005
+  #stopping criteria for the numerical solver. Stop the solver, if the error is below the eps.              
+  eps: 0.0001
+  #kdl twist
+  tolerances: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+  joints_err_weight: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
