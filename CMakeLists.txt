@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(kinematics_library
-	VERSION 0.1
-	DESCRIPTION "A framework for handling serial robot kinematics"
+    VERSION 0.1
+    DESCRIPTION "A framework for handling serial robot kinematics"
 )
 
 set(TARGET_NAME ${PROJECT_NAME})
@@ -22,7 +22,7 @@ set(DEPENDENCIES
 )
 
 set (SRCS 
-    ${PROJECT_SOURCE_DIR}/src/abstract/AbstractKinematics.cpp	
+    ${PROJECT_SOURCE_DIR}/src/abstract/AbstractKinematics.cpp
     ${PROJECT_SOURCE_DIR}/src/HandleKinematicConfig.cpp 
     ${PROJECT_SOURCE_DIR}/src/abstract/IkFastSolver.cpp
     ${PROJECT_SOURCE_DIR}/src/abstract/KdlSolver.cpp
@@ -70,10 +70,10 @@ pkg_check_modules(Dependencies REQUIRED IMPORTED_TARGET ${DEPENDENCIES})
 add_library(${TARGET_NAME} SHARED ${SRCS})
 
 target_link_libraries(${TARGET_NAME}
-	PUBLIC
-		PkgConfig::Dependencies
-		Threads::Threads
-		${CMAKE_DL_LIBS}
+    PUBLIC
+        PkgConfig::Dependencies
+        Threads::Threads
+        ${CMAKE_DL_LIBS}
 )
 
 target_include_directories(${TARGET_NAME}
@@ -91,7 +91,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkg
 
 # Build the test
 add_executable(test_kinematics_library
-	test/test_kinematics_library.cpp
+    test/test_kinematics_library.cpp
 )
 
 target_link_libraries(test_kinematics_library
