@@ -50,7 +50,6 @@ if(${NLOPT_FOUND})
     message ("NLopt found !")
     add_definitions(-DOPT_LIB_FOUND=1)
 
-    list(APPEND PKGCONFIG_REQUIRES nlopt)
     LIST(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/solver/optimization_method/ProblemFormulation.cpp)
     LIST(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/solver/optimization_method/OptSolver.cpp)
     LIST(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/solver/optimization_method/HybridIkSolver.cpp)
