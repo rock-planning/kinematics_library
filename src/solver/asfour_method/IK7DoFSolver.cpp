@@ -718,7 +718,7 @@ base::samples::Joints Ik7DoFSolver::listJointsInDesiredOrder(double* joint_value
                                                                 const std::vector< std::string >& actual_joint_names_order)
 {   
 
-    assert(desired_joint_names_order.size() == actual_joint_names_order);
+    assert(desired_joint_names_order.size() == actual_joint_names_order.size());
 
     std::vector<double> joint_vec;        
     base::samples::Joints joint_samples;

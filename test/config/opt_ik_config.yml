@@ -1,0 +1,20 @@
+cost_config:
+ # position cost s c r weight
+  position_cost: [0.0, 0.2, 5.0, 55.0]
+  # orientation cost s c r weight
+  orientation_cost: [0.0, 0.2, 5.0, 35.0]  
+  # velocity cost s c r weight
+  velocity_cost: [0.0, 0.2, 5.0, 0.01]
+  # acceleration cost s c r weight
+  acceleration_cost: [0.0, 0.2, 5.0, 0.001]
+  # jerk cost s c r weight
+  jerk_cost: [0.0, 0.2, 5.0, 0.001]
+
+opt_config:
+  # time out
+  max_time: 0.15
+  # stopping criteria for the numerical solver. Stop the solver, if the error is below the eps.              
+  abs_tol: 0.00002
+  rel_tol: 0.0001
+  min_cost: 0.00
+

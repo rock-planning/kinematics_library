@@ -10,8 +10,10 @@ kinematics_library::KinematicsConfig getKinematicsConfig(std::string test_folder
     config.base_name = "base_link";
     config.tip_name = "link_7";
     config.urdf_file = test_folder_path +"./data/kuka_iiwa.urdf";
+    // kinematics_library::KDL kinematics_library::TRACIK kinematics_library::OPT
     config.kinematic_solver = kinematics_library::KDL;
     config.solver_config_abs_path = test_folder_path +"./config";
+    // kdl_config.yml trac_ik_config.yml opt_ik_config.yml
     config.solver_config_filename = "kdl_config.yml";
 
     return config;

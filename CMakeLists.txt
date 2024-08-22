@@ -5,7 +5,6 @@ project(kinematics_library
 )
 
 set(TARGET_NAME ${PROJECT_NAME})
-set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 find_package(PkgConfig REQUIRED)
 find_package(Eigen3 REQUIRED)
