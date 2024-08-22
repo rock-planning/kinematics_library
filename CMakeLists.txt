@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
-project(kinematics_library)
+project(kinematics_library
+	VERSION 0.1
+	DESCRIPTION "A framework for handling serial robot kinematics"
+)
 
 SET(TARGET_NAME ${PROJECT_NAME})
-set(PROJECT_DESCRIPTION "A framework for handling serial robot kinematics")
-
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 find_package(PkgConfig REQUIRED)
