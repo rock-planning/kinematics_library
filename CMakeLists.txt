@@ -4,7 +4,7 @@ project(kinematics_library
 	DESCRIPTION "A framework for handling serial robot kinematics"
 )
 
-SET(TARGET_NAME ${PROJECT_NAME})
+set(TARGET_NAME ${PROJECT_NAME})
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 find_package(PkgConfig REQUIRED)
@@ -21,7 +21,7 @@ set(DEPENDENCIES
     base-types
 )
 
-SET (SRCS 
+set (SRCS 
     ${PROJECT_SOURCE_DIR}/src/abstract/AbstractKinematics.cpp	
     ${PROJECT_SOURCE_DIR}/src/HandleKinematicConfig.cpp 
     ${PROJECT_SOURCE_DIR}/src/abstract/IkFastSolver.cpp
