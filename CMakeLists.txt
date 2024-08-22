@@ -72,6 +72,7 @@ target_link_libraries(${TARGET_NAME}
     PUBLIC
         PkgConfig::Dependencies
         Threads::Threads
+        Eigen3::Eigen
         ${CMAKE_DL_LIBS}
 )
 
