@@ -1,10 +1,13 @@
 kinematics_library
 =============
 
+The Kinematics Library was initiated and is currently developed at the
+[Robotics Innovation Center](http://robotik.dfki-bremen.de/en/startpage.html) of the
+[German Research Center for Artificial Intelligence (DFKI)](http://www.dfki.de) in Bremen.
+
 A framework for handling serial robot kinematics. This framework contains the following kinematic solvers: kdl, trac_ik, ikfast, analytical solver for 7 dof manipulator and an optimisation-based kinematic solvers. The aim of this framework is to offer the user to use different types kinematic solvers by just changing the configuration.
 
-![kinematics](kinematics.png)
-
+![kinematics](/images/kinematics.png)
 
 This framework offers the following kinematics solvers to solve both forward and inverse kinematics.
 - [KDL](https://www.orocos.org/wiki/Kinematic_and_Dynamic_Solvers.html) : Use Orocos Kinematics and Dynamics library to solve the kinematic problem.
