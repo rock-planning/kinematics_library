@@ -6,11 +6,11 @@
 #include <dlfcn.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <urdf_parser/urdf_parser.h>
-#include <base/samples/Joints.hpp>
-#include <base/commands/Joints.hpp>
-#include <base/samples/RigidBodyState.hpp>
-#include <base/JointsTrajectory.hpp>
-#include <base-logging/Logging.hpp>
+#include <base-types/samples/Joints.hpp>
+#include <base-types/commands/Joints.hpp>
+#include <base-types/samples/RigidBodyState.hpp>
+#include <base-types/JointsTrajectory.hpp>
+#include <base-logging/logging/Logging.hpp>
 
 #include "abstract/AbstractKinematics.hpp"
 #include "HandleKinematicConfig.hpp"

@@ -1,99 +1,113 @@
-cmake_minimum_required(VERSION 3.16)
-project(kinematics_library
-    VERSION 0.1
-    DESCRIPTION "A framework for handling serial robot kinematics"
-)
+cmake_minimum_required(VERSION 3.10)
+project(kinematics_library VERSION 0.1 DESCRIPTION "A framework for handling serial robot kinematics")
 
+# Set C++ standard to C++14
+set(CMAKE_CXX_STANDARD 14)
 set(TARGET_NAME ${PROJECT_NAME})
 
-find_package(PkgConfig REQUIRED)
+# Boost configuration
+set(BOOST_ROOT /home/rsc/rsc/projects/libraries/dfki/dependancies/boost_1_82_0)
+set(BOOST_LIBRARYDIR ${BOOST_ROOT}/stage/lib)
+set(BOOST_INCLUDEDIR ${BOOST_ROOT})
+
+# Find required packages
 find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
 
-set(DEPENDENCIES
-    orocos_kdl
-    kdl_parser
-    urdfdom
-    urdfdom_headers
-    yaml-cpp
-    base-logging
-    base-types
+# pkg_check for required dependencies
+include(FindPkgConfig)
+pkg_check_modules(OROCOS_KDL REQUIRED orocos_kdl)
+pkg_check_modules(KDL_PARSER REQUIRED kdl_parser)
+pkg_check_modules(URDF REQUIRED urdfdom)
+pkg_check_modules(URDFHEADER REQUIRED urdfdom_headers)
+pkg_check_modules(YAML_CPP REQUIRED yaml_cpp)
+pkg_check_modules(BASE_TYPES REQUIRED base_types)
+pkg_check_modules(BASE_LOGGING REQUIRED base_logging)
+
+# set(YAML_CPP_INCLUDE_DIRS /usr/local/include/yaml_cpp)
+# set(BASE_TYPES_INCLUDE_DIRS /usr/local/include/base_types)
+# set(BASE_LOGGING_INCLUDE_DIRS /usr/local/include/yaml_cpp)
+
+# Include directories for dependencies
+set(KINEMATIC_LIB_INCLUDES 
+    ${CMAKE_SOURCE_DIR}/include
+    ${EIGEN3_INCLUDE_DIR} 
+    ${OROCOS_KDL_INCLUDE_DIRS} 
+    ${KDL_PARSER_INCLUDE_DIRS}
+    ${URDF_INCLUDE_DIRS} 
+    ${URDFHEADER_INCLUDE_DIRS} 
+    ${YAML_CPP_INCLUDE_DIRS}
+    ${BASE_TYPES_INCLUDE_DIRS} 
+    ${BASE_LOGGING_INCLUDE_DIRS}
 )
 
-set (SRCS 
+# Set libraries to link with
+set(KINEMATIC_DEP_LIBS
+    Threads::Threads
+    Eigen3::Eigen
+    ${Boost_SYSTEM_LIBRARY} 
+    ${Boost_FILESYSTEM_LIBRARY} 
+    ${OROCOS_KDL_LIBRARIES} 
+    ${KDL_PARSER_LIBRARIES} 
+    ${URDF_LIBRARIES} 
+    ${URDFHEADER_LIBRARIES}
+    ${BASE_TYPES_LIBRARY} 
+    ${BASE_LOGGING_LIBRARY}
+)
+
+# Sources for the library
+set(SRCS
     ${PROJECT_SOURCE_DIR}/src/abstract/AbstractKinematics.cpp
-    ${PROJECT_SOURCE_DIR}/src/HandleKinematicConfig.cpp 
+    ${PROJECT_SOURCE_DIR}/src/HandleKinematicConfig.cpp
     ${PROJECT_SOURCE_DIR}/src/abstract/IkFastSolver.cpp
     ${PROJECT_SOURCE_DIR}/src/abstract/KdlSolver.cpp
     ${PROJECT_SOURCE_DIR}/src/abstract/KinematicsHelper.cpp
     ${PROJECT_SOURCE_DIR}/src/solver/shimizu_method/SRSKinematicSolver.cpp
-    ${PROJECT_SOURCE_DIR}/src/solver/shimizu_method/SRSKinematicHelper.cpp    
+    ${PROJECT_SOURCE_DIR}/src/solver/shimizu_method/SRSKinematicHelper.cpp
     ${PROJECT_SOURCE_DIR}/src/solver/asfour_method/IK7DoFSolver.cpp
-    ${PROJECT_SOURCE_DIR}/src/KinematicsFactory.cpp )
+    ${PROJECT_SOURCE_DIR}/src/KinematicsFactory.cpp
+)
 
-# if trac_ik is found, add it to the kinematic factory
+# Optional dependencies
 pkg_check_modules(TRAC_IK trac_ik)
-if(${TRAC_IK_FOUND})
-    message ("TRAC_IK found !")
+if(TRAC_IK_FOUND)
+    message("TRAC_IK found!")
     add_definitions(-DTRAC_IK_LIB_FOUND=1)
-
-    LIST(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/abstract/TracIkSolver.cpp)
-    list(APPEND DEPENDENCIES trac_ik)
-else(${TRAC_IK_FOUND})
-    message ("TRAC_IK not found !")
+    list(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/abstract/TracIkSolver.cpp)
+    list(APPEND KINEMATIC_DEP_LIBS trac_ik)
+else()
+    message("TRAC_IK not found!")
 endif()
 
-# if nlopt is found, add it to the kinematic factory
 pkg_check_modules(NLOPT nlopt)
-if(${NLOPT_FOUND})
-    message ("NLopt found !")
+if(NLOPT_FOUND)
+    message("NLopt found!")
     add_definitions(-DOPT_LIB_FOUND=1)
-
-    LIST(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/solver/optimization_method/ProblemFormulation.cpp)
-    LIST(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/solver/optimization_method/OptSolver.cpp)
-    LIST(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/solver/optimization_method/HybridIkSolver.cpp)
-    list(APPEND DEPENDENCIES nlopt)
-else(${NLOPT_FOUND})
-    message ("NLOPT not found !")
-    message ("-------------------------------------------------------------------------")
-    message (" ")
-    message ("Optimization-based kinematics libraries (OptIK & HybridIK) won't be build")
-    message (" ")
-    message ("-------------------------------------------------------------------------")
+    list(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/solver/optimization_method/ProblemFormulation.cpp)
+    list(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/solver/optimization_method/OptSolver.cpp)
+    list(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/solver/optimization_method/HybridIkSolver.cpp)
+    list(APPEND KINEMATIC_DEP_LIBS nlopt)
+else()
+    message("NLOPT not found!")
+    message("Optimization-based kinematics libraries (OptIK & HybridIK) won't be built")
 endif()
-
-pkg_check_modules(Dependencies REQUIRED IMPORTED_TARGET ${DEPENDENCIES})
 
 # Build the library
-add_library(${TARGET_NAME} SHARED ${SRCS})
+add_library(${PROJECT_NAME} SHARED ${SRCS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${KINEMATIC_DEP_LIBS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${KINEMATIC_LIB_INCLUDES})
 
-target_link_libraries(${TARGET_NAME}
-    PUBLIC
-        PkgConfig::Dependencies
-        Threads::Threads
-        Eigen3::Eigen
-        ${CMAKE_DL_LIBS}
-)
+# Package configuration
+list(APPEND PKGCONFIG_REQUIRES orocos_kdl kdl_parser urdfdom urdfdom_headers yaml_cpp base_types base_logging)
+list(JOIN PKGCONFIG_REQUIRES " " PKGCONFIG_REQUIRES_STR)
+configure_file("${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.pc.in" "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc" @ONLY)
 
-target_include_directories(${TARGET_NAME}
-    PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-)
-
-list(JOIN DEPENDENCIES " " PKGCONFIG_REQUIRES)
-configure_file("${PROJECT_NAME}.pc.in" "${PROJECT_NAME}.pc" @ONLY)
-
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/kinematics_library DESTINATION include)
-install(TARGETS ${TARGET_NAME} DESTINATION lib)
+# Install
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/${PROJECT_NAME} DESTINATION include)
+install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
-# Build the test
-add_executable(test_kinematics_library
-    test/test_kinematics_library.cpp
-)
-
-target_link_libraries(test_kinematics_library
-   ${TARGET_NAME}
-)
-
+# Test executable
+# add_executable(test_kinematics_library test/test_kinematics_library.cpp)
+# target_link_libraries(test_kinematics_library PRIVATE ${PROJECT_NAME})

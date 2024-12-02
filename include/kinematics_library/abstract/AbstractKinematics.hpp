@@ -2,10 +2,11 @@
 #define ABSTRACTKINEMATIC_HPP_
 
 #include <vector>
-#include <boost/function.hpp>
+#include <memory>
+// #include <boost/function.hpp>
 #include <iostream>
 #include <string>
-#include <base/Eigen.hpp>
+#include <base-types/Eigen.hpp>
 #include "kinematics_library/KinematicsConfig.hpp"
 #include "kinematics_library/abstract/KinematicsHelper.hpp"
 

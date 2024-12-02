@@ -2,7 +2,7 @@
 #define _KINEMATICSCONFIG_HPP_
 
 #include <string>
-#include <base/samples/RigidBodyState.hpp>
+#include <base-types/samples/RigidBodyState.hpp>
 #include <vector>
 
 namespace kinematics_library

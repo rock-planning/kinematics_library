@@ -4,16 +4,16 @@
 #include <vector>
 #include <math.h>
 #include <Eigen/Dense>
-#include <base/Eigen.hpp>
-#include <base/samples/Joints.hpp>
-#include <base/commands/Joints.hpp>
-#include <base/samples/RigidBodyState.hpp>
+#include <base-types/Eigen.hpp>
+#include <base-types/samples/Joints.hpp>
+#include <base-types/commands/Joints.hpp>
+#include <base-types/samples/RigidBodyState.hpp>
 #include <kdl/frames.hpp>
 #include <kdl/jntarray.hpp>
 #include <kdl/tree.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <iostream>
-#include <base-logging/Logging.hpp>
+#include <base-logging/logging/Logging.hpp>
 
 namespace kinematics_library
 {

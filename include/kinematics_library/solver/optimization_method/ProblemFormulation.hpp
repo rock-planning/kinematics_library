@@ -12,8 +12,8 @@
 #include "kinematics_library/abstract/AbstractKinematics.hpp"
 #include <kinematics_library/solver/optimization_method/OptConfig.hpp>
 
-//#include <base/samples/RigidBodyState.hpp>
-#include <base/JointLimits.hpp>
+//#include <base-types/samples/RigidBodyState.hpp>
+#include <base-types/JointLimits.hpp>
 #include <kdl/frames.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
 
