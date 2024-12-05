@@ -5,15 +5,13 @@ project(kinematics_library VERSION 0.1 DESCRIPTION "A framework for handling ser
 set(CMAKE_CXX_STANDARD 14)
 set(TARGET_NAME ${PROJECT_NAME})
 
-# Boost configuration
-set(BOOST_ROOT /home/rsc/rsc/projects/libraries/dfki/dependancies/boost_1_82_0)
-set(BOOST_LIBRARYDIR ${BOOST_ROOT}/stage/lib)
-set(BOOST_INCLUDEDIR ${BOOST_ROOT})
+set(NLOPT_DIR "/usr/lib/x86_64-linux-gnu/cmake/nlopt")
 
 # Find required packages
 find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(YAML-CPP)
 
 # pkg_check for required dependencies
 include(FindPkgConfig)
@@ -21,13 +19,8 @@ pkg_check_modules(OROCOS_KDL REQUIRED orocos_kdl)
 pkg_check_modules(KDL_PARSER REQUIRED kdl_parser)
 pkg_check_modules(URDF REQUIRED urdfdom)
 pkg_check_modules(URDFHEADER REQUIRED urdfdom_headers)
-pkg_check_modules(YAML_CPP REQUIRED yaml_cpp)
 pkg_check_modules(BASE_TYPES REQUIRED base_types)
 pkg_check_modules(BASE_LOGGING REQUIRED base_logging)
-
-# set(YAML_CPP_INCLUDE_DIRS /usr/local/include/yaml_cpp)
-# set(BASE_TYPES_INCLUDE_DIRS /usr/local/include/base_types)
-# set(BASE_LOGGING_INCLUDE_DIRS /usr/local/include/yaml_cpp)
 
 # Include directories for dependencies
 set(KINEMATIC_LIB_INCLUDES 
@@ -37,7 +30,6 @@ set(KINEMATIC_LIB_INCLUDES
     ${KDL_PARSER_INCLUDE_DIRS}
     ${URDF_INCLUDE_DIRS} 
     ${URDFHEADER_INCLUDE_DIRS} 
-    ${YAML_CPP_INCLUDE_DIRS}
     ${BASE_TYPES_INCLUDE_DIRS} 
     ${BASE_LOGGING_INCLUDE_DIRS}
 )
@@ -47,7 +39,8 @@ set(KINEMATIC_DEP_LIBS
     Threads::Threads
     Eigen3::Eigen
     ${Boost_SYSTEM_LIBRARY} 
-    ${Boost_FILESYSTEM_LIBRARY} 
+    ${Boost_FILESYSTEM_LIBRARY}
+    ${YAML_CPP_LIBRARY} 
     ${OROCOS_KDL_LIBRARIES} 
     ${KDL_PARSER_LIBRARIES} 
     ${URDF_LIBRARIES} 
