@@ -1,12 +1,14 @@
 prefix=@CMAKE_INSTALL_PREFIX@
-exec_prefix=@CMAKE_INSTALL_PREFIX@
-libdir=${prefix}/lib
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
 includedir=${prefix}/include/kinematics_library
 
-Name: kinematics_library
+Name: @PROJECT_NAME@
 Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
-Requires: orocos_kdl kdl_parser urdfdom urdfdom_headers srdfdom octomap
-Requires.private: eigen3 base_types base_logging yaml-cpp
-Libs: -L${libdir} -l@TARGET_NAME@ -lboost_system -lboost_filesystem @PKGCONFIG_LIBS@
+Requires: @PKGCONFIG_REQUIRES_STR@ yaml-cpp
+Requires.private: eigen3
+Libs: -L${libdir} -lkinematics_library @PKGCONFIG_LIBS@
+Libs.private: @Boost_SYSTEM_LIBRARY@ @Boost_FILESYSTEM_LIBRARY@ -pthread
+@NLOPT_FOUND@Libs: ${Libs} -lnlopt
 Cflags: -I${includedir} @PKGCONFIG_CFLAGS@ -I@BOOST_INCLUDEDIR@ -I@EIGEN3_INCLUDE_DIR@

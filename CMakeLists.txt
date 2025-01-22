@@ -92,7 +92,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${KINEMATIC_DEP_LIBS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${KINEMATIC_LIB_INCLUDES})
 
 # Package configuration
-list(APPEND PKGCONFIG_REQUIRES orocos_kdl kdl_parser urdfdom urdfdom_headers yaml_cpp base_types base_logging)
+list(APPEND PKGCONFIG_REQUIRES base_logging base_types orocos_kdl kdl_parser urdfdom urdfdom_headers)
 list(JOIN PKGCONFIG_REQUIRES " " PKGCONFIG_REQUIRES_STR)
 configure_file("${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.pc.in" "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc" @ONLY)
 
