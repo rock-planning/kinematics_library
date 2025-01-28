@@ -3,3 +3,10 @@ kdl_config:
   max_iteration: 50
   #stopping criteria for the numerical solver. Stop the solver, if the error is below the eps.              
   eps: 0.01
+additional_joints:
+  - joint_name: "WORKBENCH_LINK_1_joint"
+    position: 1.8
+  - joint_name: "WORKBENCH_LINK_2_joint"
+    position: 0.4
+  - joint_name: "WORKBENCH_LINK_3_joint"
+    position: 0.0

@@ -6,10 +6,10 @@ kinematics_library::KinematicsConfig getKinematicsConfig(std::string test_folder
 {
     kinematics_library::KinematicsConfig config;
 
-    config.config_name = "kuka_arm";
-    config.base_name = "base_link";
-    config.tip_name = "link_7";
-    config.urdf_file = test_folder_path +"./data/kuka_iiwa.urdf";
+    config.config_name = "vispa_arm";
+    config.base_name = "WEBOTS_WORLD_link";
+    config.tip_name = "VISPA_LINK_6_link";
+    config.urdf_file = test_folder_path +"./data/eu-rise/eurise_scene.urdf";
     // kinematics_library::KDL kinematics_library::TRACIK kinematics_library::OPT
     config.kinematic_solver = kinematics_library::KDL;
     config.solver_config_abs_path = test_folder_path +"./config";
@@ -22,8 +22,8 @@ kinematics_library::KinematicsConfig getKinematicsConfig(std::string test_folder
 base::samples::Joints convertToBaseJoints(const std::vector<double> &data)
 {
     base::samples::Joints joint_values;
-    joint_values.names = {"joint_a1", "joint_a2", "joint_a3", "joint_a4", "joint_a5", "joint_a6", "joint_a7"};
-    joint_values.elements.resize(7);
+    joint_values.names = {"VISPA_LINK_1_joint", "VISPA_LINK_2_joint", "VISPA_LINK_3_joint", "VISPA_LINK_4_joint", "VISPA_LINK_5_joint", "VISPA_LINK_6_joint"};
+    joint_values.elements.resize(6); // TODO - make adhoc
     assert(joint_values.size() == data.size());
     for(size_t i = 0; i < data.size(); i++)
         joint_values.elements[i].position =  data[i];
@@ -131,7 +131,7 @@ int main(int argc, char * argv[])
     }
 
     // calculate forward kinematics for the following joint values
-    std::vector<double> fk_vec_values = {0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5};
+    std::vector<double> fk_vec_values = {1.2901426874228322e-06, -3.0649502405475371e-06, 3.1399999707118269, -1.1033763311356292e-09, -2.7999985780255177, 2.2575316428927116e-07};
     base::samples::Joints fk_joint_values = convertToBaseJoints(fk_vec_values);
     base::samples::RigidBodyState fk_pose;
 
@@ -146,7 +146,7 @@ int main(int argc, char * argv[])
     std::cout<<"\n\n!!!!!!!! Check the inverse kinematics  !!!!!!!! \n";
     
     // calculate inverse kinematics for the above calculated FK pose
-    std::vector<double> ik_seed_vec_values = {0.1, 0.1, -0.1, 0.1, 0.1, 0.1, 0.1};
+    std::vector<double> ik_seed_vec_values = {1.2901426874228322e-06, -3.0649502405475371e-06, 3.1399999707118269, -1.1033763311356292e-09, -2.7999985780255177, 2.2575316428927116e-07};
     base::samples::Joints ik_seed_joint_values = convertToBaseJoints(ik_seed_vec_values);// here we assign zero joint values as seed ik solution
     std::vector<base::commands::Joints> ik_solutions;
     

@@ -88,6 +88,21 @@ class AbstractKinematics
 
         std::string getKinematicChainTipName(){return kinematics_config_.tip_name;}
 
+        std::map<std::string, double> additional_joint_positions_;
+
+        // Add getter/setter for additional joints
+        void setAdditionalJointPosition(const std::string& joint_name, double position) {
+            additional_joint_positions_[joint_name] = position;
+        }
+
+        double getAdditionalJointPosition(const std::string& joint_name) const {
+            auto it = additional_joint_positions_.find(joint_name);
+            if(it != additional_joint_positions_.end()) {
+                return it->second;
+            }
+            return 0.0; // or throw an exception
+        }
+
     protected:
         base::samples::RigidBodyState kinematic_pose_;
         std::vector<double>current_jt_status_, ik_solution_;

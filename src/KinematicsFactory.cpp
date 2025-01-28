@@ -146,6 +146,27 @@ bool KinematicsFactory::initialise ( const KinematicsConfig &kinematics_config, 
         jt_names_.push_back(kinematics_kdl_chain_.getSegment ( jn ).getJoint().getName());
     }
 
+    // After processing main chain joints
+    for(const auto& additional_joint : kinematics_config.additional_joints)
+    {
+        auto joint = urdf_model_->getJoint(additional_joint.joint_name);
+        if(!joint) {
+            LOG_WARN("[KinematicsFactory]: Additional joint %s not found in URDF", 
+                     additional_joint.joint_name.c_str());
+            continue;
+        }
+        
+        if(joint->type != urdf::Joint::REVOLUTE) {
+            LOG_WARN("[KinematicsFactory]: Joint %s is not revolute", 
+                     additional_joint.joint_name.c_str());
+            continue;
+        }
+
+        // Store the joint configuration somewhere accessible to your solver
+        // This could be a new member variable in your AbstractKinematics class
+        additional_joint_positions_[additional_joint.joint_name] = additional_joint.position;
+    }
+
     LOG_DEBUG ( "[KinematicsFactory]: Kinematics initialisation finished" );
     return true;
 }
