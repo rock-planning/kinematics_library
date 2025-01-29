@@ -11,7 +11,7 @@ set(NLOPT_DIR "/usr/lib/x86_64-linux-gnu/cmake/nlopt")
 find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Boost COMPONENTS system filesystem REQUIRED)
-find_package(YAML-CPP)
+find_package(yaml-cpp REQUIRED)
 
 # pkg_check for required dependencies
 include(FindPkgConfig)
@@ -21,6 +21,9 @@ pkg_check_modules(URDF REQUIRED urdfdom)
 pkg_check_modules(URDFHEADER REQUIRED urdfdom_headers)
 pkg_check_modules(BASE_TYPES REQUIRED base_types)
 pkg_check_modules(BASE_LOGGING REQUIRED base_logging)
+
+message(STATUS "BASE_TYPES_LIBRARIES: ${BASE_TYPES_LIBRARIES}")
+message(STATUS "BASE_TYPES_LIBRARY_DIRS: ${BASE_TYPES_LIBRARY_DIRS}")
 
 # Include directories for dependencies
 set(KINEMATIC_LIB_INCLUDES
@@ -32,15 +35,16 @@ set(KINEMATIC_LIB_INCLUDES
     ${URDFHEADER_INCLUDE_DIRS}
     ${BASE_TYPES_INCLUDE_DIRS}
     ${BASE_LOGGING_INCLUDE_DIRS}
+    ${YAML_CPP_INCLUDE_DIR}
 )
 
 # Set libraries to link with
 set(KINEMATIC_DEP_LIBS
     Threads::Threads
     Eigen3::Eigen
+    yaml-cpp::yaml-cpp
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
-    ${YAML_CPP_LIBRARY}
     ${OROCOS_KDL_LIBRARIES}
     ${KDL_PARSER_LIBRARIES}
     ${URDF_LIBRARIES}
@@ -92,7 +96,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${KINEMATIC_DEP_LIBS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${KINEMATIC_LIB_INCLUDES})
 
 # Package configuration
-list(APPEND PKGCONFIG_REQUIRES orocos_kdl kdl_parser urdfdom urdfdom_headers yaml_cpp base_types base_logging)
+list(APPEND PKGCONFIG_REQUIRES orocos_kdl kdl_parser urdfdom urdfdom_headers base_types base_logging)
 list(JOIN PKGCONFIG_REQUIRES " " PKGCONFIG_REQUIRES_STR)
 configure_file("${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.pc.in" "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc" @ONLY)
 
@@ -102,5 +106,6 @@ install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 # Test executable
-# add_executable(test_kinematics_library test/test_kinematics_library.cpp)
-# target_link_libraries(test_kinematics_library PRIVATE ${PROJECT_NAME})
+add_executable(test_kinematics_library test/test_kinematics_library.cpp)
+target_include_directories(test_kinematics_library PRIVATE ${KINEMATIC_LIB_INCLUDES})
+target_link_libraries(test_kinematics_library PRIVATE ${PROJECT_NAME} ${KINEMATIC_DEP_LIBS})
