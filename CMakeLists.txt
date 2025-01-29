@@ -22,6 +22,9 @@ pkg_check_modules(URDFHEADER REQUIRED urdfdom_headers)
 pkg_check_modules(BASE_TYPES REQUIRED base_types)
 pkg_check_modules(BASE_LOGGING REQUIRED base_logging)
 
+message(STATUS "BASE_TYPES_LIBRARIES: ${BASE_TYPES_LIBRARIES}")
+message(STATUS "BASE_TYPES_LIBRARY_DIRS: ${BASE_TYPES_LIBRARY_DIRS}")
+
 # Include directories for dependencies
 set(KINEMATIC_LIB_INCLUDES
     ${CMAKE_SOURCE_DIR}/include
@@ -39,9 +42,9 @@ set(KINEMATIC_LIB_INCLUDES
 set(KINEMATIC_DEP_LIBS
     Threads::Threads
     Eigen3::Eigen
+    yaml-cpp::yaml-cpp
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
-    yaml-cpp::yaml-cpp
     ${OROCOS_KDL_LIBRARIES}
     ${KDL_PARSER_LIBRARIES}
     ${URDF_LIBRARIES}
