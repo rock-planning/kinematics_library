@@ -10,7 +10,7 @@ set(NLOPT_DIR "/usr/lib/x86_64-linux-gnu/cmake/nlopt")
 # Find required packages
 find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
-find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(Boost COMPONENTS thread system filesystem REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 # pkg_check for required dependencies
@@ -36,6 +36,7 @@ set(KINEMATIC_LIB_INCLUDES
     ${BASE_TYPES_INCLUDE_DIRS}
     ${BASE_LOGGING_INCLUDE_DIRS}
     ${YAML_CPP_INCLUDE_DIR}
+    ${BOOST_INCLUDE_DIR}
 )
 
 # Set libraries to link with
@@ -43,6 +44,7 @@ set(KINEMATIC_DEP_LIBS
     Threads::Threads
     Eigen3::Eigen
     yaml-cpp::yaml-cpp
+    Boost::thread
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${OROCOS_KDL_LIBRARIES}
