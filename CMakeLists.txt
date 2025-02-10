@@ -106,6 +106,10 @@ install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 # Test executable
-add_executable(test_kinematics_library test/test_kinematics_library.cpp)
-target_include_directories(test_kinematics_library PRIVATE ${KINEMATIC_LIB_INCLUDES})
-target_link_libraries(test_kinematics_library PRIVATE ${PROJECT_NAME} ${KINEMATIC_DEP_LIBS})
+add_executable(test_kuka test/test_kuka.cpp)
+target_include_directories(test_kuka PRIVATE ${KINEMATIC_LIB_INCLUDES})
+target_link_libraries(test_kuka PRIVATE ${PROJECT_NAME} ${KINEMATIC_DEP_LIBS})
+
+add_executable(test_vispa test/test_vispa.cpp)
+target_include_directories(test_vispa PRIVATE ${KINEMATIC_LIB_INCLUDES})
+target_link_libraries(test_vispa PRIVATE ${PROJECT_NAME} ${KINEMATIC_DEP_LIBS})

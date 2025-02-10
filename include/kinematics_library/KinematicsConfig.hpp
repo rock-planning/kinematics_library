@@ -8,11 +8,6 @@
 namespace kinematics_library
 {
 
-struct AdditionalJointConfig {
-    std::string joint_name;
-    double position;
-};
-
 enum KinematicSolver
 {
     IKFAST,
@@ -64,8 +59,6 @@ struct KinematicsConfig
     bool linear_relative_movement;
     // relative movement configuration
     LinearConfig linear_movement_config;
-    //
-    std::vector<AdditionalJointConfig> additional_joints;
 };
 
 struct DHParamConfig
