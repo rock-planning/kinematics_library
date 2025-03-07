@@ -7,15 +7,15 @@ kinematics_library::KinematicsConfig getKinematicsConfig(std::string test_folder
     kinematics_library::KinematicsConfig config;
 
     config.config_name = "kuka_arm";
-    config.base_name = "IIWA14_BASE_LINK_link";
+    config.base_name = "WEBOTS_WORLD_link";
     // config.base_name = "WEBOTS_WORLD_link";
     config.tip_name = "IIWA14_LINK_7_link";
     config.urdf_file = test_folder_path + "./data/eu-rise/eurise_scene.urdf";
     // kinematics_library::KDL kinematics_library::TRACIK kinematics_library::OPT
-    config.kinematic_solver = kinematics_library::KDL;
+    config.kinematic_solver = kinematics_library::TRACIK;
     config.solver_config_abs_path = test_folder_path + "./config";
     // kdl_config.yml trac_ik_config.yml opt_ik_config.yml
-    config.solver_config_filename = "kdl_config.yml";
+    config.solver_config_filename = "tracik_config.yml";
 
     return config;
 }
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
     base::samples::RigidBodyState fk_pose;
 
     // calculate forward kinematics for the following joint values
-    std::vector<double> fk_vec_values = {1.95265, 1.92175, -1.97375, -0.515773, 2.85604, 1.13886, -1.19884};
+    std::vector<double> fk_vec_values = {0.436756, 1.20342, 2.85701, -0.964373, 2.49749, -0.361696, 1.37496};
     base::samples::Joints fk_joint_values = convertToBaseJoints(fk_vec_values);
 
     if (!robot_kinematics->solveFK(fk_joint_values, fk_pose, kinematics_status))
@@ -158,21 +158,21 @@ int main(int argc, char *argv[])
     std::cout << "\n\n!!!!!!!! Check the inverse kinematics  !!!!!!!! \n";
 
     // calculate inverse kinematics for the above calculated FK pose
-    std::vector<double> ik_seed_vec_values = {1.95265, 1.92175, -1.97375, -0.515773, 2.85604, 1.13886, -1.19884};
-    // std::vector<double> ik_seed_vec_values = {0.5, 0.5, 1.5, 0.5, 0.5, 0.5, 0.5};
+    // std::vector<double> ik_seed_vec_values = {0, 0, 0, 0, 0, 0, 0};
+    std::vector<double> ik_seed_vec_values = {0.436756, 1.20342, 2.85701, -0.964373, 2.49749, -0.361696, 1.37496};
     base::samples::Joints ik_seed_joint_values = convertToBaseJoints(ik_seed_vec_values); // here we assign zero joint values as seed ik solution
     std::vector<base::commands::Joints> ik_solutions;
 
-    fk_pose.position(0) = -0.301340;
-    fk_pose.position(1) = 0.418330;
-    fk_pose.position(2) = 0.490160;
+    fk_pose.position(0) = 2.986160; // , , 
+    fk_pose.position(1) = 2.911630;
+    fk_pose.position(2) = 1.243150;
 
-    fk_pose.orientation.x() = 0.086556;
-    fk_pose.orientation.y() = 0.966314;
-    fk_pose.orientation.z() = -0.004447;
-    fk_pose.orientation.w() = 0.242335;
+    fk_pose.orientation.w() = -0.004447;  // , ,, 
+    fk_pose.orientation.x() = 0.966314;
+    fk_pose.orientation.y() = -0.086556;
+    fk_pose.orientation.z() = -0.242335;
 
-    fk_pose.sourceFrame = "IIWA14_BASE_LINK_link";
+    fk_pose.sourceFrame = "WEBOTS_WORLD_link";
     fk_pose.targetFrame = "IIWA14_LINK_7_link";
 
     if (robot_kinematics->solveIK(fk_pose, ik_seed_joint_values, ik_solutions, kinematics_status))
