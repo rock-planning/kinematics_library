@@ -9,13 +9,14 @@ set(TARGET_NAME ${PROJECT_NAME})
 find_package(PkgConfig REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
+find_package(Boost COMPONENTS thread system filesystem REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 set(DEPENDENCIES
     orocos_kdl
     kdl_parser
     urdfdom
     urdfdom_headers
-    yaml-cpp
     base-logging
     base-types
 )
@@ -72,11 +73,16 @@ target_link_libraries(${TARGET_NAME}
         PkgConfig::Dependencies
         Threads::Threads
         Eigen3::Eigen
+        yaml-cpp::yaml-cpp
+        Boost::thread
+        ${Boost_SYSTEM_LIBRARY}
+        ${Boost_FILESYSTEM_LIBRARY}
         ${CMAKE_DL_LIBS}
 )
 
 target_include_directories(${TARGET_NAME}
     PUBLIC
+        ${BOOST_INCLUDE_DIR}
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
