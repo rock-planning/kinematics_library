@@ -98,16 +98,20 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${KINEMATIC_DEP_LIBS})
 target_include_directories(${PROJECT_NAME} PUBLIC ${KINEMATIC_LIB_INCLUDES})
 
 # Package configuration
-list(APPEND PKGCONFIG_REQUIRES orocos_kdl kdl_parser urdfdom urdfdom_headers base_types base_logging)
+list(APPEND PKGCONFIG_REQUIRES base_types base_logging orocos_kdl kdl_parser urdfdom urdfdom_headers)
 list(JOIN PKGCONFIG_REQUIRES " " PKGCONFIG_REQUIRES_STR)
 configure_file("${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.pc.in" "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc" @ONLY)
 
 # Install
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/${PROJECT_NAME} DESTINATION include)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include)
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig)
 
 # Test executable
-add_executable(test_kinematics_library test/test_kinematics_library.cpp)
-target_include_directories(test_kinematics_library PRIVATE ${KINEMATIC_LIB_INCLUDES})
-target_link_libraries(test_kinematics_library PRIVATE ${PROJECT_NAME} ${KINEMATIC_DEP_LIBS})
+add_executable(test_kuka test/test_kuka.cpp)
+target_include_directories(test_kuka PRIVATE ${KINEMATIC_LIB_INCLUDES})
+target_link_libraries(test_kuka PRIVATE ${PROJECT_NAME} ${KINEMATIC_DEP_LIBS})
+
+add_executable(test_vispa test/test_vispa.cpp)
+target_include_directories(test_vispa PRIVATE ${KINEMATIC_LIB_INCLUDES})
+target_link_libraries(test_vispa PRIVATE ${PROJECT_NAME} ${KINEMATIC_DEP_LIBS})

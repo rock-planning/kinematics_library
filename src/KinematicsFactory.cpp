@@ -145,7 +145,7 @@ bool KinematicsFactory::initialise ( const KinematicsConfig &kinematics_config, 
 
         jt_names_.push_back(kinematics_kdl_chain_.getSegment ( jn ).getJoint().getName());
     }
-
+    
     LOG_DEBUG ( "[KinematicsFactory]: Kinematics initialisation finished" );
     return true;
 }
