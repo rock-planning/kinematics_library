@@ -18,39 +18,38 @@
 namespace kinematics_library
 {
 
-/**
- * @class KinematicsFactory
- * @brief Provides a factory class for the AbstractKinematics class.
- */
-class KinematicsFactory
-{
+    /**
+     * @class KinematicsFactory
+     * @brief Provides a factory class for the AbstractKinematics class.
+     */
+    class KinematicsFactory
+    {
 
     public:
         /**
-        * @brief  constructor
-        */
+         * @brief  constructor
+         */
         KinematicsFactory();
         /**
-        * @brief  destructor
-        */
+         * @brief  destructor
+         */
         ~KinematicsFactory();
 
         AbstractKinematicPtr getKinematicsSolver(const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status);
 
         bool initialise(const KinematicsConfig &kinematics_config, KinematicsStatus &kinematics_status);
 
-        KDL::Tree getKDLTree(){return kdl_tree_;}
+        KDL::Tree getKDLTree() { return kdl_tree_; }
 
-        KDL::Chain getKDLChain(){return kdl_chain_;}
+        KDL::Chain getKDLChain() { return kdl_chain_; }
 
-        KDL::Chain getKDLKinematicsChain(){return kinematics_kdl_chain_;}
+        KDL::Chain getKDLKinematicsChain() { return kinematics_kdl_chain_; }
 
-        std::vector< std::pair<double, double> > getJointLimits(){return joints_limits_;}
+        std::vector<std::pair<double, double>> getJointLimits() { return joints_limits_; }
 
-        std::vector<std::string> getJointNames(){return jt_names_;}
+        std::vector<std::string> getJointNames() { return jt_names_; }
 
     private:
-
         bool initiailiseURDF(std::string urdf_file);
 
         /** \brief kdl tree containing joints and links of the robot */
@@ -62,9 +61,8 @@ class KinematicsFactory
 
         std::vector<std::string> jt_names_;
         urdf::ModelInterfaceSharedPtr urdf_model_;
-        std::vector< std::pair<double, double> > joints_limits_;
-};
+        std::vector<std::pair<double, double>> joints_limits_;
+    };
 };
 
 #endif
-
