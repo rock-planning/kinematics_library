@@ -75,7 +75,7 @@ target_link_libraries(${TARGET_NAME}
     PkgConfig::Dependencies
     Threads::Threads
     Eigen3::Eigen
-    yaml-cpp::yaml-cpp
+    yaml-cpp
     Boost::thread
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
