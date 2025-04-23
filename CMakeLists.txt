@@ -89,6 +89,8 @@ target_include_directories(${TARGET_NAME}
     $<INSTALL_INTERFACE:include>
 )
 
+set(PKGCONFIG_LIBS "${PKGCONFIG_LIBS} -lboost_system -lboost_thread -lboost_filesystem")
+
 list(JOIN DEPENDENCIES " " PKGCONFIG_REQUIRES)
 configure_file("${PROJECT_NAME}.pc.in" "${PROJECT_NAME}.pc" @ONLY)
 
