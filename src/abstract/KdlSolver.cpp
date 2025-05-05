@@ -37,7 +37,8 @@ namespace kinematics_library
         // assign the config
         YAML::Node input_config;
         // check whether the config could be loaded or not.
-        if (!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path, kinematics_config.solver_config_filename, input_config))
+        if (!handle_kinematic_config::loadConfigFile(kinematics_config.solver_config_abs_path,
+                                                     kinematics_config.solver_config_filename, input_config))
         {
             LOG_ERROR("[KdlSolver]: Unable to load kinematic config file %s from %s", kinematics_config.solver_config_filename.c_str(),
                       kinematics_config.solver_config_abs_path.c_str());
@@ -71,8 +72,8 @@ namespace kinematics_library
         return true;
     }
 
-    bool KdlSolver::solveIK(const base::samples::RigidBodyState &target_pose, const base::samples::Joints &joint_status, std::vector<base::commands::Joints> &solution,
-                            KinematicsStatus &solver_status)
+    bool KdlSolver::solveIK(const base::samples::RigidBodyState &target_pose, const base::samples::Joints &joint_status,
+                            std::vector<base::commands::Joints> &solution, KinematicsStatus &solver_status)
     {
         if (!convertPoseBetweenDifferentFrames(kdl_tree_, joint_status, target_pose, kinematic_pose_))
         {
@@ -108,7 +109,8 @@ namespace kinematics_library
         }
     }
 
-    bool KdlSolver::solveFK(const base::samples::Joints &joint_angles, base::samples::RigidBodyState &fk_pose, KinematicsStatus &solver_status)
+    bool KdlSolver::solveFK(const base::samples::Joints &joint_angles, base::samples::RigidBodyState &fk_pose,
+                            KinematicsStatus &solver_status)
     {
         getKinematicJoints(kdl_kinematic_chain_, joint_angles, jt_names_, current_jt_status_);
 
