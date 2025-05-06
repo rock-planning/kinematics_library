@@ -21,33 +21,35 @@ set(DEPENDENCIES
     base-types
 )
 
-set (SRCS 
+set(SRCS
     ${PROJECT_SOURCE_DIR}/src/abstract/AbstractKinematics.cpp
-    ${PROJECT_SOURCE_DIR}/src/HandleKinematicConfig.cpp 
+    ${PROJECT_SOURCE_DIR}/src/HandleKinematicConfig.cpp
     ${PROJECT_SOURCE_DIR}/src/abstract/IkFastSolver.cpp
     ${PROJECT_SOURCE_DIR}/src/abstract/KdlSolver.cpp
     ${PROJECT_SOURCE_DIR}/src/abstract/KinematicsHelper.cpp
     ${PROJECT_SOURCE_DIR}/src/solver/shimizu_method/SRSKinematicSolver.cpp
-    ${PROJECT_SOURCE_DIR}/src/solver/shimizu_method/SRSKinematicHelper.cpp    
+    ${PROJECT_SOURCE_DIR}/src/solver/shimizu_method/SRSKinematicHelper.cpp
     ${PROJECT_SOURCE_DIR}/src/solver/asfour_method/IK7DoFSolver.cpp
-    ${PROJECT_SOURCE_DIR}/src/KinematicsFactory.cpp )
+    ${PROJECT_SOURCE_DIR}/src/KinematicsFactory.cpp)
 
 # if trac_ik is found, add it to the kinematic factory
 pkg_check_modules(TRAC_IK trac_ik)
+
 if(${TRAC_IK_FOUND})
-    message ("TRAC_IK found !")
+    message("TRAC_IK found !")
     add_definitions(-DTRAC_IK_LIB_FOUND=1)
 
     LIST(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/abstract/TracIkSolver.cpp)
     list(APPEND DEPENDENCIES trac_ik)
 else(${TRAC_IK_FOUND})
-    message ("TRAC_IK not found !")
+    message("TRAC_IK not found !")
 endif()
 
 # if nlopt is found, add it to the kinematic factory
 pkg_check_modules(NLOPT nlopt)
+
 if(${NLOPT_FOUND})
-    message ("NLopt found !")
+    message("NLopt found !")
     add_definitions(-DOPT_LIB_FOUND=1)
 
     LIST(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/solver/optimization_method/ProblemFormulation.cpp)
@@ -55,12 +57,12 @@ if(${NLOPT_FOUND})
     LIST(APPEND SRCS ${PROJECT_SOURCE_DIR}/src/solver/optimization_method/HybridIkSolver.cpp)
     list(APPEND DEPENDENCIES nlopt)
 else(${NLOPT_FOUND})
-    message ("NLOPT not found !")
-    message ("-------------------------------------------------------------------------")
-    message (" ")
-    message ("Optimization-based kinematics libraries (OptIK & HybridIK) won't be build")
-    message (" ")
-    message ("-------------------------------------------------------------------------")
+    message("NLOPT not found !")
+    message("-------------------------------------------------------------------------")
+    message(" ")
+    message("Optimization-based kinematics libraries (OptIK & HybridIK) won't be build")
+    message(" ")
+    message("-------------------------------------------------------------------------")
 endif()
 
 pkg_check_modules(Dependencies REQUIRED IMPORTED_TARGET ${DEPENDENCIES})
@@ -70,21 +72,21 @@ add_library(${TARGET_NAME} SHARED ${SRCS})
 
 target_link_libraries(${TARGET_NAME}
     PUBLIC
-        PkgConfig::Dependencies
-        Threads::Threads
-        Eigen3::Eigen
-        yaml-cpp
-        Boost::thread
-        ${Boost_SYSTEM_LIBRARY}
-        ${Boost_FILESYSTEM_LIBRARY}
-        ${CMAKE_DL_LIBS}
+    PkgConfig::Dependencies
+    Threads::Threads
+    Eigen3::Eigen
+    yaml-cpp
+    Boost::thread
+    ${Boost_SYSTEM_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY}
+    ${CMAKE_DL_LIBS}
 )
 
 target_include_directories(${TARGET_NAME}
     PUBLIC
-        ${BOOST_INCLUDE_DIR}
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
+    ${BOOST_INCLUDE_DIR}
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
 set(PKGCONFIG_LIBS "${PKGCONFIG_LIBS} -lboost_system -lboost_thread -lboost_filesystem")
@@ -102,6 +104,5 @@ add_executable(test_kinematics_library
 )
 
 target_link_libraries(test_kinematics_library
-   ${TARGET_NAME}
+    ${TARGET_NAME}
 )
-
