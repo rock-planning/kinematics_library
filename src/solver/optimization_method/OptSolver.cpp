@@ -143,21 +143,21 @@ namespace kinematics_library
                 }
             } while ((elapsed.count() < opt_param_.opt_config.max_time));
         }
-        std::cout << "Result loop " << result << " new minf loop=" << minf << "  " << elapsed.count() << "  " << best_minf << std::endl;
+        // std::cout << "Result loop " << result << " new minf loop=" << minf << "  " << elapsed.count() << "  " << best_minf << std::endl;
 
         opt_var_ = best_opt_var;
 
         solution.resize(1);
         solution[0].resize(number_of_joints_);
         solution[0].names = jt_names_;
-        std::cout << "Sol = " << " ";
+        // std::cout << "Sol = " << " ";
         for (std::size_t i = 0; i < opt_var_.size(); ++i)
         {
             solution[0].elements.at(i).position = opt_var_[i];
             solution[0].elements.at(i).speed = 0.0;
-            std::cout << opt_var_[i] << " ";
+            // std::cout << opt_var_[i] << " ";
         }
-        std::cout << std::endl;
+        // std::cout << std::endl;
         // base::samples::RigidBodyState fk_pose;
 
         // bool ll = solveFK (solution[0], fk_pose, solver_status );

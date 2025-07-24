@@ -322,14 +322,14 @@ namespace kinematics_library
 
             // jointangles.elements.at(3).position = acos(thet4);  //using cosine law
             jointangles.elements.at(3).position = (acos(thet4)); // using cosine law
-            std::cout << "JOINT before 4 = " << jointangles.elements.at(3).position * kinematics_library::RTD << "   " << t_thet4 << "  " << sqrt(1 - (thet4 * thet4)) << std::endl;
+            // std::cout << "JOINT before 4 = " << jointangles.elements.at(3).position * kinematics_library::RTD << "   " << t_thet4 << "  " << sqrt(1 - (thet4 * thet4)) << std::endl;
 
             // Below calculate the reference shoulder angle
             rotMatrix(jointangles.elements.at(3).position, kinematics_library::PI / 2.0, R34);
 
             jointangles.elements.at(3).position = srs_config_.dh_param.joints_mapping[3] * (acos(thet4) - srs_config_.dh_param.theta_offsets[3]); // using cosine law
 
-            std::cout << "JOINT 4 = " << jointangles.elements.at(3).position * kinematics_library::RTD << "   " << t_thet4 << "  " << sqrt(1 - (thet4 * thet4)) << std::endl;
+            // std::cout << "JOINT 4 = " << jointangles.elements.at(3).position * kinematics_library::RTD << "   " << t_thet4 << "  " << sqrt(1 - (thet4 * thet4)) << std::endl;
 
             multMatVec(R34, l_ew, t_R34);
 

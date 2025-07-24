@@ -408,8 +408,6 @@ namespace kinematics_library
 
             KDL::Frame fk_pose, calculated_frame, new_frame;
 
-            std::cout << "source_pose.sourceFrame " << source_pose.sourceFrame << std::endl;
-
             if (!transformFrame(kdl_tree, joint_status, target_pose.sourceFrame, source_pose.sourceFrame, fk_pose))
                 return false;
 
@@ -425,8 +423,6 @@ namespace kinematics_library
 
             // transform_tip_kt_  -> transformation from kinematic tip to target tip
             KDL::Frame fk_pose, new_frame, calculated_frame;
-
-            std::cout << "target_pose.targetFrame " << target_pose.targetFrame << std::endl;
 
             if (!transformFrame(kdl_tree, joint_status, source_pose.targetFrame, target_pose.targetFrame, fk_pose))
                 return false;
